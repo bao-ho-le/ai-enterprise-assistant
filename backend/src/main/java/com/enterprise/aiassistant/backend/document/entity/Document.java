@@ -3,9 +3,7 @@ package com.enterprise.aiassistant.backend.document.entity;
 import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.document.enums.DocumentType;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,6 +30,8 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Document {
 
     @Id
@@ -53,6 +53,7 @@ public class Document {
     private DocumentType documentType;
 
     @Enumerated(EnumType.STRING)
+    @Builder.Default
     @Column(nullable = false)
     private DocumentStatus status = DocumentStatus.ACTIVE;
 
@@ -71,6 +72,7 @@ public class Document {
             orphanRemoval = true,
             fetch = FetchType.LAZY
     )
+    @Builder.Default
     private List<DocumentVersion> versions = new ArrayList<>();
 
     @PrePersist

@@ -3,9 +3,7 @@ package com.enterprise.aiassistant.backend.document.entity;
 import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -32,6 +30,8 @@ import java.time.LocalDateTime;
 )
 @Getter
 @Setter
+@AllArgsConstructor
+@Builder
 @NoArgsConstructor
 public class DocumentVersion {
 
@@ -56,6 +56,7 @@ public class DocumentVersion {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private VersionStatus status = VersionStatus.PENDING;
 
     @Column(columnDefinition = "text", name = "change_note")

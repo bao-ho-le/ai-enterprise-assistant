@@ -5,7 +5,11 @@ import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface DocumentVersionRepository extends JpaRepository<DocumentVersion, Long> {
+    int countByDocumentId(Long documentId);
+
+    Optional<DocumentVersion> findTopByDocumentIdOrderByVersionNumberDesc(Long documentId);
 
 }
