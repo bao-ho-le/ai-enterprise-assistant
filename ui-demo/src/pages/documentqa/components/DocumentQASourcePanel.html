@@ -1,0 +1,42 @@
+<aside
+  class="hidden xl:flex w-80 shrink-0 flex-col border-l border-border-subtle bg-bg-secondary"
+>
+  <div
+    class="flex h-14 items-center justify-between border-b border-border-subtle px-4"
+  >
+    <div
+      class="flex h-14 items-center justify-between border-b border-border-subtle px-4 transition-colors hover:bg-bg-elevated"
+    >
+      <div class="flex items-center gap-2">
+        <i data-lucide="upload" class="h-4 w-4 text-text-secondary"></i>
+        <span class="text-sm font-medium text-text-secondary"
+          >Upload Document</span
+        >
+      </div>
+    </div>
+  </div>
+
+  <div class="p-4 border-b border-border-subtle">
+    <div class="relative">
+      <i
+        data-lucide="search"
+        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted"
+      ></i>
+      <input
+        type="search"
+        placeholder="Search documents..."
+        class="input-field pl-9 text-sm"
+        aria-label="Search source documents"
+      />
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-4 space-y-2">
+    <!-- @include DocumentSourceItem-Q4Financial.html -->
+    <!-- @include DocumentSourceItem-Compliance.html -->
+    <!-- @include DocumentSourceItem-BoardMinutes.html -->
+    <!-- @include DocumentSourceItem-VendorContract.html -->
+    <!-- @include DocumentSourceItem-HRHandbook.html -->
+    <!-- @include DocumentSourceItem-ClientEmail.html -->
+  </div>
+</aside>

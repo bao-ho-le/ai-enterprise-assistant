@@ -1,0 +1,142 @@
+<div class="card overflow-hidden">
+  <!-- Selection toolbar (visible when files selected) -->
+  <div
+    class="flex items-center justify-between gap-4 px-4 py-3 border-b border-border-subtle"
+  >
+    <!-- Left -->
+    <div class="flex items-center gap-3">
+      <span class="text-sm font-medium text-text-primary">
+        3 files selected
+      </span>
+
+      <button
+        type="button"
+        class="text-sm text-text-muted hover:text-text-primary transition-colors"
+      >
+        Clear selection
+      </button>
+    </div>
+
+    <!-- Right -->
+    <div class="flex items-center gap-2">
+      <a
+        href="/src/pages/writereport/WriteReportPage.html"
+        class="btn-secondary py-2 px-3 text-sm"
+      >
+        <i data-lucide="file-text" class="h-4 w-4"></i>
+        Write Report
+      </a>
+
+      <a
+        href="/src/pages/summary/SummaryPage.html"
+        class="btn-secondary py-2 px-3 text-sm"
+      >
+        <i data-lucide="list-tree" class="h-4 w-4"></i>
+        Summary
+      </a>
+
+      <a
+        href="/src/pages/documentqa/DocumentQAPage.html"
+        class="btn-secondary py-2 px-3 text-sm"
+      >
+        <i data-lucide="messages-square" class="h-4 w-4"></i>
+        Document QA
+      </a>
+
+      <button
+        type="button"
+        class="btn-secondary py-2 px-3 text-sm text-error border-error/30 hover:bg-error/10"
+      >
+        <i data-lucide="trash-2" class="h-4 w-4"></i>
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full min-w-[900px]">
+      <thead>
+        <tr class="border-b border-border-subtle bg-bg-secondary">
+          <th class="px-4 py-3 text-left w-10">
+            <input
+              type="checkbox"
+              class="h-4 w-4 rounded border-border-default bg-bg-primary accent-accent"
+              aria-label="Select all files"
+              checked
+            />
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            File Name
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Upload Time
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Document Type
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Extension
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Size
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Semantic Similarity
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Status
+          </th>
+          <th
+            class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted"
+          >
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- @include ../../documentqa/components/DocumentRow-Q4Financial.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-RevenueForecast.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-BoardMinutes.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-ClientEmail.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-CompliancePolicy.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-SprintRetro.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-VendorContract.html -->
+        <!-- @include ../../documentqa/components/DocumentRow-HRHandbook.html -->
+      </tbody>
+    </table>
+  </div>
+
+  <div
+    class="flex items-center justify-between px-4 py-3 border-t border-border-subtle bg-bg-secondary"
+  >
+    <p class="text-sm text-text-muted">Showing 8 of 247 documents</p>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        class="btn-ghost p-2"
+        aria-label="Previous page"
+        disabled
+      >
+        <i data-lucide="chevron-left" class="h-4 w-4"></i>
+      </button>
+      <span class="text-sm text-text-secondary px-2">Page 1 of 31</span>
+      <button type="button" class="btn-ghost p-2" aria-label="Next page">
+        <i data-lucide="chevron-right" class="h-4 w-4"></i>
+      </button>
+    </div>
+  </div>
+</div>

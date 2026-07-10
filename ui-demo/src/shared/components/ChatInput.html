@@ -1,0 +1,39 @@
+<div class="p-4">
+  <div class="flex items-end gap-3 max-w-3xl mx-auto">
+    <!-- INPUT AREA -->
+    <div class="flex-1">
+      <div
+        class="flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-card px-3 py-2 min-h-[48px]"
+      >
+        <!-- TEXTAREA -->
+        <textarea
+          rows="1"
+          placeholder="Ask a question about your documents..."
+          class="flex-1 resize-none bg-transparent text-sm text-text-primary outline-none leading-normal"
+          aria-label="Chat message input"
+        ></textarea>
+
+        <!-- ACTIONS -->
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-md text-text-muted hover:bg-bg-elevated"
+          aria-label="Attach file"
+        >
+          <i data-lucide="paperclip" class="h-4 w-4"></i>
+        </button>
+
+        <button
+          type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-md bg-bg-elevated text-text-muted hover:bg-bg-card"
+          aria-label="Send message"
+        >
+          <i data-lucide="send" class="h-4 w-4"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-center text-xs text-text-muted mt-2">
+    AI responses are grounded in your selected source documents
+  </p>
+</div>

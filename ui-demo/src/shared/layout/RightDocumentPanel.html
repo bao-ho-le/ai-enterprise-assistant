@@ -1,0 +1,117 @@
+<aside
+  class="hidden xl:flex w-80 shrink-0 flex-col border-l border-border-subtle bg-bg-secondary"
+>
+  <div class="flex h-14 items-center justify-between p-4">
+    <button
+      type="button"
+      class="btn-secondary w-full text-sm transition-colors hover:bg-bg-elevated mt-4"
+    >
+      <i data-lucide="upload" class="h-4 w-4"></i>
+      Upload Document
+    </button>
+  </div>
+
+  <div class="p-4 border-b border-border-subtle">
+    <div class="relative">
+      <input
+        type="search"
+        placeholder="Search documents..."
+        class="input-field h-10 w-full pl-3 pr-10 text-sm"
+      />
+
+      <div
+        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+      >
+        <i data-lucide="search" class="h-4 w-4 text-text-muted"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto p-4">
+    <p
+      class="mb-3 text-xs font-medium uppercase tracking-wider text-text-muted"
+    >
+      Attached (3)
+    </p>
+    <ul class="space-y-2">
+      <li class="card flex items-center gap-3 p-3">
+        <span
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-500/10"
+        >
+          <i data-lucide="file-text" class="h-4 w-4 text-red-400"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-text-primary">
+            Q4-Financial-Report.pdf
+          </p>
+        </div>
+        <i data-lucide="more-vertical" class="h-4 w-4 text-text-muted"></i>
+        <button
+          type="button"
+          class="btn-ghost p-1"
+          aria-label="Remove document"
+        >
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              class="h-4 w-4 accent-accent cursor-pointer rounded-full"
+              aria-label="Select document"
+            />
+          </div>
+        </button>
+      </li>
+      <li class="card flex items-center gap-3 p-3">
+        <span
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10"
+        >
+          <i data-lucide="file-spreadsheet" class="h-4 w-4 text-blue-400"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-text-primary">
+            Revenue-Forecast-2026.xlsx
+          </p>
+        </div>
+        <i data-lucide="more-vertical" class="h-4 w-4 text-text-muted"></i>
+        <button
+          type="button"
+          class="btn-ghost p-1"
+          aria-label="Remove document"
+        >
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              class="h-4 w-4 accent-accent cursor-pointer rounded-full"
+              aria-label="Select document"
+            />
+          </div>
+        </button>
+      </li>
+      <li class="card flex items-center gap-3 p-3">
+        <span
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10"
+        >
+          <i data-lucide="file-text" class="h-4 w-4 text-emerald-400"></i>
+        </span>
+        <div class="min-w-0 flex-1">
+          <p class="truncate text-sm font-medium text-text-primary">
+            Board-Meeting-Minutes.docx
+          </p>
+        </div>
+        <i data-lucide="more-vertical" class="h-4 w-4 text-text-muted"></i>
+        <button
+          type="button"
+          class="btn-ghost p-1"
+          aria-label="Remove document"
+        >
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              class="h-4 w-4 accent-accent cursor-pointer rounded-full"
+              aria-label="Select document"
+            />
+          </div>
+        </button>
+      </li>
+    </ul>
+  </div>
+</aside>

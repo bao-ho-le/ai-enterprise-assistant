@@ -1,0 +1,10 @@
+<label class="flex items-center gap-3 card p-3 cursor-pointer transition-colors hover:border-border-default {{SELECTED_CLASS}}">
+  <input type="checkbox" class="h-4 w-4 rounded border-border-default bg-bg-primary accent-accent" {{CHECKED}} aria-label="Select {{NAME}}" />
+  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg {{ICON_BG}}">
+    <i data-lucide="{{ICON}}" class="h-4 w-4 {{ICON_COLOR}}"></i>
+  </span>
+  <div class="min-w-0 flex-1">
+    <p class="text-sm font-medium text-text-primary truncate">{{NAME}}</p>
+    <p class="text-xs text-text-muted">{{META}}</p>
+  </div>
+</label>

@@ -1,0 +1,87 @@
+<section class="pt-10 border-t border-border-subtle" aria-label="Email preview">
+  <div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-text-primary">Email Preview</h2>
+    <button type="button" class="btn-secondary text-sm">
+      <i data-lucide="arrow-left" class="h-4 w-4"></i>
+      Back to Form
+    </button>
+  </div>
+
+  <article class="card overflow-hidden">
+    <!-- Email header -->
+    <div
+      class="px-6 py-4 border-b border-border-subtle bg-bg-elevated/50 space-y-3"
+    >
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-text-muted w-16 shrink-0">From:</span>
+        <span class="text-text-primary">nguyen.tran@company.com</span>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-text-muted w-16 shrink-0">To:</span>
+        <span class="text-text-primary">sarah.chen@acmecorp.com</span>
+      </div>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="text-text-muted w-16 shrink-0">Subject:</span>
+        <input
+          type="text"
+          class="input-field flex-1 py-1.5 text-sm font-medium"
+          value="Re: Q4 Partnership Proposal — Next Steps &amp; Integration Timeline"
+        />
+      </div>
+    </div>
+
+    <!-- Email body (editable) -->
+    <div class="px-6 py-6">
+      <div
+        contenteditable="true"
+        class="prose prose-invert max-w-none text-sm text-text-primary leading-relaxed focus:outline-none min-h-[200px]"
+        role="textbox"
+        aria-label="Email body"
+      >
+        <p>Dear Sarah,</p>
+        <p class="mt-4">
+          Thank you for the productive discussion during our meeting on June 28.
+          I appreciate your team's thorough review of our Q4 partnership
+          proposal.
+        </p>
+        <p class="mt-4">
+          As requested, I'm providing a written summary of the key deliverables
+          and proposed integration timeline:
+        </p>
+        <p class="mt-4">
+          <strong>Phase 1 (August 2026):</strong> API authentication setup and
+          sandbox environment configuration.
+        </p>
+        <p class="mt-2">
+          <strong>Phase 2 (September 2026):</strong> Core data sync
+          implementation and initial testing.
+        </p>
+        <p class="mt-2">
+          <strong>Phase 3 (October 2026):</strong> Production deployment and
+          go-live support.
+        </p>
+        <p class="mt-4">
+          Please let me know if this timeline aligns with your team's
+          availability. I'm happy to schedule a follow-up call to discuss any
+          adjustments.
+        </p>
+        <p class="mt-4">
+          Best regards,<br />Nguyen Tran<br />Senior Account Manager
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="px-6 py-4 border-t border-border-subtle bg-bg-secondary flex items-center gap-3"
+    >
+      <button type="button" class="btn-primary text-sm">
+        <i data-lucide="copy" class="h-4 w-4"></i>
+        Copy to Clipboard
+      </button>
+      <button type="button" class="btn-secondary text-sm">
+        <i data-lucide="download" class="h-4 w-4"></i>
+        Export as .eml
+      </button>
+    </div>
+  </article>
+</section>

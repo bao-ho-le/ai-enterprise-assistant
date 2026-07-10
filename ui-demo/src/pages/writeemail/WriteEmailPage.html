@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- @include ../../shared/layout/PageHead.html -->
+    <title>Write Email — Enterprise AI Assistant</title>
+  </head>
+  <body data-page="write-email" class="min-h-screen flex flex-col">
+    <!-- @include ../../shared/layout/NavigationBar.html -->
+
+    <div class="flex flex-1 overflow-hidden">
+      <!-- @include ../../shared/layout/LeftSidebar.html -->
+
+      <main class="flex-1 overflow-y-auto">
+        <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+          <!-- Form Section -->
+          <div id="email-form-section">
+            <form class="space-y-6" aria-label="Email composition form">
+              <div>
+                <label for="email-purpose" class="label-text">Purpose</label>
+                <textarea
+                  id="email-purpose"
+                  rows="7"
+                  class="textarea-field resize-none"
+                  placeholder="Describe the purpose of this email — e.g. Follow up on Q4 partnership proposal with Acme Corp"
+                >
+Follow up on our Q4 partnership proposal with Acme Corp and confirm next steps for the integration timeline.</textarea
+                >
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="email-sender" class="label-text">Sender</label>
+                  <input
+                    type="email"
+                    id="email-sender"
+                    class="input-field"
+                    value="nguyen.tran@company.com"
+                  />
+                </div>
+                <div>
+                  <label for="email-recipient" class="label-text"
+                    >Recipient</label
+                  >
+                  <input
+                    type="email"
+                    id="email-recipient"
+                    class="input-field"
+                    value="sarah.chen@acmecorp.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label for="email-context" class="label-text"
+                  >Optional Context</label
+                >
+                <textarea
+                  id="email-context"
+                  rows="7"
+                  class="textarea-field resize-none"
+                  placeholder="Additional context for the AI to consider"
+                >
+Previous meeting on June 28 discussed API integration scope. Sarah requested a written summary of deliverables and timeline by end of week.</textarea
+                >
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label for="email-language" class="label-text"
+                    >Language</label
+                  >
+                  <select id="email-language" class="select-field">
+                    <option value="en" selected>English</option>
+                    <option value="vi">Vietnamese</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="email-length" class="label-text"
+                    >Email Length</label
+                  >
+                  <select id="email-length" class="select-field">
+                    <option value="short">Short</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="long">Long</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="email-audience" class="label-text"
+                    >Audience</label
+                  >
+                  <select id="email-audience" class="select-field">
+                    <option value="customer" selected>Customer</option>
+                    <option value="employee">Employee</option>
+                    <option value="manager">Manager</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="email-tone" class="label-text">Tone</label>
+                  <select id="email-tone" class="select-field">
+                    <option value="formal">Formal</option>
+                    <option value="professional" selected>Professional</option>
+                    <option value="friendly">Friendly</option>
+                    <option value="neutral">Neutral</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="pt-2">
+                <button
+                  type="button"
+                  id="btn-generate-email"
+                  class="btn-primary px-6"
+                >
+                  <i data-lucide="sparkles" class="h-4 w-4"></i>
+                  Generate Email
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Email Preview Section (hidden by default) -->
+          <section
+            id="email-preview-section"
+            class="hidden"
+            aria-label="Email preview"
+          >
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-lg font-semibold text-text-primary">
+                Email Preview
+              </h2>
+              <button
+                type="button"
+                id="btn-back-to-form"
+                class="btn-secondary text-sm"
+              >
+                <i data-lucide="arrow-left" class="h-4 w-4"></i>
+                Back to Form
+              </button>
+            </div>
+
+            <article class="card overflow-hidden">
+              <!-- Email header -->
+              <div
+                class="px-6 py-4 border-b border-border-subtle bg-bg-elevated/50 space-y-3"
+              >
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-text-muted w-16 shrink-0">From:</span>
+                  <span class="text-text-primary">nguyen.tran@company.com</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-text-muted w-16 shrink-0">To:</span>
+                  <span class="text-text-primary">sarah.chen@acmecorp.com</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="text-text-muted w-16 shrink-0">Subject:</span>
+                  <input
+                    type="text"
+                    class="input-field flex-1 py-1.5 text-sm font-medium"
+                    value="Re: Q4 Partnership Proposal — Next Steps &amp; Integration Timeline"
+                  />
+                </div>
+              </div>
+
+              <!-- Email body (editable) -->
+              <div class="px-6 py-6">
+                <div
+                  contenteditable="true"
+                  class="prose prose-invert max-w-none text-sm text-text-primary leading-relaxed focus:outline-none min-h-[200px]"
+                  role="textbox"
+                  aria-label="Email body"
+                >
+                  <p>Dear Sarah,</p>
+                  <p class="mt-4">
+                    Thank you for the productive discussion during our meeting
+                    on June 28. I appreciate your team's thorough review of our
+                    Q4 partnership proposal.
+                  </p>
+                  <p class="mt-4">
+                    As requested, I'm providing a written summary of the key
+                    deliverables and proposed integration timeline:
+                  </p>
+                  <p class="mt-4">
+                    <strong>Phase 1 (August 2026):</strong> API authentication
+                    setup and sandbox environment configuration.
+                  </p>
+                  <p class="mt-2">
+                    <strong>Phase 2 (September 2026):</strong> Core data sync
+                    implementation and initial testing.
+                  </p>
+                  <p class="mt-2">
+                    <strong>Phase 3 (October 2026):</strong> Production
+                    deployment and go-live support.
+                  </p>
+                  <p class="mt-4">
+                    Please let me know if this timeline aligns with your team's
+                    availability. I'm happy to schedule a follow-up call to
+                    discuss any adjustments.
+                  </p>
+                  <p class="mt-4">
+                    Best regards,<br />Nguyen Tran<br />Senior Account Manager
+                  </p>
+                </div>
+              </div>
+
+              <div
+                class="px-6 py-4 border-t border-border-subtle bg-bg-secondary flex items-center gap-3"
+              >
+                <button type="button" class="btn-primary text-sm">
+                  <i data-lucide="copy" class="h-4 w-4"></i>
+                  Copy to Clipboard
+                </button>
+                <button
+                  type="button"
+                  id="btn-save-email"
+                  class="btn-secondary text-sm"
+                >
+                  <i data-lucide="save" class="h-4 w-4"></i>
+                  <span class="save-label">Save</span>
+                </button>
+                <button type="button" class="btn-secondary text-sm">
+                  <i data-lucide="download" class="h-4 w-4"></i>
+                  Export as .eml
+                </button>
+              </div>
+            </article>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/scripts/init.js"></script>
+
+    <!-- Minimal JS for visibility toggle -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var formSection = document.getElementById("email-form-section");
+        var previewSection = document.getElementById("email-preview-section");
+        var btnGenerate = document.getElementById("btn-generate-email");
+        var btnBackToForm = document.getElementById("btn-back-to-form");
+        var btnSave = document.getElementById("btn-save-email");
+
+        btnGenerate.addEventListener("click", function () {
+          formSection.classList.add("hidden");
+          previewSection.classList.remove("hidden");
+        });
+
+        btnBackToForm.addEventListener("click", function () {
+          previewSection.classList.add("hidden");
+          formSection.classList.remove("hidden");
+        });
+
+        btnSave.addEventListener("click", function () {
+          var label = btnSave.querySelector(".save-label");
+          label.textContent = "Saved!";
+          setTimeout(function () {
+            label.textContent = "Save";
+          }, 2000);
+        });
+      });
+    </script>
+  </body>
+</html>

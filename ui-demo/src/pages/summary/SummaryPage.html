@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- @include ../../shared/layout/PageHead.html -->
+    <title>Summary — Enterprise AI Assistant</title>
+  </head>
+  <body data-page="summary" class="min-h-screen flex flex-col">
+    <!-- @include ../../shared/layout/NavigationBar.html -->
+
+    <div class="flex flex-1 overflow-hidden">
+      <!-- @include ../../shared/layout/LeftSidebar.html -->
+
+      <main class="flex-1 overflow-y-auto">
+        <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+          <!-- @include ./components/SummaryOptions.html -->
+        </div>
+      </main>
+
+      <!-- @include ../../shared/layout/RightDocumentPanel.html -->
+    </div>
+
+    <script type="module" src="/src/scripts/init.js"></script>
+  </body>
+</html>
