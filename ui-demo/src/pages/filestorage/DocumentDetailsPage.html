@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- @include ../../shared/layout/PageHead.html -->
+    <title>Document Details — Enterprise AI Assistant</title>
+    <style>
+      /* Collapse animation for Advanced Information */
+      .collapse-section {
+        transition: max-height 0.3s ease, opacity 0.25s ease;
+        max-height: 500px;
+        opacity: 1;
+        overflow: hidden;
+      }
+      .collapse-section.collapsed {
+        max-height: 0;
+        opacity: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+      .collapse-chevron {
+        transition: transform 0.3s ease;
+      }
+      .collapse-chevron.rotated {
+        transform: rotate(180deg);
+      }
+    </style>
+  </head>
+  <body data-page="document-details" class="min-h-screen flex flex-col">
+    <!-- @include ../../shared/layout/NavigationBar.html -->
+
+    <main class="flex-1 mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-text-primary tracking-tight">
+            Document Details
+          </h1>
+          <p class="text-sm text-text-muted mt-1">
+            View and manage document information, versions, and metadata
+          </p>
+        </div>
+        <a
+          href="/src/pages/filestorage/FileStoragePage.html"
+          class="btn-secondary py-2 px-4 text-sm"
+        >
+          <i data-lucide="arrow-left" class="h-4 w-4"></i>
+          Back
+        </a>
+      </div>
+
+      <!-- Grid layout for top cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- === 1. Document Information Card === -->
+        <div class="card p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/10">
+              <i data-lucide="info" class="h-4 w-4 text-accent"></i>
+            </span>
+            <h2 class="text-base font-semibold text-text-primary">
+              Document Information
+            </h2>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Title -->
+            <div>
+              <label class="block mb-1.5 text-sm font-bold text-text-primary">Title</label>
+              <p class="text-sm text-text-secondary">
+                Annual Revenue Report 2026
+              </p>
+            </div>
+
+            <!-- Description -->
+            <div>
+              <label class="block mb-1.5 text-sm font-bold text-text-primary">Description</label>
+              <p class="text-sm text-text-secondary">
+                Company revenue report document
+              </p>
+            </div>
+
+            <!-- Document Type + Status row -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Document Type</label>
+                <span class="badge badge-neutral">REPORT</span>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Status</label>
+                <span class="badge badge-success">ACTIVE</span>
+              </div>
+            </div>
+
+            <!-- Created At + Updated At row -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Created At</label>
+                <p class="text-sm text-text-secondary">01/06/2026 · 09:00</p>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Updated At</label>
+                <p class="text-sm text-text-secondary">10/07/2026 · 14:30</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- === 2. Current Version Card === -->
+        <div class="card p-6">
+          <div class="flex items-center gap-2 mb-5">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10">
+              <i data-lucide="file-check" class="h-4 w-4 text-green-400"></i>
+            </span>
+            <h2 class="text-base font-semibold text-text-primary">
+              Current Version
+            </h2>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Current Version + Status row -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Current Version</label>
+                <p class="text-sm text-text-secondary">v3</p>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Version Status</label>
+                <span class="badge badge-success">READY</span>
+              </div>
+            </div>
+
+            <!-- File Name -->
+            <div>
+              <label class="block mb-1.5 text-sm font-bold text-text-primary">File Name</label>
+              <p class="text-sm text-text-secondary">
+                Annual_Report_2026.pdf
+              </p>
+            </div>
+
+            <!-- File Size + Extension row -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">File Size</label>
+                <p class="text-sm text-text-secondary">2.5 MB</p>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Extension</label>
+                <span class="text-sm text-text-secondary uppercase">PDF</span>
+              </div>
+            </div>
+
+            <!-- Uploaded Date -->
+            <div>
+              <label class="block mb-1.5 text-sm font-bold text-text-primary">Uploaded Date</label>
+              <p class="text-sm text-text-secondary">10/07/2026 · 14:30</p>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex items-center gap-3 pt-2">
+              <button type="button" class="btn-primary py-2 px-4 text-sm">
+                <i data-lucide="download" class="h-4 w-4"></i>
+                Download
+              </button>
+              <button type="button" class="btn-secondary py-2 px-4 text-sm">
+                <i data-lucide="upload" class="h-4 w-4"></i>
+                Upload New Version
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- === 3. Version History Table === -->
+      <div class="card overflow-hidden mb-6">
+        <div class="flex items-center gap-2 px-6 py-4 border-b border-border-subtle">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-500/10">
+            <i data-lucide="history" class="h-3.5 w-3.5 text-blue-400"></i>
+          </span>
+          <h2 class="text-base font-semibold text-text-primary">
+            Version History
+          </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[800px]">
+            <thead>
+              <tr class="border-b border-border-subtle bg-bg-secondary">
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                  Version
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                  File Name
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                  Change Note
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                  Status
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                  Created At
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-text-muted">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- v3 - current -->
+              <tr class="border-b border-border-subtle transition-colors hover:bg-bg-elevated/50">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-medium text-text-primary">v3</span>
+                    <span class="badge badge-success text-[10px] px-1.5 py-0">Current</span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary">
+                  Annual_Report_2026.pdf
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary max-w-[220px] break-words whitespace-normal">
+                  Updated revenue data for Q2 report
+                </td>
+                <td class="px-6 py-4">
+                  <span class="badge badge-success">READY</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
+                  10/07/2026
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="btn-ghost p-1.5 text-xs" title="View">
+                      <i data-lucide="eye" class="h-4 w-4"></i>
+                      <span class="sr-only">View</span>
+                    </button>
+                    <button type="button" class="btn-ghost p-1.5 text-xs" aria-label="Download">
+                      <i data-lucide="download" class="h-4 w-4"></i>
+                      <span class="sr-only">Download</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <!-- v2 -->
+              <tr class="border-b border-border-subtle transition-colors hover:bg-bg-elevated/50">
+                <td class="px-6 py-4">
+                  <span class="text-sm font-medium text-text-primary">v2</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary">
+                  Annual_Report_2026_v2.pdf
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary max-w-[220px] break-words whitespace-normal">
+                  Fixed calculation errors
+                </td>
+                <td class="px-6 py-4">
+                  <span class="badge badge-success">READY</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
+                  01/07/2026
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="btn-ghost p-1.5 text-xs" title="View">
+                      <i data-lucide="eye" class="h-4 w-4"></i>
+                      <span class="sr-only">View</span>
+                    </button>
+                    <button type="button" class="btn-ghost p-1.5 text-xs" aria-label="Download">
+                      <i data-lucide="download" class="h-4 w-4"></i>
+                      <span class="sr-only">Download</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <!-- v1 -->
+              <tr class="border-b border-border-subtle transition-colors hover:bg-bg-elevated/50">
+                <td class="px-6 py-4">
+                  <span class="text-sm font-medium text-text-primary">v1</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary">
+                  Annual_Report_2026_v1.pdf
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary max-w-[220px] break-words whitespace-normal">
+                  Initial document upload
+                </td>
+                <td class="px-6 py-4">
+                  <span class="badge badge-success">READY</span>
+                </td>
+                <td class="px-6 py-4 text-sm text-text-secondary whitespace-nowrap">
+                  01/06/2026
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="btn-ghost p-1.5 text-xs" title="View">
+                      <i data-lucide="eye" class="h-4 w-4"></i>
+                      <span class="sr-only">View</span>
+                    </button>
+                    <button type="button" class="btn-ghost p-1.5 text-xs" aria-label="Download">
+                      <i data-lucide="download" class="h-4 w-4"></i>
+                      <span class="sr-only">Download</span>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- === 4. Advanced Information (Collapsible) === -->
+      <div class="card overflow-hidden">
+        <button
+          type="button"
+          id="advanced-toggle"
+          class="flex items-center gap-3 w-full px-6 py-4 text-left transition-colors hover:bg-bg-elevated/50"
+          onclick="toggleAdvanced()"
+        >
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
+            <i data-lucide="code" class="h-3.5 w-3.5 text-amber-400"></i>
+          </span>
+          <span class="flex-1 text-base font-semibold text-text-primary">
+            Advanced Information
+          </span>
+          <i data-lucide="chevron-down" id="advanced-chevron" class="collapse-chevron h-4 w-4 text-text-muted"></i>
+        </button>
+
+        <div id="advanced-content" class="collapse-section px-6 pb-6">
+          <div class="border-t border-border-subtle pt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Storage Provider</label>
+                <p class="text-sm text-text-secondary">MINIO</p>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Bucket Name</label>
+                <p class="text-sm text-text-secondary font-mono">documents</p>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Object Key</label>
+                <p class="text-sm text-text-secondary font-mono text-xs break-all">
+                  documents/report/v3/file.pdf
+                </p>
+              </div>
+              <div>
+                <label class="block mb-1.5 text-sm font-bold text-text-primary">Checksum</label>
+                <p class="text-sm text-text-secondary font-mono">abc123</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script type="module" src="/src/scripts/init.js"></script>
+    <script>
+      function toggleAdvanced() {
+        const content = document.getElementById('advanced-content');
+        const chevron = document.getElementById('advanced-chevron');
+        content.classList.toggle('collapsed');
+        chevron.classList.toggle('rotated');
+      }
+    </script>
+  </body>
+</html>
