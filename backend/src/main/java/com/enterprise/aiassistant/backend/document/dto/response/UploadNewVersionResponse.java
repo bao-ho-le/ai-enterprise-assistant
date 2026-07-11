@@ -1,22 +1,23 @@
 package com.enterprise.aiassistant.backend.document.dto.response;
 
-import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class DocumentUploadResponse {
+public class UploadNewVersionResponse {
 
     private Long documentId;
 
     private Long currentVersionId;
 
-    private String title;
-
     private String filename;
 
     private int versionNumber;
 
-    private DocumentStatus status;
+    private String changeNote;
+
+    private int totalVersions;
+
+    private String status;
 }

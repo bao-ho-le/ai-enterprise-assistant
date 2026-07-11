@@ -1,7 +1,9 @@
 package com.enterprise.aiassistant.backend.document.mapper;
 
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
@@ -40,16 +42,41 @@ public class DocumentMapper {
 
     public DocumentUploadResponse toUploadResponse(
             Document document,
-            FileEntity fileEntity,
-            int totalVersions
+            FileEntity fileEntity
     ) {
 
         return DocumentUploadResponse.builder()
                 .documentId(document.getId())
-                .filename(fileEntity.getOriginalFilename())
                 .currentVersionId(document.getCurrentVersion().getId())
+                .title(document.getTitle())
+                .filename(fileEntity.getOriginalFilename())
                 .versionNumber(document.getCurrentVersion().getVersionNumber())
-                .totalVersions(totalVersions)
+                .status(document.getStatus())
+                .build();
+    }
+
+    public DocumentUpdateMetadataResponse toUpdateMetadataReponse(Document document) {
+
+        return DocumentUpdateMetadataResponse.builder()
+                .documentId(document.getId())
+                .title(document.getTitle())
+                .description(document.getDescription())
+                .documentType(document.getDocumentType())
+                .build();
+    }
+
+    public UploadNewVersionResponse toUploadNewVersionResponse(
+            Document document,
+            DocumentVersion version,
+            FileEntity fileEntity){
+
+        return UploadNewVersionResponse.builder()
+                .documentId(document.getId())
+                .currentVersionId(version.getId())
+                .filename(fileEntity.getOriginalFilename())
+                .versionNumber(version.getVersionNumber())
+                .changeNote(version.getChangeNote())
+                .status(version.getStatus().name())
                 .build();
     }
 }

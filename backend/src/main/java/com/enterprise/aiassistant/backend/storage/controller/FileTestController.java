@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/test/storage")
+@RequestMapping("${api.prefix}/test/storage")
 @RequiredArgsConstructor
 public class FileTestController {
 

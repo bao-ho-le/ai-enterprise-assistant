@@ -2,10 +2,9 @@ package com.enterprise.aiassistant.backend.document.dto.request;
 
 import com.enterprise.aiassistant.backend.document.enums.DocumentType;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
-public class DocumentUploadRequest {
+public class DocumentUpdateMetadataRequest {
 
     private String title;
 

@@ -1,15 +1,19 @@
-package com.enterprise.aiassistant.backend.document.dto.request;
+package com.enterprise.aiassistant.backend.document.dto.response;
 
 import com.enterprise.aiassistant.backend.document.enums.DocumentType;
+import lombok.Builder;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 @Data
-public class DocumentUploadRequest {
+@Builder
+public class DocumentUpdateMetadataResponse {
+
+    private Long documentId;
 
     private String title;
 
     private String description;
 
     private DocumentType documentType;
+
 }

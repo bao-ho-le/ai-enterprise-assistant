@@ -1,9 +1,12 @@
 package com.enterprise.aiassistant.backend.document.service;
 
-import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
@@ -15,10 +18,11 @@ import com.enterprise.aiassistant.backend.storage.mapper.FileMapper;
 import com.enterprise.aiassistant.backend.storage.repository.FileRepository;
 import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import static com.enterprise.aiassistant.backend.common.exception.ErrorCode.DOCUMENT_NOT_FOUND;
 
 @Service
 @RequiredArgsConstructor
@@ -52,56 +56,106 @@ public class DocumentServiceImpl implements DocumentService{
         FileEntity newFile = fileMapper.toFileEntity(storedFile);
         fileRepository.save(newFile);
 
-        Document document = null;
-        DocumentVersion version = null;
+
+        // 3. Tạo Document
+        Document document = documentMapper.toDocument(request);
+        documentRepository.save(document);
 
 
-        // 3. Nếu có documentId => tạo version mới
-        if (request.getDocumentId() != null) {
-
-            document = documentRepository
-                    .findById(request.getDocumentId())
-                    .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_NOT_FOUND));
-
-            // Update metadata
-            document.setTitle(request.getTitle());
-            document.setDescription(request.getDescription());
-            document.setDocumentType(request.getDocumentType());
-
-            version = createNewVersion(document, newFile, request.getChangeNote());
-        }
-        // 4. Nếu chưa có documentId => tạo document mới
-        else {
-
-            document = documentMapper.toDocument(request);
-
-            documentRepository.save(document);
-
-            version = documentMapper.toDocumentVersion(
-                    document,
-                    newFile,
-                    1,
-                    request.getChangeNote()
-            );
-        }
-
-
-        // 5. Save version
+        // 4. Tạo DocumentVersion
+        DocumentVersion version = documentMapper.toDocumentVersion(
+                document,
+                newFile,
+                1,
+                ""
+        );
         versionRepository.save(version);
 
 
-        // 6. Update current version
+        // 5. Update current version
         document.setCurrentVersion(version);
         documentRepository.save(document);
 
-        int totalVersions = (int) versionRepository.countByDocumentId(document.getId());
         return documentMapper.toUploadResponse(
                 document,
-                newFile,
-                totalVersions
+                newFile
         );
     }
 
+    @Override
+    @Transactional
+    public UploadNewVersionResponse uploadNewVersion(
+            Long documentId,
+            MultipartFile file,
+            UploadNewVersionRequest request
+    ){
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+
+        // Upload file mới vào storage
+        StoredFileDto storedFile = fileStorageService.store(file);
+
+
+        // Lưu metadata file
+        FileEntity fileEntity = fileMapper.toFileEntity(storedFile);
+        fileRepository.save(fileEntity);
+
+
+        // Tạo version mới
+        DocumentVersion newVersion = createNewVersion(
+                document,
+                fileEntity,
+                request.getChangeNote()
+        );
+
+        versionRepository.save(newVersion);
+
+
+        // Update current version
+        document.setCurrentVersion(newVersion);
+        documentRepository.save(document);
+
+
+        return documentMapper.toUploadNewVersionResponse(
+                document,
+                newVersion,
+                fileEntity
+        );
+    }
+
+    @Override
+    @Transactional
+    public DocumentUpdateMetadataResponse updateDocumentMetadata(
+            Long documentId,
+            DocumentUpdateMetadataRequest request
+    ){
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+
+        if (request.getTitle() != null) {
+            document.setTitle(request.getTitle());
+        }
+
+        if (request.getDescription() != null) {
+            document.setDescription(request.getDescription());
+        }
+
+        if (request.getDocumentType() != null) {
+            document.setDocumentType(request.getDocumentType());
+        }
+
+        documentRepository.save(document);
+
+        return documentMapper.toUpdateMetadataReponse(document);
+    }
+
+
+
+    // Helper
     private int getNextVersionNumber(Document document) {
 
         return versionRepository
