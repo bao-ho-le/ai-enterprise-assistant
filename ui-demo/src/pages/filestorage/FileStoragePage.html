@@ -3,6 +3,23 @@
   <head>
     <!-- @include ../../shared/layout/PageHead.html -->
     <title>File Storage — Enterprise AI Assistant</title>
+    <style>
+      /* Dropdown menu styles */
+      .action-dropdown {
+        transform-origin: top right;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+      }
+      .action-dropdown.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.95);
+      }
+      .action-dropdown.visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
+      }
+    </style>
   </head>
   <body data-page="file-storage" class="min-h-screen flex flex-col">
     <!-- @include ../../shared/layout/NavigationBar.html -->
@@ -21,7 +38,7 @@
         <div class="flex items-center">
           <button type="button" class="btn-upload-file-file-storage shrink-0">
             <i data-lucide="upload" class="h-4 w-4"></i>
-            Upload Files
+            Upload New Document
           </button>
         </div>
       </div>
@@ -30,5 +47,45 @@
     </main>
 
     <script type="module" src="/src/scripts/init.js"></script>
+    <script>
+      // Dropdown menu functionality
+      document.addEventListener('click', function(e) {
+        // Handle dropdown trigger clicks
+        const trigger = e.target.closest('.action-menu-trigger');
+        if (trigger) {
+          e.stopPropagation();
+          const dropdownId = trigger.getAttribute('data-dropdown');
+          const dropdown = document.getElementById(dropdownId);
+          
+          // Close all other dropdowns
+          document.querySelectorAll('.action-dropdown').forEach(d => {
+            if (d.id !== dropdownId) {
+              d.classList.add('hidden');
+              d.classList.remove('visible');
+            }
+          });
+          
+          // Toggle current dropdown
+          if (dropdown) {
+            dropdown.classList.toggle('hidden');
+            dropdown.classList.toggle('visible');
+          }
+          return;
+        }
+        
+        // Close all dropdowns when clicking outside
+        document.querySelectorAll('.action-dropdown').forEach(dropdown => {
+          dropdown.classList.add('hidden');
+          dropdown.classList.remove('visible');
+        });
+      });
+
+      // Prevent dropdown content clicks from closing
+      document.querySelectorAll('.action-dropdown').forEach(dropdown => {
+        dropdown.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      });
+    </script>
   </body>
 </html>
