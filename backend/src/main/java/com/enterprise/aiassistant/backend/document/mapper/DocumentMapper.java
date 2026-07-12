@@ -1,6 +1,7 @@
 package com.enterprise.aiassistant.backend.document.mapper;
 
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentListResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
@@ -77,6 +78,23 @@ public class DocumentMapper {
                 .versionNumber(version.getVersionNumber())
                 .changeNote(version.getChangeNote())
                 .status(version.getStatus().name())
+                .build();
+    }
+
+    public DocumentListResponse toListResponse(
+            Document document,
+            DocumentVersion currentVersion,
+            FileEntity file
+    ) {
+
+        return DocumentListResponse.builder()
+                .id(document.getId())
+                .title(document.getTitle())
+                .uploadTime(currentVersion.getCreatedAt())
+                .documentType(document.getDocumentType())
+                .currentVersion(currentVersion.getVersionNumber())
+                .size(file.getFileSize())
+                .status(currentVersion.getStatus())
                 .build();
     }
 }

@@ -4,9 +4,7 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.Do
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
@@ -18,6 +16,8 @@ import com.enterprise.aiassistant.backend.storage.mapper.FileMapper;
 import com.enterprise.aiassistant.backend.storage.repository.FileRepository;
 import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -153,6 +153,13 @@ public class DocumentServiceImpl implements DocumentService{
         return documentMapper.toUpdateMetadataReponse(document);
     }
 
+    @Override
+    @Transactional
+    public Page<DocumentListResponse> getDocuments(DocumentFilterRequest filter, Pageable pageable){
+
+        return documentRepository
+                .filterDocuments(filter, pageable);
+    }
 
 
     // Helper

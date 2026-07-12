@@ -3,11 +3,12 @@ package com.enterprise.aiassistant.backend.document.controller;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,6 +54,18 @@ public class DocumentController {
 
         return ResponseEntity.ok(
                 documentService.updateDocumentMetadata(documentId, request)
+        );
+    }
+
+    @GetMapping
+    public Page<DocumentListResponse> getDocuments(
+            DocumentFilterRequest filter,
+            @PageableDefault(page = 0, size = 10) Pageable pageable
+    ){
+
+        return documentService.getDocuments(
+                filter,
+                pageable
         );
     }
 }
