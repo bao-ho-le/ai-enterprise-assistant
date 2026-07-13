@@ -181,25 +181,4 @@ public class DocumentServiceImpl implements DocumentService{
                 .filterDocuments(filter, pageable);
     }
 
-
-    // Helper
-    private int getNextVersionNumber(Document document) {
-
-        return versionRepository
-                .findTopByDocumentIdOrderByVersionNumberDesc(document.getId())
-                .map(version -> version.getVersionNumber() + 1)
-                .orElse(1);
-    }
-
-    private DocumentVersion createNewVersion(Document document, FileEntity newFile, String changeNote){
-        int nextVersion = getNextVersionNumber(document);
-
-        return documentMapper.toDocumentVersion(
-                document,
-                newFile,
-                nextVersion,
-                changeNote
-        );
-    }
-
 }
