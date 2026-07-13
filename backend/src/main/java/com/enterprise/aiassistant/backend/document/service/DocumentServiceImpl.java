@@ -7,6 +7,7 @@ import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionR
 import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
+import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
@@ -40,6 +41,8 @@ public class DocumentServiceImpl implements DocumentService{
 
     private final FileMapper fileMapper;
 
+    private final DocumentHelper documentHelper;
+
 
     @Override
     @Transactional
@@ -47,6 +50,9 @@ public class DocumentServiceImpl implements DocumentService{
             MultipartFile file,
             DocumentUploadRequest request
     ) {
+
+        documentHelper.validateFile(file);
+        documentHelper.validateRequest(request);
 
         // 1. Upload file lên MinIO
         StoredFileDto storedFile = fileStorageService.store(file);
@@ -90,9 +96,15 @@ public class DocumentServiceImpl implements DocumentService{
             UploadNewVersionRequest request
     ){
 
+        documentHelper.validateDocumentId(documentId);
+        documentHelper.validateFile(file);
+        documentHelper.validateVersionRequest(request);
+
+
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
 
+        documentHelper.validateDocumentStatus(document);
 
         // Upload file mới vào storage
         StoredFileDto storedFile = fileStorageService.store(file);
@@ -104,7 +116,7 @@ public class DocumentServiceImpl implements DocumentService{
 
 
         // Tạo version mới
-        DocumentVersion newVersion = createNewVersion(
+        DocumentVersion newVersion = documentHelper.createNewVersion(
                 document,
                 fileEntity,
                 request.getChangeNote()
@@ -132,8 +144,16 @@ public class DocumentServiceImpl implements DocumentService{
             DocumentUpdateMetadataRequest request
     ){
 
+        documentHelper.validateDocumentId(documentId);
+        documentHelper.validateUpdateMetadataRequest(request);
+
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+        // Nếu document đã bị delete thì không cho cập nhật
+        documentHelper.validateDocumentStatus(document);
+
+        documentHelper.validateMetadata(request);
 
 
         if (request.getTitle() != null) {
