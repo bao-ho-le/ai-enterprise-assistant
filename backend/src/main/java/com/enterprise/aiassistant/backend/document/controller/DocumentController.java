@@ -3,15 +3,23 @@ package com.enterprise.aiassistant.backend.document.controller;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
+
 import com.enterprise.aiassistant.backend.document.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequestMapping("${api.prefix}/documents")
@@ -19,6 +27,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentController {
 
     private final DocumentService documentService;
+
+
 
     @PostMapping(
             value = "/upload",
@@ -54,5 +64,46 @@ public class DocumentController {
         return ResponseEntity.ok(
                 documentService.updateDocumentMetadata(documentId, request)
         );
+    }
+
+    @GetMapping("/{documentId}/download")
+    public ResponseEntity<Resource> downloadCurrentVersion(
+            @PathVariable Long documentId
+    ) {
+
+        DocumentDownloadResource downloadResource =
+                documentService.downloadCurrentVersion(documentId);
+
+        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok()
+                .contentType(resolveMediaType(downloadResource.mimeType()))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(
+                                        downloadResource.originalFilename(),
+                                        StandardCharsets.UTF_8
+                                )
+                                .build()
+                                .toString()
+                );
+
+        if (downloadResource.fileSize() != null) {
+            responseBuilder.contentLength(downloadResource.fileSize());
+        }
+
+        return responseBuilder.body(downloadResource.resource());
+    }
+
+    private MediaType resolveMediaType(String mimeType) {
+
+        if (mimeType == null || mimeType.isBlank()) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        try {
+            return MediaType.parseMediaType(mimeType);
+        } catch (InvalidMediaTypeException e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
     }
 }

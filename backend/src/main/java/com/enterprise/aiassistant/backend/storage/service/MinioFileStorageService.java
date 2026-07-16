@@ -5,13 +5,17 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.Bu
 import com.enterprise.aiassistant.backend.common.exception.business_exception.FileStorageException;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.mapper.StoredFileMapper;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import static com.enterprise.aiassistant.backend.common.exception.ErrorCode.FILE_STORAGE_READ_FAILED;
 import java.util.UUID;
 import static com.enterprise.aiassistant.backend.common.exception.ErrorCode.FILE_UPLOAD_FAILED;
 
@@ -53,6 +57,27 @@ public class MinioFileStorageService implements FileStorageService{
             throw new FileStorageException(FILE_UPLOAD_FAILED.getMessage(), e);
         }
 
+    }
+
+    @Override
+    public Resource loadAsResource(String bucketName, String objectKey) {
+
+        try {
+            return new InputStreamResource(
+                    minioClient.getObject(
+                            GetObjectArgs.builder()
+                                    .bucket(bucketName)
+                                    .object(objectKey)
+                                    .build()
+                    )
+            );
+        } catch (Exception e) {
+            throw new FileStorageException(
+                    FILE_STORAGE_READ_FAILED,
+                    FILE_STORAGE_READ_FAILED.getMessage(),
+                    e
+            );
+        }
     }
 
     private void validateNotEmptyFile(MultipartFile file) {

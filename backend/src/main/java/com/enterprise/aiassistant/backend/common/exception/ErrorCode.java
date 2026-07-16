@@ -19,6 +19,16 @@ public enum ErrorCode {
             "File upload failed"
     ),
 
+    FILE_STORAGE_READ_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "File storage read failed"
+    ),
+
+    FILE_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "File not found"
+    ),
+
     EMPTY_FILE(
             BAD_REQUEST,
             "File cannot be empty"
@@ -39,6 +49,10 @@ public enum ErrorCode {
             "Unsupported file type"
     ),
 
+    FILE_STORAGE_METADATA_INVALID(
+            BAD_REQUEST,
+            "File storage metadata is invalid"
+    ),
 
 
     // Document
@@ -70,6 +84,16 @@ public enum ErrorCode {
     DOCUMENT_NOT_FOUND(
             HttpStatus.NOT_FOUND,
             "Document not found"
+    ),
+
+    DOCUMENT_HAS_NO_CURRENT_VERSION(
+            HttpStatus.BAD_REQUEST,
+            "Document has no current version"
+    ),
+
+    DOCUMENT_VERSION_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "Document version not found"
     ),
 
     INVALID_DOCUMENT_TYPE(

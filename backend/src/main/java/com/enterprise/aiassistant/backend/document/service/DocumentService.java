@@ -3,6 +3,7 @@ package com.enterprise.aiassistant.backend.document.service;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
@@ -20,6 +21,12 @@ public interface DocumentService {
             MultipartFile file,
             UploadNewVersionRequest request
     );
+
+
+    DocumentDownloadResource downloadCurrentVersion(
+            Long documentId
+    );
+
 
     DocumentUpdateMetadataResponse updateDocumentMetadata(Long documentId, DocumentUpdateMetadataRequest request);
 }

@@ -1,14 +1,17 @@
 package com.enterprise.aiassistant.backend.document.service;
 
+import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
@@ -19,6 +22,7 @@ import com.enterprise.aiassistant.backend.storage.mapper.FileMapper;
 import com.enterprise.aiassistant.backend.storage.repository.FileRepository;
 import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -173,4 +177,50 @@ public class DocumentServiceImpl implements DocumentService{
         return documentMapper.toUpdateMetadataReponse(document);
     }
 
-}
+
+        @Transactional(readOnly = true)
+        public DocumentDownloadResource downloadCurrentVersion(Long documentId) {
+
+            Document document = documentRepository.findById(documentId)
+                    .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+            if (document.getStatus() == DocumentStatus.DELETED) {
+                throw new DocumentException(ErrorCode.DOCUMENT_DELETED);
+            }
+
+            DocumentVersion currentVersion = document.getCurrentVersion();
+
+            if (currentVersion == null) {
+                throw new DocumentException(ErrorCode.DOCUMENT_HAS_NO_CURRENT_VERSION);
+            }
+
+            FileEntity file = currentVersion.getFile();
+
+            if (file == null) {
+                throw new DocumentException(ErrorCode.FILE_NOT_FOUND);
+            }
+
+            if (file.getBucketName() == null
+                    || file.getBucketName().isBlank()
+                    || file.getObjectKey() == null
+                    || file.getObjectKey().isBlank()) {
+                throw new DocumentException(
+                        ErrorCode.FILE_STORAGE_METADATA_INVALID
+                );
+            }
+
+            Resource resource = fileStorageService.loadAsResource(
+                    file.getBucketName(),
+                    file.getObjectKey()
+            );
+
+            return new DocumentDownloadResource(
+                    resource,
+                    file.getOriginalFilename(),
+                    file.getMimeType(),
+                    file.getFileSize()
+            );
+        }
+    }
+
+

@@ -4,6 +4,18 @@ import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 
 public class FileStorageException extends BusinessException {
     public FileStorageException(
+            ErrorCode errorCode,
+            String message,
+            Throwable cause
+    ){
+        super(
+                errorCode,
+                message,
+                cause
+        );
+    }
+
+    public FileStorageException(
             String message,
             Throwable cause
     ){
