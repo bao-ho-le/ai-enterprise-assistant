@@ -66,6 +66,12 @@ public class DocumentController {
         );
     }
 
+    @DeleteMapping("/{documentId}")
+    public ResponseEntity<Void> deleteDocument(@PathVariable Long documentId) {
+        documentService.deleteDocument(documentId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{documentId}/download")
     public ResponseEntity<Resource> downloadCurrentVersion(
             @PathVariable Long documentId

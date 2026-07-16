@@ -180,13 +180,12 @@ public class DocumentServiceImpl implements DocumentService{
 
         @Transactional(readOnly = true)
         public DocumentDownloadResource downloadCurrentVersion(Long documentId) {
+            documentHelper.validateDocumentId(documentId);
 
             Document document = documentRepository.findById(documentId)
                     .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_NOT_FOUND));
 
-            if (document.getStatus() == DocumentStatus.DELETED) {
-                throw new DocumentException(ErrorCode.DOCUMENT_DELETED);
-            }
+            documentHelper.validateDocumentStatus(document);
 
             DocumentVersion currentVersion = document.getCurrentVersion();
 
@@ -221,6 +220,21 @@ public class DocumentServiceImpl implements DocumentService{
                     file.getFileSize()
             );
         }
+
+
+    @Transactional
+    public void deleteDocument(Long documentId) {
+
+        documentHelper.validateDocumentId(documentId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_NOT_FOUND));
+
+        documentHelper.validateDocumentStatus(document);
+
+        document.setStatus(DocumentStatus.DELETED);
+        documentRepository.save(document);
+    }
     }
 
 

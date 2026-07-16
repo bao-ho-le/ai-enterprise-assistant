@@ -27,6 +27,8 @@ public interface DocumentService {
             Long documentId
     );
 
+    void deleteDocument(Long documentId);
+
 
     DocumentUpdateMetadataResponse updateDocumentMetadata(Long documentId, DocumentUpdateMetadataRequest request);
 }

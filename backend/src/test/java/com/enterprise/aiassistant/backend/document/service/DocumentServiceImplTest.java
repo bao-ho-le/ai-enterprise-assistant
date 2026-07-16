@@ -9,6 +9,7 @@ import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadReq
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
@@ -29,6 +30,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Optional;
@@ -572,5 +575,211 @@ class DocumentServiceImplTest {
 
         verify(documentRepository, never()).save(any());
         verifyNoInteractions(documentMapper);
+    }
+
+    // ========================================================================
+    // Tests for downloadCurrentVersion()
+    // ========================================================================
+
+    @Test
+    void downloadCurrentVersion_validDocument_shouldReturnDownloadResource() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.ACTIVE);
+        FileEntity fileEntity = createFileEntity(10L);
+        DocumentVersion currentVersion = createDocumentVersion(20L, 1);
+        Resource resource = new ByteArrayResource("file-content".getBytes());
+
+        currentVersion.setFile(fileEntity);
+        document.setCurrentVersion(currentVersion);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        when(fileStorageService.loadAsResource("documents", "documents/uuid-test.pdf"))
+                .thenReturn(resource);
+
+        // When
+        DocumentDownloadResource response = documentService.downloadCurrentVersion(documentId);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.resource()).isSameAs(resource);
+        assertThat(response.originalFilename()).isEqualTo("test.pdf");
+        assertThat(response.mimeType()).isEqualTo("application/pdf");
+        assertThat(response.fileSize()).isEqualTo(1024L);
+
+        verify(documentHelper).validateDocumentId(documentId);
+        verify(documentHelper).validateDocumentStatus(document);
+        verify(fileStorageService).loadAsResource("documents", "documents/uuid-test.pdf");
+    }
+
+    @Test
+    void downloadCurrentVersion_documentIdNull_shouldThrowException() {
+        // Given
+        doThrow(new DocumentException(ErrorCode.DOCUMENT_ID_REQUIRED))
+                .when(documentHelper).validateDocumentId(null);
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.downloadCurrentVersion(null))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_ID_REQUIRED);
+
+        verifyNoInteractions(documentRepository, fileStorageService);
+    }
+
+    @Test
+    void downloadCurrentVersion_documentNotFound_shouldThrowException() {
+        // Given
+        Long documentId = 99L;
+        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.downloadCurrentVersion(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_NOT_FOUND);
+
+        verifyNoInteractions(fileStorageService);
+    }
+
+    @Test
+    void downloadCurrentVersion_deletedDocument_shouldThrowException() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.DELETED);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        doThrow(new DocumentException(ErrorCode.DOCUMENT_DELETED))
+                .when(documentHelper).validateDocumentStatus(document);
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.downloadCurrentVersion(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_DELETED);
+
+        verifyNoInteractions(fileStorageService);
+    }
+
+    @Test
+    void downloadCurrentVersion_noCurrentVersion_shouldThrowException() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.ACTIVE);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.downloadCurrentVersion(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_HAS_NO_CURRENT_VERSION);
+
+        verifyNoInteractions(fileStorageService);
+    }
+
+    @Test
+    void downloadCurrentVersion_currentVersionHasNoFile_shouldThrowException() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.ACTIVE);
+        DocumentVersion currentVersion = createDocumentVersion(20L, 1);
+
+        document.setCurrentVersion(currentVersion);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.downloadCurrentVersion(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_NOT_FOUND);
+
+        verifyNoInteractions(fileStorageService);
+    }
+
+    @Test
+    void downloadCurrentVersion_fileStorageMetadataInvalid_shouldThrowException() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.ACTIVE);
+        FileEntity fileEntity = createFileEntity(10L);
+        DocumentVersion currentVersion = createDocumentVersion(20L, 1);
+
+        fileEntity.setObjectKey(" ");
+        currentVersion.setFile(fileEntity);
+        document.setCurrentVersion(currentVersion);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.downloadCurrentVersion(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_STORAGE_METADATA_INVALID);
+
+        verifyNoInteractions(fileStorageService);
+    }
+
+    // ========================================================================
+    // Tests for deleteDocument()
+    // ========================================================================
+
+    @Test
+    void deleteDocument_validDocument_shouldSoftDeleteDocument() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.ACTIVE);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+        // When
+        documentService.deleteDocument(documentId);
+
+        // Then
+        assertThat(document.getStatus()).isEqualTo(DocumentStatus.DELETED);
+        verify(documentHelper).validateDocumentId(documentId);
+        verify(documentHelper).validateDocumentStatus(document);
+        verify(documentRepository).save(document);
+    }
+
+    @Test
+    void deleteDocument_documentIdNull_shouldThrowException() {
+        // Given
+        doThrow(new DocumentException(ErrorCode.DOCUMENT_ID_REQUIRED))
+                .when(documentHelper).validateDocumentId(null);
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.deleteDocument(null))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_ID_REQUIRED);
+
+        verifyNoInteractions(documentRepository);
+    }
+
+    @Test
+    void deleteDocument_documentNotFound_shouldThrowException() {
+        // Given
+        Long documentId = 99L;
+        when(documentRepository.findById(documentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.deleteDocument(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_NOT_FOUND);
+
+        verify(documentRepository, never()).save(any());
+    }
+
+    @Test
+    void deleteDocument_deletedDocument_shouldThrowException() {
+        // Given
+        Long documentId = 1L;
+        Document document = createDocument(documentId, DocumentStatus.DELETED);
+
+        when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
+        doThrow(new DocumentException(ErrorCode.DOCUMENT_DELETED))
+                .when(documentHelper).validateDocumentStatus(document);
+
+        // When & Then
+        assertThatThrownBy(() -> documentService.deleteDocument(documentId))
+                .isInstanceOf(DocumentException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DOCUMENT_DELETED);
+
+        verify(documentRepository, never()).save(any());
     }
 }
