@@ -245,6 +245,7 @@ public class DocumentServiceImpl implements DocumentService{
         documentHelper.validateDocumentStatus(document);
 
         document.setStatus(DocumentStatus.DELETED);
+        document.setDeletedAt(java.time.LocalDateTime.now());
         documentRepository.save(document);
     }
     }
