@@ -66,6 +66,7 @@ public class DocumentController {
         );
     }
 
+
     @DeleteMapping("/{documentId}")
     public ResponseEntity<Void> deleteDocument(@PathVariable Long documentId) {
         documentService.deleteDocument(documentId);

@@ -33,8 +33,9 @@ public class DocumentHelper {
     private static final Set<String> ALLOWED_TYPES =
             Set.of(
                     "application/pdf",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    "application/msword", // .doc
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
             );
 
     public void validateFile(MultipartFile file) {
