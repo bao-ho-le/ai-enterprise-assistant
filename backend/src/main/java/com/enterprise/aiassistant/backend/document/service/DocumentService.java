@@ -7,6 +7,7 @@ import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownload
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface DocumentService {
@@ -23,10 +24,14 @@ public interface DocumentService {
     );
 
 
-    DocumentDownloadResource downloadCurrentVersion(
-            Long documentId
+    DocumentDownloadResource downloadSelectedVersion(
+            Long documentId,
+            Long versionId
     );
 
+    Resource loadProcessingResource(
+            Long versionId
+    );
     void deleteDocument(Long documentId);
 
 

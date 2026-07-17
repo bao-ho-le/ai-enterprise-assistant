@@ -4,10 +4,33 @@ import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 
 public class DocumentException extends BusinessException {
 
-    public DocumentException(ErrorCode errorCode) {
+    public DocumentException(
+            ErrorCode errorCode
+    ){
+        super(
+                errorCode
+        );
+    }
+
+    public DocumentException(
+            ErrorCode errorCode,
+            Throwable cause
+    ){
         super(
                 errorCode,
                 errorCode.getMessage()
+        );
+    }
+
+    public DocumentException(
+            ErrorCode errorCode,
+            String message,
+            Throwable cause
+    ){
+        super(
+                errorCode,
+                message,
+                cause
         );
     }
 }

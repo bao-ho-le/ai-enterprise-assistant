@@ -233,7 +233,7 @@ class DocumentServiceImplTest {
         MultipartFile file = createMockFile();
         DocumentUploadRequest request = createUploadRequest();
         when(fileStorageService.store(file))
-                .thenThrow(new FileStorageException("MinIO connection failed", new RuntimeException()));
+                .thenThrow(new FileStorageException(ErrorCode.FILE_UPLOAD_FAILED));
 
         // When & Then
         assertThatThrownBy(() -> documentService.upload(file, request))
@@ -376,7 +376,7 @@ class DocumentServiceImplTest {
 
         when(documentRepository.findById(documentId)).thenReturn(Optional.of(document));
         when(fileStorageService.store(file))
-                .thenThrow(new FileStorageException("Storage unavailable", new RuntimeException()));
+                .thenThrow(new FileStorageException(ErrorCode.FILE_UPLOAD_FAILED));
 
         // When & Then
         assertThatThrownBy(() -> documentService.uploadNewVersion(documentId, file, request))

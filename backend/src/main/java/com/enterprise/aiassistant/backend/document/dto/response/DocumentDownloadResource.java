@@ -1,11 +1,18 @@
 package com.enterprise.aiassistant.backend.document.dto.response;
 
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.core.io.Resource;
 
-public record DocumentDownloadResource(
-        Resource resource,
-        String originalFilename,
-        String mimeType,
-        Long fileSize
-) {
+@Data
+@Builder
+@Getter
+@Setter
+public class DocumentDownloadResource {
+    private Resource resource;
+    private String originalFilename;
+    private String mimeType;
+    private Long fileSize;
 }

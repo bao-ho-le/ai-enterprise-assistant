@@ -1,15 +1,23 @@
 package com.enterprise.aiassistant.backend.document.mapper;
 
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
+import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
 import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
+import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class DocumentMapper {
@@ -79,4 +87,42 @@ public class DocumentMapper {
                 .status(version.getStatus().name())
                 .build();
     }
+
+
+    public DocumentDownloadResource toDocumentDownloadResource(
+            Resource resource,
+            FileEntity fileEntity){
+
+        return DocumentDownloadResource.builder()
+                .resource(resource)
+                .originalFilename(fileEntity.getOriginalFilename())
+                .mimeType(fileEntity.getMimeType())
+                .fileSize(fileEntity.getFileSize())
+                .build();
+    }
+
+
+    public ResponseEntity<Resource> toDownloadResponse(
+            DocumentDownloadResource downloadResource
+    ) {
+        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok()
+                .contentType(DocumentHelper.resolveMediaType(downloadResource.getMimeType()))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(
+                                        downloadResource.getOriginalFilename(),
+                                        StandardCharsets.UTF_8
+                                )
+                                .build()
+                                .toString()
+                );
+
+        if (downloadResource.getFileSize() != null) {
+            responseBuilder.contentLength(downloadResource.getFileSize());
+        }
+
+        return responseBuilder.body(downloadResource.getResource());
+    }
 }
+

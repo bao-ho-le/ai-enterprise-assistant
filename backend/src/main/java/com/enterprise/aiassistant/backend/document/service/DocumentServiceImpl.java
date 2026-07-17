@@ -177,51 +177,63 @@ public class DocumentServiceImpl implements DocumentService{
         return documentMapper.toUpdateMetadataReponse(document);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public DocumentDownloadResource downloadSelectedVersion(Long documentId, Long  versionId) {
+        documentHelper.validateDocumentId(documentId);
 
-        @Transactional(readOnly = true)
-        public DocumentDownloadResource downloadCurrentVersion(Long documentId) {
-            documentHelper.validateDocumentId(documentId);
+        documentHelper.validateDocumentVersion(versionId);
 
-            Document document = documentRepository.findById(documentId)
-                    .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_NOT_FOUND));
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_NOT_FOUND));
 
+        documentHelper.validateDocumentStatus(document);
+
+        DocumentVersion selectedVersion = versionRepository.findById(versionId)
+                .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_VERSION_NOT_FOUND));
+
+
+        FileEntity file = selectedVersion.getFile();
+
+        documentHelper.validateFileStorageMetadata(file);
+
+
+        Resource resource = fileStorageService.loadAsResource(
+                file.getBucketName(),
+                file.getObjectKey()
+        );
+
+        return documentMapper.toDocumentDownloadResource(resource, file);
+
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Resource loadProcessingResource(Long versionId) {
+        documentHelper.validateDocumentVersion(versionId);
+
+        DocumentVersion version = versionRepository.findById(versionId)
+                .orElseThrow(() -> new DocumentException(ErrorCode.DOCUMENT_VERSION_NOT_FOUND));
+
+        Document document = version.getDocument();
+
+        if (document != null) {
             documentHelper.validateDocumentStatus(document);
-
-            DocumentVersion currentVersion = document.getCurrentVersion();
-
-            if (currentVersion == null) {
-                throw new DocumentException(ErrorCode.DOCUMENT_HAS_NO_CURRENT_VERSION);
-            }
-
-            FileEntity file = currentVersion.getFile();
-
-            if (file == null) {
-                throw new DocumentException(ErrorCode.FILE_NOT_FOUND);
-            }
-
-            if (file.getBucketName() == null
-                    || file.getBucketName().isBlank()
-                    || file.getObjectKey() == null
-                    || file.getObjectKey().isBlank()) {
-                throw new DocumentException(
-                        ErrorCode.FILE_STORAGE_METADATA_INVALID
-                );
-            }
-
-            Resource resource = fileStorageService.loadAsResource(
-                    file.getBucketName(),
-                    file.getObjectKey()
-            );
-
-            return new DocumentDownloadResource(
-                    resource,
-                    file.getOriginalFilename(),
-                    file.getMimeType(),
-                    file.getFileSize()
-            );
         }
 
+        FileEntity fileEntity = version.getFile();
 
+        if (fileEntity == null) {
+            throw new DocumentException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        return fileStorageService.loadAsResource(
+                fileEntity.getBucketName(),
+                fileEntity.getObjectKey()
+        );
+    }
+
+    @Override
     @Transactional
     public void deleteDocument(Long documentId) {
 

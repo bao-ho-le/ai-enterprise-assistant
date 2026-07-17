@@ -20,6 +20,8 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ){
 
+        log.error("Unhandled exception", exception);
+
         ErrorCode errorCode = exception.getErrorCode();
 
         ErrorResponseDto response = ErrorResponseDto.builder()
@@ -40,9 +42,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleUnknownException(
             Exception exception,
             HttpServletRequest request
-    ){
 
+    ){
         log.error("Unhandled exception", exception);
+
 
         ErrorResponseDto response =
                 ErrorResponseDto.builder()
