@@ -4,6 +4,24 @@ import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 
 public class FileStorageException extends BusinessException {
     public FileStorageException(
+            ErrorCode errorCode
+    ){
+        super(
+                errorCode
+        );
+    }
+
+    public FileStorageException(
+            ErrorCode errorCode,
+            Throwable cause
+    ){
+        super(
+                errorCode,
+                errorCode.getMessage()
+        );
+    }
+
+    public FileStorageException(
             ErrorCode errorCode,
             String message,
             Throwable cause
@@ -15,14 +33,4 @@ public class FileStorageException extends BusinessException {
         );
     }
 
-    public FileStorageException(
-            String message,
-            Throwable cause
-    ){
-        super(
-                ErrorCode.FILE_UPLOAD_FAILED,
-                message,
-                cause
-        );
-    }
 }

@@ -2,6 +2,7 @@ package com.enterprise.aiassistant.backend.common.exception;
 
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -17,6 +19,8 @@ public class GlobalExceptionHandler {
             BusinessException exception,
             HttpServletRequest request
     ){
+
+        log.error("Unhandled exception", exception);
 
         ErrorCode errorCode = exception.getErrorCode();
 
@@ -38,8 +42,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleUnknownException(
             Exception exception,
             HttpServletRequest request
-    ){
 
+    ){
+        log.error("Unhandled exception", exception);
         ErrorResponseDto response =
                 ErrorResponseDto.builder()
                         .timestamp(LocalDateTime.now())

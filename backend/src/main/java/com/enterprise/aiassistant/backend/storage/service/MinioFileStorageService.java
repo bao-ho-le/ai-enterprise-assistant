@@ -54,7 +54,7 @@ public class MinioFileStorageService implements FileStorageService{
             return storedFileMapper.toDto(file, storedName, bucket);
 
         } catch (Exception e) {
-            throw new FileStorageException(FILE_UPLOAD_FAILED.getMessage(), e);
+            throw new FileStorageException(FILE_UPLOAD_FAILED, e);
         }
 
     }

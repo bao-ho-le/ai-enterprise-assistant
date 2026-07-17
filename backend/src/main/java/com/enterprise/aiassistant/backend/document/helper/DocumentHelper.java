@@ -3,6 +3,7 @@ package com.enterprise.aiassistant.backend.document.helper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.FileStorageException;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
@@ -15,6 +16,8 @@ import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRep
 import com.enterprise.aiassistant.backend.storage.config.FileUploadProperties;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.InvalidMediaTypeException;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,8 +36,9 @@ public class DocumentHelper {
     private static final Set<String> ALLOWED_TYPES =
             Set.of(
                     "application/pdf",
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    "application/msword", // .doc
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
             );
 
     public void validateFile(MultipartFile file) {
@@ -189,6 +193,43 @@ public class DocumentHelper {
         }
     }
 
+    public static MediaType resolveMediaType(String mimeType) {
+        if (mimeType == null || mimeType.isBlank()) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
 
+        try {
+            return MediaType.parseMediaType(mimeType);
+        } catch (InvalidMediaTypeException e) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+    }
 
+    public void validateDocumentVersion(Long versionId){
+        if(versionId == null){
+            throw new DocumentException(
+                    ErrorCode.DOCUMENT_VERSION_NOT_FOUND
+            );
+        }
+    }
+    public void validateFileStorageMetadata(FileEntity file){
+
+        if (file == null) {
+        throw new FileStorageException(ErrorCode.FILE_NOT_FOUND);
+    }
+
+        if (file.getBucketName() == null
+                || file.getBucketName().isBlank()
+                || file.getObjectKey() == null
+                || file.getObjectKey().isBlank()) {
+            throw new DocumentException(
+                    ErrorCode.FILE_STORAGE_METADATA_INVALID
+            );
+        }
+    }
 }
+
+
+
+
+
