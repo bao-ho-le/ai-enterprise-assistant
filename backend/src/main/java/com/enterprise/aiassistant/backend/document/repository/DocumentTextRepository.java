@@ -14,4 +14,6 @@ public interface DocumentTextRepository extends JpaRepository<DocumentText, Long
 
     boolean existsByDocumentVersionId(Long documentVersionId);
 
+    void deleteByDocumentVersionId(Long documentVersionId);
+
 }

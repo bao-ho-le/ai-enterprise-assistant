@@ -81,4 +81,9 @@ public class DocumentController {
         return documentMapper.toDownloadResponse(documentDownloadResource);
 
     }
+
+    @GetMapping("/check-title")
+    public boolean checkTitle(@RequestParam String title) {
+        return documentService.existsByTitle(title);
+    }
 }

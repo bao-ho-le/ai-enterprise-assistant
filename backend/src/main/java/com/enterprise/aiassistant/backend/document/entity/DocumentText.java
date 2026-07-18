@@ -30,8 +30,7 @@ public class DocumentText {
     @JoinColumn(name = "document_version_id", nullable = false)
     private DocumentVersion documentVersion;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     @Enumerated(EnumType.STRING)

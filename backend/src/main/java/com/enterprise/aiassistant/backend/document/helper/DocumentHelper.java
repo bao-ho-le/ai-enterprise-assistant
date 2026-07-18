@@ -10,7 +10,6 @@ import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionR
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
-import com.enterprise.aiassistant.backend.document.enums.DocumentType;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
 import com.enterprise.aiassistant.backend.storage.config.FileUploadProperties;
@@ -32,6 +31,7 @@ public class DocumentHelper {
     private final DocumentVersionRepository versionRepository;
 
     private final DocumentMapper documentMapper;
+
 
     private static final Set<String> ALLOWED_TYPES =
             Set.of(

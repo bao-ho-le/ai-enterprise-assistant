@@ -36,4 +36,6 @@ public interface DocumentService {
 
 
     DocumentUpdateMetadataResponse updateDocumentMetadata(Long documentId, DocumentUpdateMetadataRequest request);
+
+    public boolean existsByTitle(String title);
 }

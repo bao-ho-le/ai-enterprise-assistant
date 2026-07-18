@@ -1,9 +1,8 @@
 package com.enterprise.aiassistant.backend.processing.extractor;
 
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
-import jakarta.annotation.Resource;
+import org.springframework.core.io.Resource;
 
-import java.io.IOException;
 
 public interface TextExtractor {
 

@@ -8,9 +8,7 @@ import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersion
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
-import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+
 
 @Component
 public class DocumentMapper {

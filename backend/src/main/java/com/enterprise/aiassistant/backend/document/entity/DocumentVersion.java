@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.document.entity;
 
+import com.enterprise.aiassistant.backend.document.enums.ProcessingStep;
 import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import jakarta.persistence.*;
@@ -53,6 +54,10 @@ public class DocumentVersion {
     )
     @JoinColumn(name = "file_id", nullable = false)
     private FileEntity file;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "processing_step")
+    private ProcessingStep processingStep;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

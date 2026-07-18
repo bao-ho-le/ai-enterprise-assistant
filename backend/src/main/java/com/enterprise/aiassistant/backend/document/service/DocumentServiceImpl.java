@@ -16,6 +16,7 @@ import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
+import com.enterprise.aiassistant.backend.processing.worker.DocumentProcessingWorker;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import com.enterprise.aiassistant.backend.storage.mapper.FileMapper;
@@ -46,6 +47,8 @@ public class DocumentServiceImpl implements DocumentService{
     private final FileMapper fileMapper;
 
     private final DocumentHelper documentHelper;
+
+    private final DocumentProcessingWorker documentProcessingWorker;
 
 
     @Override
@@ -86,6 +89,9 @@ public class DocumentServiceImpl implements DocumentService{
         document.setCurrentVersion(version);
         documentRepository.save(document);
 
+
+        // Gọi Document Processing Worker
+        documentProcessingWorker.submit(version.getId());
 
         return documentMapper.toUploadResponse(
                 document,
@@ -212,6 +218,7 @@ public class DocumentServiceImpl implements DocumentService{
     @Override
     @Transactional(readOnly = true)
     public Resource loadProcessingResource(Long versionId) {
+
         documentHelper.validateDocumentVersion(versionId);
 
         DocumentVersion version = versionRepository.findById(versionId)
@@ -250,6 +257,11 @@ public class DocumentServiceImpl implements DocumentService{
         document.setDeletedAt(java.time.LocalDateTime.now());
         documentRepository.save(document);
     }
+
+    @Override
+    public boolean existsByTitle(String title) {
+        return documentRepository.existsByTitle(title);
     }
+}
 
 
