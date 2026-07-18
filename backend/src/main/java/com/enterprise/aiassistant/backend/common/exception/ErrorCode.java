@@ -3,7 +3,7 @@ package com.enterprise.aiassistant.backend.common.exception;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.*;
 
 @Getter
 public enum ErrorCode {
@@ -13,14 +13,14 @@ public enum ErrorCode {
             "Request body is required"
     ),
 
-    // Storage
+    // File
     FILE_UPLOAD_FAILED(
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            INTERNAL_SERVER_ERROR,
             "File upload failed"
     ),
 
     FILE_STORAGE_READ_FAILED(
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            INTERNAL_SERVER_ERROR,
             "File storage read failed"
     ),
 
@@ -37,6 +37,11 @@ public enum ErrorCode {
     FILE_TOO_LARGE(
             BAD_REQUEST,
             "File size exceeds limit"
+    ),
+
+    TEXT_EXTRACTOR_NOT_FOUND(
+            INTERNAL_SERVER_ERROR,
+            "No text extractor found for the file type"
     ),
 
     FILE_REQUIRED(
@@ -57,13 +62,18 @@ public enum ErrorCode {
 
     // Document
     DOCUMENT_CREATION_FAILED(
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            INTERNAL_SERVER_ERROR,
             "Document creation failed"
     ),
 
     DOCUMENT_VERSION_CREATION_FAILED(
-            HttpStatus.INTERNAL_SERVER_ERROR,
+            INTERNAL_SERVER_ERROR,
             "Document version creation failed"
+    ),
+
+    DOCUMENT_VERSION_INVALID_STATUS(
+            CONFLICT,
+            "Document version is not in a valid state for processing"
     ),
 
     DOCUMENT_ID_REQUIRED(
@@ -101,12 +111,7 @@ public enum ErrorCode {
             "Invalid document type"
     ),
 
-
-
-
-
     // Document Version
-
     CHANGE_NOTE_TOO_LONG(
             HttpStatus.BAD_REQUEST,
             "Change note exceeds maximum length"
@@ -119,7 +124,24 @@ public enum ErrorCode {
     DESCRIPTION_TOO_LONG(
             HttpStatus.BAD_REQUEST,
             "Document description exceeds maximum length"
-    ),;
+    ),
+
+    // ===================== Processing =====================
+
+    TEXT_EXTRACTION_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to extract text from the document"
+    ),
+
+    DOCUMENT_CHUNKING_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to split the document into chunks"
+    ),
+
+    DOCUMENT_PROCESSING_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to process the document"
+    );
 
 
     private final HttpStatus status;

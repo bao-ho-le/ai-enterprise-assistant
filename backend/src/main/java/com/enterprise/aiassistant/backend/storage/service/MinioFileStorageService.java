@@ -77,7 +77,6 @@ public class MinioFileStorageService implements FileStorageService{
         } catch (Exception e) {
             throw new FileStorageException(
                     FILE_STORAGE_READ_FAILED,
-                    FILE_STORAGE_READ_FAILED.getMessage(),
                     e
             );
         }

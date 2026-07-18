@@ -181,6 +181,7 @@ public class DocumentServiceImpl implements DocumentService{
     @Override
     @Transactional(readOnly = true)
     public DocumentDownloadResource downloadSelectedVersion(Long documentId, Long  versionId) {
+
         documentHelper.validateDocumentId(documentId);
 
         documentHelper.validateDocumentVersion(versionId);

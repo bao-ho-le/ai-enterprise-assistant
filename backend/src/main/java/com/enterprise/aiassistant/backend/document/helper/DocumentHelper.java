@@ -85,6 +85,13 @@ public class DocumentHelper {
                     ErrorCode.DOCUMENT_TITLE_REQUIRED
             );
         }
+
+        if (request.getDocumentType() == null) {
+            throw new DocumentException(
+                    ErrorCode.INVALID_DOCUMENT_TYPE
+            );
+        }
+
     }
 
     private int getNextVersionNumber(Document document) {

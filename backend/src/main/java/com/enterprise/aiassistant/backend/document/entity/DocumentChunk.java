@@ -1,6 +1,5 @@
-package com.enterprise.aiassistant.backend.processing.entity;
+package com.enterprise.aiassistant.backend.document.entity;
 
-import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
