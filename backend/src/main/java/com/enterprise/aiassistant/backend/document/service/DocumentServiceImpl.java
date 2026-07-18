@@ -86,6 +86,7 @@ public class DocumentServiceImpl implements DocumentService{
         document.setCurrentVersion(version);
         documentRepository.save(document);
 
+
         return documentMapper.toUploadResponse(
                 document,
                 newFile

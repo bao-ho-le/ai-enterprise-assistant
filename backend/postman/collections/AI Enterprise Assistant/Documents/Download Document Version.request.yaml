@@ -1,5 +1,0 @@
-$kind: http-request
-method: GET
-url: '{{baseUrl}}/api/v1/documents/{{documentId}}/{{versionId}}/download'
-order: 5000
-description: 'Download a specific version of a document. Returns the file as a binary stream.'

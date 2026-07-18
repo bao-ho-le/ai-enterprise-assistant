@@ -1,5 +1,0 @@
-$kind: http-request
-method: DELETE
-url: '{{baseUrl}}/api/v1/documents/{{documentId}}'
-order: 4000
-description: 'Soft-delete a document by its ID. Returns 204 No Content.'

@@ -1,9 +1,0 @@
-$kind: collection
-name: AI Enterprise Assistant
-variables:
-  - key: baseUrl
-    value: 'http://localhost:8080'
-  - key: documentId
-    value: ''
-  - key: versionId
-    value: ''
