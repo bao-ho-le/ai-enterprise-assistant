@@ -45,6 +45,8 @@ public class GlobalExceptionHandler {
 
     ){
         log.error("Unhandled exception", exception);
+
+
         ErrorResponseDto response =
                 ErrorResponseDto.builder()
                         .timestamp(LocalDateTime.now())
@@ -53,7 +55,6 @@ public class GlobalExceptionHandler {
                         .message("Something went wrong")
                         .path(request.getRequestURI())
                         .build();
-
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
