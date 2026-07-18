@@ -33,7 +33,7 @@ build/
 .vscode/
 
 ### Properties ###
-/src/main/resources/application.properties
+**/*.properties
 
 ### Postman ###
 .postman/
