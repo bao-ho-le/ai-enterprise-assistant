@@ -1,10 +1,7 @@
 package com.enterprise.aiassistant.backend.document.mapper;
 
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
@@ -16,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
+import java.util.List;
 
 
 @Component
@@ -98,6 +97,57 @@ public class DocumentMapper {
                 .mimeType(fileEntity.getMimeType())
                 .fileSize(fileEntity.getFileSize())
                 .build();
+    }
+
+    public DocumentDetailResponse.DocumentInfo toDocumentInfo(Document document) {
+        return new DocumentDetailResponse.DocumentInfo(
+                document.getTitle(),
+                document.getDescription(),
+                document.getStatus(),
+                document.getDocumentType(),
+                document.getCreatedAt(),
+                document.getUpdatedAt()
+        );
+    }
+
+    public DocumentDetailResponse.CurrentVersionInfo toCurrentVersionInfo(
+            DocumentVersion version,
+            FileEntity file
+    ) {
+        return new DocumentDetailResponse.CurrentVersionInfo(
+                version.getVersionNumber(),
+                version.getStatus(),
+                file.getOriginalFilename(),
+                file.getExtension(),
+                file.getFileSize(),
+                version.getCreatedAt()
+        );
+    }
+
+    public List<DocumentDetailResponse.VersionHistoryItem> toVersionHistory(
+            List<DocumentVersion> versions
+    ) {
+        return versions.stream()
+                .sorted(Comparator.comparing(DocumentVersion::getVersionNumber).reversed())
+                .map(v -> new DocumentDetailResponse.VersionHistoryItem(
+                        v.getVersionNumber(),
+                        v.getFile().getOriginalFilename(),
+                        v.getChangeNote(),
+                        v.getStatus(),
+                        v.getCreatedAt()
+                ))
+                .toList();
+    }
+
+    public DocumentDetailResponse.AdvancedInfo toAdvancedInfo(
+            FileEntity file
+    ) {
+        return new DocumentDetailResponse.AdvancedInfo(
+                file.getStorageProvider(),
+                file.getBucketName(),
+                file.getObjectKey(),
+                file.getChecksum()
+        );
     }
 
 

@@ -141,6 +141,33 @@ public enum ErrorCode {
     DOCUMENT_PROCESSING_FAILED(
             INTERNAL_SERVER_ERROR,
         "Failed to process the document"
+    ),
+
+    // ===================== Document Filter =====================
+
+    INVALID_DATE_RANGE(
+            BAD_REQUEST,
+        "From date must be before or equal to to date"
+    ),
+
+    INVALID_FILE_SIZE(
+            BAD_REQUEST,
+        "File size must be greater than or equal to 0"
+    ),
+
+    INVALID_FILE_SIZE_RANGE(
+            BAD_REQUEST,
+        "Minimum file size must be less than or equal to maximum file size"
+    ),
+
+    INVALID_SORT_OPTION(
+            BAD_REQUEST,
+        "Sort option must be either 'newest' or 'oldest'"
+    ),
+
+    KEYWORD_TOO_LONG(
+            BAD_REQUEST,
+        "Keyword exceeds maximum length"
     );
 
 

@@ -7,5 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface DocumentRepository extends JpaRepository<Document, Long> {
-    boolean existsByTitle(String title);}
+public interface DocumentRepository extends JpaRepository<Document, Long> ,
+        DocumentRepositoryCustom{
+    boolean existsByTitle(String title);
+}

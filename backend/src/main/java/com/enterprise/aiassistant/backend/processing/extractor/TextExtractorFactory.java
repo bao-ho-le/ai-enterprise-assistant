@@ -13,7 +13,6 @@ public class TextExtractorFactory {
 
     private final List<TextExtractor> extractors;
 
-
     public TextExtractor getExtractor(String mimeType) {
 
         return extractors.stream()

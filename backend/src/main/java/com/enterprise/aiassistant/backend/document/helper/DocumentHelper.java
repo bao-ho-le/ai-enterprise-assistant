@@ -4,6 +4,7 @@ import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.FileStorageException;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Locale;
 import java.util.Set;
 
 @Component
@@ -35,11 +37,23 @@ public class DocumentHelper {
 
     private static final Set<String> ALLOWED_TYPES =
             Set.of(
+                    // PDF
                     "application/pdf",
+
+                    // Microsoft Word
                     "application/msword", // .doc
                     "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" // .xlsx
+
+                    // Microsoft Excel
+                    "application/vnd.ms-excel", // .xls
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+
+                    // Text
+                    "text/plain"
             );
+
+    private static final Set<String> ALLOWED_SORTS = Set.of("newest", "oldest");
+
 
     public void validateFile(MultipartFile file) {
         if (file == null) {
@@ -119,6 +133,43 @@ public class DocumentHelper {
             throw new DocumentException(
                     ErrorCode.DOCUMENT_ID_REQUIRED
             );
+        }
+    }
+
+    public void validateFilter(DocumentFilterRequest request) {
+
+        if (request == null) {
+            return;
+        }
+
+        if (request.getSort() != null
+                && !ALLOWED_SORTS.contains(request.getSort().toLowerCase(Locale.ROOT))) {
+            throw new BusinessException(ErrorCode.INVALID_SORT_OPTION);
+        }
+
+        if (request.getFromDate() != null
+                && request.getToDate() != null
+                && request.getFromDate().isAfter(request.getToDate())) {
+            throw new BusinessException(ErrorCode.INVALID_DATE_RANGE);
+        }
+
+        if (request.getMinSize() != null && request.getMinSize() < 0) {
+            throw new BusinessException(ErrorCode.INVALID_FILE_SIZE);
+        }
+
+        if (request.getMaxSize() != null && request.getMaxSize() < 0) {
+            throw new BusinessException(ErrorCode.INVALID_FILE_SIZE);
+        }
+
+        if (request.getMinSize() != null
+                && request.getMaxSize() != null
+                && request.getMinSize() > request.getMaxSize()) {
+            throw new BusinessException(ErrorCode.INVALID_FILE_SIZE_RANGE);
+        }
+
+        if (request.getKeyword() != null
+                && request.getKeyword().length() > 255) {
+            throw new BusinessException(ErrorCode.KEYWORD_TOO_LONG);
         }
     }
 

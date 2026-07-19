@@ -2,13 +2,11 @@ package com.enterprise.aiassistant.backend.document.service;
 
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentDownloadResource;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUpdateMetadataResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.DocumentUploadResponse;
-import com.enterprise.aiassistant.backend.document.dto.response.UploadNewVersionResponse;
+import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
@@ -24,9 +22,13 @@ import com.enterprise.aiassistant.backend.storage.repository.FileRepository;
 import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 import static com.enterprise.aiassistant.backend.common.exception.ErrorCode.DOCUMENT_NOT_FOUND;
 
@@ -256,6 +258,41 @@ public class DocumentServiceImpl implements DocumentService{
         document.setStatus(DocumentStatus.DELETED);
         document.setDeletedAt(java.time.LocalDateTime.now());
         documentRepository.save(document);
+    }
+
+    @Override
+    @Transactional
+    public Page<DocumentListResponse> getDocuments(DocumentFilterRequest filter, Pageable pageable){
+
+        documentHelper.validateFilter(filter);
+
+        return documentRepository.filterDocuments(filter, pageable);
+    }
+
+    @Override
+    public DocumentDetailResponse getDocumentDetail(Long documentId) {
+
+        documentHelper.validateDocumentId(documentId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+        DocumentVersion currentVersion = document.getCurrentVersion();
+        FileEntity currentFile = currentVersion.getFile();
+
+        DocumentDetailResponse.DocumentInfo documentInfo =
+                documentMapper.toDocumentInfo(document);
+
+        DocumentDetailResponse.CurrentVersionInfo currentVersionInfo =
+                documentMapper.toCurrentVersionInfo(currentVersion, currentFile);
+
+        List<DocumentDetailResponse.VersionHistoryItem> versionHistory =
+                documentMapper.toVersionHistory(document.getVersions());
+
+        DocumentDetailResponse.AdvancedInfo advancedInfo =
+                documentMapper.toAdvancedInfo(currentFile);
+
+        return new DocumentDetailResponse(documentInfo, currentVersionInfo, versionHistory, advancedInfo);
     }
 
     @Override
