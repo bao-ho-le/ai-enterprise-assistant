@@ -28,6 +28,7 @@ public record DocumentDetailResponse(
     }
 
     public record CurrentVersionInfo(
+            Long versionId,
             Integer versionNumber,
             VersionStatus versionStatus,
             String fileName,
@@ -38,6 +39,7 @@ public record DocumentDetailResponse(
     }
 
     public record VersionHistoryItem(
+            Long versionId,
             Integer versionNumber,
             String fileName,
             String changeNote,

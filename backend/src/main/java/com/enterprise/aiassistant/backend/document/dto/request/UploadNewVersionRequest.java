@@ -7,4 +7,10 @@ import lombok.Data;
 public class UploadNewVersionRequest {
 
     private String changeNote;
+
+    private String title;
+
+    private String description;
+
+    private DocumentType documentType;
 }

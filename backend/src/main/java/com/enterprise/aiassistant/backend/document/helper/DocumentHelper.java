@@ -191,6 +191,9 @@ public class DocumentHelper {
                     ErrorCode.CHANGE_NOTE_TOO_LONG
             );
         }
+
+        validateTitleIfPresent(request.getTitle());
+        validateDescriptionIfPresent(request.getDescription());
     }
 
     public void validateDocumentStatus(Document document){
@@ -218,36 +221,35 @@ public class DocumentHelper {
     public void validateMetadata(
             DocumentUpdateMetadataRequest request
     ){
+        validateTitleIfPresent(request.getTitle());
+        validateDescriptionIfPresent(request.getDescription());
+    }
 
-        // Validate title
-        if(request.getTitle() != null){
+    private void validateTitleIfPresent(String title){
 
-            if(request.getTitle().isBlank()){
-
-                throw new BusinessException(
-                        ErrorCode.DOCUMENT_TITLE_REQUIRED
-                );
-            }
-
-
-            if(request.getTitle().length() > 255){
-
-                throw new BusinessException(
-                        ErrorCode.TITLE_TOO_LONG
-                );
-            }
+        if(title == null){
+            return;
         }
 
+        if(title.isBlank()){
+            throw new BusinessException(
+                    ErrorCode.DOCUMENT_TITLE_REQUIRED
+            );
+        }
 
-        // Validate description
-        if(request.getDescription() != null){
+        if(title.length() > 255){
+            throw new BusinessException(
+                    ErrorCode.TITLE_TOO_LONG
+            );
+        }
+    }
 
-            if(request.getDescription().length() > 1000){
+    private void validateDescriptionIfPresent(String description){
 
-                throw new BusinessException(
-                        ErrorCode.DESCRIPTION_TOO_LONG
-                );
-            }
+        if(description != null && description.length() > 1000){
+            throw new BusinessException(
+                    ErrorCode.DESCRIPTION_TOO_LONG
+            );
         }
     }
 

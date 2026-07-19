@@ -34,10 +34,11 @@ public class DocumentRepositoryCustomImpl implements DocumentRepositoryCustom {
                     d.id,
                     d.title,
                     v.createdAt,
+                    f.extension,
                     d.documentType,
-                    v.versionNumber,
                     f.fileSize,
-                    v.status
+                    v.status,
+                    d.status
                 )
                 
                 FROM Document d
@@ -191,6 +192,17 @@ public class DocumentRepositoryCustomImpl implements DocumentRepositoryCustom {
 
             jpql.append(" AND v.status = :status");
             params.put("status", filter.getStatus());
+        }
+
+
+        // =========================
+        // Document status
+        // =========================
+
+        if (filter.getDocumentStatus() != null) {
+
+            jpql.append(" AND d.status = :documentStatus");
+            params.put("documentStatus", filter.getDocumentStatus());
         }
 
 

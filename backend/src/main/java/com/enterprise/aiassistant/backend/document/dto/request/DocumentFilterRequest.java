@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.document.dto.request;
 
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.document.enums.DocumentType;
 import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import lombok.Data;
@@ -32,6 +33,10 @@ public class DocumentFilterRequest {
 
     private Long maxSize;
 
+    // DocumentVersion.status (processing pipeline state — "Processing" filter)
     private VersionStatus status;
+
+    // Document.status (ACTIVE/DELETED — "Status" filter)
+    private DocumentStatus documentStatus;
 
 }

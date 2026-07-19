@@ -48,14 +48,20 @@ public class DocumentProcessingService {
     @Transactional
     public void process(Long versionId) {
 
-
-        DocumentVersion version = documentVersionRepository.findById(versionId)
-                        .orElseThrow(() -> new BusinessException(
-                                ErrorCode.DOCUMENT_VERSION_NOT_FOUND));
-
-        processingHelper.validateStatus(version);
+        // Declared outside the try so the catch block can always reach it (and the
+        // in-flight processingStep) — previously findById()/validateStatus() ran
+        // BEFORE the try/catch, so a NOT_FOUND or invalid-status exception at that
+        // point bypassed handleFailed() entirely, leaving the version stuck at
+        // whatever status it already had (typically PENDING).
+        DocumentVersion version = null;
 
         try {
+
+            version = documentVersionRepository.findById(versionId)
+                    .orElseThrow(() -> new BusinessException(
+                            ErrorCode.DOCUMENT_VERSION_NOT_FOUND));
+
+            processingHelper.validateStatus(version);
 
             // update PROCESSING
             version.setStatus(VersionStatus.PROCESSING);
@@ -117,19 +123,41 @@ public class DocumentProcessingService {
 
         } catch (BusinessException e) {
 
-            processingHelper.handleFailed(version.getId(), e, version.getProcessingStep());
+            handleFailureUnlessAlreadySucceeded(versionId, version, e);
             throw e;
 
 
         } catch (Exception e) {
 
-            processingHelper.handleFailed(version.getId(), e, version.getProcessingStep());
+            handleFailureUnlessAlreadySucceeded(versionId, version, e);
 
             throw new BusinessException(
                     ErrorCode.DOCUMENT_PROCESSING_FAILED,
                     ErrorCode.DOCUMENT_PROCESSING_FAILED.getMessage(),
                     e
             );
+        }
+    }
+
+    /**
+     * validateStatus() throws DOCUMENT_VERSION_INVALID_STATUS when the version is
+     * already READY — that guard exists to stop a stray duplicate trigger from
+     * reprocessing a finished version, and must never itself flip that same version
+     * to FAILED. Every other failure path (not found, transient I/O, extraction,
+     * chunking, anything unexpected) always marks FAILED, using the versionId
+     * parameter rather than version.getId() so this can't NullPointerException when
+     * `version` is still null (i.e. the version wasn't even found).
+     */
+    private void handleFailureUnlessAlreadySucceeded(
+            Long versionId,
+            DocumentVersion version,
+            Exception exception
+    ) {
+        boolean alreadySucceeded = version != null && version.getStatus() == VersionStatus.READY;
+
+        if (!alreadySucceeded) {
+            ProcessingStep failedStep = version != null ? version.getProcessingStep() : null;
+            processingHelper.handleFailed(versionId, exception, failedStep);
         }
     }
 

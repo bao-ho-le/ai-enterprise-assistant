@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.document.dto.response;
 
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.document.enums.DocumentType;
 import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import lombok.AllArgsConstructor;
@@ -21,11 +22,15 @@ public class DocumentListResponse {
 
     private LocalDateTime uploadTime;
 
-    private DocumentType documentType;
+    private String extension;
 
-    private Integer currentVersion;
+    private DocumentType documentType;
 
     private Long size;
 
-    private VersionStatus status;
+    // DocumentVersion.status (processing pipeline state of the current version)
+    private VersionStatus versionStatus;
+
+    // Document.status (soft-delete state of the document itself)
+    private DocumentStatus documentStatus;
 }

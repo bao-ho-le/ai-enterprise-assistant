@@ -115,6 +115,7 @@ public class DocumentMapper {
             FileEntity file
     ) {
         return new DocumentDetailResponse.CurrentVersionInfo(
+                version.getId(),
                 version.getVersionNumber(),
                 version.getStatus(),
                 file.getOriginalFilename(),
@@ -130,6 +131,7 @@ public class DocumentMapper {
         return versions.stream()
                 .sorted(Comparator.comparing(DocumentVersion::getVersionNumber).reversed())
                 .map(v -> new DocumentDetailResponse.VersionHistoryItem(
+                        v.getId(),
                         v.getVersionNumber(),
                         v.getFile().getOriginalFilename(),
                         v.getChangeNote(),

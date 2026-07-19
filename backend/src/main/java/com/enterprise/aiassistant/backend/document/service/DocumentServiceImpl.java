@@ -14,13 +14,14 @@ import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
-import com.enterprise.aiassistant.backend.processing.worker.DocumentProcessingWorker;
+import com.enterprise.aiassistant.backend.processing.event.DocumentVersionCreatedEvent;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import com.enterprise.aiassistant.backend.storage.mapper.FileMapper;
 import com.enterprise.aiassistant.backend.storage.repository.FileRepository;
 import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +51,7 @@ public class DocumentServiceImpl implements DocumentService{
 
     private final DocumentHelper documentHelper;
 
-    private final DocumentProcessingWorker documentProcessingWorker;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
     @Override
@@ -92,8 +93,9 @@ public class DocumentServiceImpl implements DocumentService{
         documentRepository.save(document);
 
 
-        // Gọi Document Processing Worker
-        documentProcessingWorker.submit(version.getId());
+        // Kích hoạt xử lý bất đồng bộ sau khi transaction này commit (tránh việc
+        // worker chạy trước khi Document/DocumentVersion thực sự tồn tại trong DB)
+        applicationEventPublisher.publishEvent(new DocumentVersionCreatedEvent(version.getId()));
 
         return documentMapper.toUploadResponse(
                 document,
@@ -138,9 +140,25 @@ public class DocumentServiceImpl implements DocumentService{
         versionRepository.save(newVersion);
 
 
-        // Update current version
+        // Update current version + optional metadata carried over from the form
         document.setCurrentVersion(newVersion);
+
+        if (request.getTitle() != null) {
+            document.setTitle(request.getTitle());
+        }
+
+        if (request.getDescription() != null) {
+            document.setDescription(request.getDescription());
+        }
+
+        if (request.getDocumentType() != null) {
+            document.setDocumentType(request.getDocumentType());
+        }
+
         documentRepository.save(document);
+
+        // Kích hoạt xử lý bất đồng bộ sau khi transaction này commit
+        applicationEventPublisher.publishEvent(new DocumentVersionCreatedEvent(newVersion.getId()));
 
 
         return documentMapper.toUploadNewVersionResponse(
