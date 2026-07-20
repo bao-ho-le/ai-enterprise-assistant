@@ -1,0 +1,8 @@
+Dừng
+docker stop qdrant
+
+Chạy lại
+docker start qdrant
+
+Khởi động lại
+docker restart qdrant

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Upload } from "lucide-react";
 import SearchBar from "./SearchBar";
 import FilterToolbar from "./FilterToolbar";
@@ -9,9 +9,12 @@ import UploadDocumentModal from "./UploadDocumentModal";
 import UploadVersionModal from "./UploadVersionModal";
 import EditMetadataModal from "./EditMetadataModal";
 import ConfirmDialog from "./ConfirmDialog";
+import EvidenceDialog from "./EvidenceDialog";
 import Toast from "@/components/ui/Toast";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useSemanticSearch } from "@/hooks/useSemanticSearch";
 import { dateInputToIso } from "@/utils/format";
+import { matchesSimilarityBucket } from "@/constants/document";
 import {
   listDocuments,
   deleteDocument,
@@ -19,6 +22,11 @@ import {
 } from "@/services/documentService";
 
 const PAGE_SIZE = 10;
+const SEMANTIC_TOP_K = 50;
+// ponytail: search scans the first 200 documents (matching current filters)
+// client-side rather than a server-side "search within these IDs" endpoint —
+// raise this or push the intersection server-side if a tenant outgrows it.
+const SEARCH_SCAN_SIZE = 200;
 
 const INITIAL_FILTERS = {
   sort: "newest",
@@ -34,6 +42,9 @@ const INITIAL_FILTERS = {
 export default function FileStorageView() {
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
+  const trimmedKeyword = debouncedKeyword.trim();
+  const isSearching = trimmedKeyword.length > 0;
+
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [page, setPage] = useState(0);
 
@@ -50,14 +61,37 @@ export default function FileStorageView() {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null); // doc | { bulk: true }
   const [deleting, setDeleting] = useState(false);
+  const [evidenceTarget, setEvidenceTarget] = useState(null);
 
   const notify = useCallback((type, text) => setToast({ type, text }), []);
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
+  // Semantic search — replaces the old LIKE-based `keyword` filter entirely.
+  const {
+    results: semanticHits,
+    loading: searchLoading,
+    error: searchError,
+  } = useSemanticSearch(isSearching ? trimmedKeyword : "", SEMANTIC_TOP_K);
+
+  // documentId -> { bestScore, matches: SemanticSearchResult[] } (matches stay
+  // score-sorted since semanticHits is already score-sorted by the backend).
+  const semanticByDocument = useMemo(() => {
+    const map = new Map();
+    for (const hit of semanticHits) {
+      const entry = map.get(hit.documentId);
+      if (!entry) {
+        map.set(hit.documentId, { bestScore: hit.score, matches: [hit] });
+      } else {
+        entry.matches.push(hit);
+        if (hit.score > entry.bestScore) entry.bestScore = hit.score;
+      }
+    }
+    return map;
+  }, [semanticHits]);
+
   useEffect(() => {
     const controller = new AbortController();
     const params = {
-      keyword: debouncedKeyword.trim() || undefined,
       sort: filters.sort || undefined,
       documentType: filters.documentType || undefined,
       extension: filters.extension || undefined,
@@ -65,8 +99,8 @@ export default function FileStorageView() {
       toDate: dateInputToIso(filters.toDate, true),
       status: filters.status || undefined,
       documentStatus: filters.documentStatus || undefined,
-      page,
-      size: PAGE_SIZE,
+      page: isSearching ? 0 : page,
+      size: isSearching ? SEARCH_SCAN_SIZE : PAGE_SIZE,
     };
 
     setLoading(true);
@@ -86,7 +120,27 @@ export default function FileStorageView() {
       });
 
     return () => controller.abort();
-  }, [debouncedKeyword, filters, page, reloadKey]);
+  }, [filters, page, reloadKey, isSearching]);
+
+  // While searching, the plain paginated list is replaced by semantic matches,
+  // ranked by best score and re-paginated client-side.
+  const matchedDocuments = useMemo(() => {
+    if (!isSearching) return null;
+    return data.content
+      .filter((doc) => semanticByDocument.has(doc.id))
+      .map((doc) => ({ ...doc, semanticScore: semanticByDocument.get(doc.id).bestScore }))
+      .filter((doc) => matchesSimilarityBucket(doc.semanticScore, filters.similarity))
+      .sort((a, b) => b.semanticScore - a.semanticScore);
+  }, [isSearching, data.content, semanticByDocument, filters.similarity]);
+
+  const tableDocuments = isSearching
+    ? matchedDocuments.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE)
+    : data.content;
+  const tableTotalElements = isSearching ? matchedDocuments.length : data.totalElements;
+  const tableTotalPages = isSearching
+    ? Math.max(1, Math.ceil(matchedDocuments.length / PAGE_SIZE))
+    : data.totalPages;
+  const tableNumber = isSearching ? page : data.number;
 
   const onFilterChange = (patch) => {
     setFilters((f) => ({ ...f, ...patch }));
@@ -106,8 +160,8 @@ export default function FileStorageView() {
 
   const toggleAll = () =>
     setSelectedIds((prev) => {
-      const allSelected = data.content.length > 0 && data.content.every((d) => prev.has(d.id));
-      return allSelected ? new Set() : new Set(data.content.map((d) => d.id));
+      const allSelected = tableDocuments.length > 0 && tableDocuments.every((d) => prev.has(d.id));
+      return allSelected ? new Set() : new Set(tableDocuments.map((d) => d.id));
     });
 
   const onDownload = async (doc) => {
@@ -160,15 +214,15 @@ export default function FileStorageView() {
       </div>
 
       <DocumentTable
-        documents={data.content}
-        loading={loading}
-        error={error}
+        documents={tableDocuments}
+        loading={loading || (isSearching && searchLoading)}
+        error={error || (isSearching ? searchError : "")}
         selectedIds={selectedIds}
         onToggleRow={toggleRow}
         onToggleAll={toggleAll}
-        number={data.number}
-        totalPages={data.totalPages}
-        totalElements={data.totalElements}
+        number={tableNumber}
+        totalPages={tableTotalPages}
+        totalElements={tableTotalElements}
         onPrev={() => setPage((p) => Math.max(0, p - 1))}
         onNext={() => setPage((p) => p + 1)}
         onDownload={onDownload}
@@ -176,6 +230,7 @@ export default function FileStorageView() {
         onEdit={(doc) => setEditTarget(doc)}
         onDelete={(doc) => setDeleteTarget(doc)}
         onBulkDelete={() => setDeleteTarget({ bulk: true })}
+        onViewEvidence={(doc) => setEvidenceTarget(doc)}
       />
 
       <UploadDocumentModal
@@ -220,6 +275,14 @@ export default function FileStorageView() {
             ? `Delete ${selectedIds.size} selected document(s)? This cannot be undone.`
             : `Delete "${deleteTarget?.title}"? This cannot be undone.`
         }
+      />
+
+      <EvidenceDialog
+        open={Boolean(evidenceTarget)}
+        onClose={() => setEvidenceTarget(null)}
+        doc={evidenceTarget}
+        keyword={trimmedKeyword}
+        matches={evidenceTarget ? semanticByDocument.get(evidenceTarget.id)?.matches : null}
       />
 
       <Toast toast={toast} onDone={() => setToast(null)} />

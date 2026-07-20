@@ -168,6 +168,52 @@ public enum ErrorCode {
     KEYWORD_TOO_LONG(
             BAD_REQUEST,
         "Keyword exceeds maximum length"
+    ),
+
+    // ===================== Embedding =====================
+
+    EMBEDDING_TEXT_REQUIRED(
+            BAD_REQUEST,
+        "Text to embed is required"
+    ),
+
+    EMBEDDING_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to generate embedding"
+    ),
+
+    // ===================== Vector Store =====================
+
+    VECTOR_UPSERT_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to save vectors to the vector store"
+    ),
+
+    VECTOR_DELETE_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to delete vectors from the vector store"
+    ),
+
+    VECTOR_SEARCH_FAILED(
+            INTERNAL_SERVER_ERROR,
+        "Failed to search the vector store"
+    ),
+
+    // ===================== Search =====================
+
+    SEARCH_KEYWORD_REQUIRED(
+            BAD_REQUEST,
+        "Search keyword is required"
+    ),
+
+    INVALID_TOP_K(
+            BAD_REQUEST,
+        "topK must be between 1 and 50"
+    ),
+
+    INVALID_DOCUMENT_ID(
+            BAD_REQUEST,
+        "documentId must be a positive number"
     );
 
 

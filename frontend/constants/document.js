@@ -68,3 +68,13 @@ export const EXTENSION_OPTIONS = [
 // Accept attribute + allowed MIME types for upload (matches backend DocumentHelper).
 export const UPLOAD_ACCEPT =
   ".pdf,.doc,.docx,.xls,.xlsx,.txt";
+
+// Semantic search score (0..1) buckets — mirrors the "Similarity" filter select.
+const SIMILARITY_THRESHOLDS = { high: 0.9, medium: 0.7 };
+
+export function matchesSimilarityBucket(score, bucket) {
+  if (!bucket) return true;
+  if (bucket === "high") return score >= SIMILARITY_THRESHOLDS.high;
+  if (bucket === "medium") return score >= SIMILARITY_THRESHOLDS.medium && score < SIMILARITY_THRESHOLDS.high;
+  return score < SIMILARITY_THRESHOLDS.medium; // "low"
+}

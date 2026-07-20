@@ -1,5 +1,7 @@
 package com.enterprise.aiassistant.backend.processing.service;
 
+import com.enterprise.aiassistant.backend.ai.embedding.service.EmbeddingService;
+import com.enterprise.aiassistant.backend.ai.vectorstore.service.VectorStoreService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ProcessingException;
@@ -45,6 +47,8 @@ class DocumentProcessingServiceTest {
     @Mock private TextExtractionService textExtractionService;
     @Mock private ChunkingService chunkingService;
     @Mock private DocumentChunkRepository documentChunkRepository;
+    @Mock private EmbeddingService embeddingService;
+    @Mock private VectorStoreService vectorStoreService;
     @Mock private ProcessingHelper processingHelper;
 
     private DocumentProcessingService service;
@@ -58,6 +62,8 @@ class DocumentProcessingServiceTest {
                 textExtractionService,
                 chunkingService,
                 documentChunkRepository,
+                embeddingService,
+                vectorStoreService,
                 new ProcessingMapper(),
                 processingHelper
         );

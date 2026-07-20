@@ -62,6 +62,18 @@ export function filenameFromContentDisposition(header, fallback = "download") {
   return plain ? plain[1].trim() : fallback;
 }
 
+// Splits `text` around case-insensitive matches of `query` into
+// [{ text, match }] segments, for rendering <mark> highlights.
+export function highlightSegments(text, query) {
+  if (!text) return [];
+  const trimmed = (query || "").trim();
+  if (!trimmed) return [{ text, match: false }];
+
+  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  return parts.map((part, i) => ({ text: part, match: i % 2 === 1 }));
+}
+
 // Save a Blob to disk from the browser.
 export function saveBlob(blob, filename) {
   const url = URL.createObjectURL(blob);

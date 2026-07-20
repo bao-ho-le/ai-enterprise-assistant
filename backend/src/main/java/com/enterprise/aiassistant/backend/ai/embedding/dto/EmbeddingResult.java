@@ -1,0 +1,16 @@
+package com.enterprise.aiassistant.backend.ai.embedding.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class EmbeddingResult {
+
+    private float[] vector;
+
+    private Integer dimension;
+
+    private String model;
+
+}

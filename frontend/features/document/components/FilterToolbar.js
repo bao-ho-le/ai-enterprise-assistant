@@ -7,8 +7,8 @@ import {
 } from "@/constants/document";
 import DatePicker from "@/components/ui/DatePicker";
 
-// Controlled: `filters` object + onChange(patch). Keeps the demo toolbar layout;
-// wires the fields the backend supports (Similarity stays as demo-only decoration).
+// Controlled: `filters` object + onChange(patch). Similarity only takes effect
+// while a semantic search keyword is active — it's a no-op otherwise.
 export default function FilterToolbar({ filters, onChange }) {
   const set = (key) => (e) => onChange({ [key]: e.target.value });
   const setValue = (key) => (value) => onChange({ [key]: value });

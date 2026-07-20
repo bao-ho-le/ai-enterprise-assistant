@@ -1,5 +1,8 @@
 package com.enterprise.aiassistant.backend.processing.service;
 
+import com.enterprise.aiassistant.backend.ai.embedding.service.EmbeddingService;
+import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPoint;
+import com.enterprise.aiassistant.backend.ai.vectorstore.service.VectorStoreService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
@@ -21,6 +24,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -39,6 +43,10 @@ public class DocumentProcessingService {
     private final ChunkingService chunkingService;
 
     private final DocumentChunkRepository documentChunkRepository;
+
+    private final EmbeddingService embeddingService;
+
+    private final VectorStoreService vectorStoreService;
 
     private final ProcessingMapper processingMapper;
 
@@ -112,10 +120,31 @@ public class DocumentProcessingService {
              * Save document_chunks
              */
 
+            List<DocumentChunk> savedChunks = new ArrayList<>();
+
             for (TextChunk textChunk: listTextChunk){
                 DocumentChunk newDocumentChunk = processingMapper.toDocumentChunk(version, textChunk);
-                documentChunkRepository.save(newDocumentChunk);
+                savedChunks.add(documentChunkRepository.save(newDocumentChunk));
             }
+
+
+            /*
+             * STEP 3:
+             * EMBEDDING
+             */
+
+            version.setProcessingStep(ProcessingStep.EMBEDDING);
+
+            // ponytail: sequential embedding calls (one per chunk); parallelize with a
+            // bounded executor if large documents make this a throughput bottleneck.
+            List<VectorPoint> vectorPoints = savedChunks.stream()
+                    .map(chunk -> processingMapper.toVectorPoint(
+                            chunk,
+                            embeddingService.embed(chunk.getContent())
+                    ))
+                    .toList();
+
+            vectorStoreService.upsert(vectorPoints);
 
             version.setStatus(VersionStatus.READY);
 

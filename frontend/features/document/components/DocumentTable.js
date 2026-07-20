@@ -45,6 +45,7 @@ export default function DocumentTable({
   onEdit,
   onDelete,
   onBulkDelete,
+  onViewEvidence,
 }) {
   const selectedCount = selectedIds.size;
   const allSelected = documents.length > 0 && documents.every((d) => selectedIds.has(d.id));
@@ -152,6 +153,7 @@ export default function DocumentTable({
                   onUploadVersion={onUploadVersion}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onViewEvidence={onViewEvidence}
                 />
               ))}
           </tbody>

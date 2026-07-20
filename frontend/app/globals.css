@@ -332,24 +332,6 @@ body {
   background-color: var(--bg-elevated);
 }
 
-/* Dropdown menu (File Storage row actions) */
-.action-dropdown {
-  transform-origin: top right;
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-.action-dropdown.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(0.95);
-}
-.action-dropdown.visible {
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1);
-}
-
 /* Collapse section (Document Details advanced info) */
 .collapse-section {
   transition:

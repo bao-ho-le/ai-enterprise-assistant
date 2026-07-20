@@ -1,5 +1,8 @@
 package com.enterprise.aiassistant.backend.processing.mapper;
 
+import com.enterprise.aiassistant.backend.ai.embedding.dto.EmbeddingResult;
+import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPayload;
+import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPoint;
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
 import com.enterprise.aiassistant.backend.document.entity.DocumentText;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
@@ -56,6 +59,28 @@ public class ProcessingMapper {
                 .startChar(textChunk.getStartChar())
                 .endChar(textChunk.getEndChar())
                 .tokenCount(textChunk.getTokenCount())
+                .build();
+    }
+
+    public VectorPoint toVectorPoint(DocumentChunk chunk, EmbeddingResult embeddingResult) {
+
+        VectorPayload payload = VectorPayload.builder()
+                .chunkId(chunk.getId())
+                .documentId(chunk.getDocumentVersion().getDocument().getId())
+                .documentVersionId(chunk.getDocumentVersion().getId())
+                .chunkIndex(chunk.getChunkIndex())
+                .pageNumber(chunk.getPageNumber())
+                .startChar(chunk.getStartChar())
+                .endChar(chunk.getEndChar())
+                .tokenCount(chunk.getTokenCount())
+                .embeddingModel(embeddingResult.getModel())
+                .content(chunk.getContent())
+                .build();
+
+        return VectorPoint.builder()
+                .id(String.valueOf(chunk.getId()))
+                .vector(embeddingResult.getVector())
+                .payload(payload)
                 .build();
     }
 }
