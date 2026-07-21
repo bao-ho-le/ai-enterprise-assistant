@@ -13,16 +13,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AIUsageSummaryResponse {
 
-    private long totalRequests;
-    private long todayRequests;
+    private long todayRequest;
+    private long todayToken;
+    private BigDecimal todayCost;
+    private double todaySuccessRate;
 
-    private long totalInputTokens;
-    private long totalOutputTokens;
-    private long totalTokens;
-
-    private BigDecimal estimatedCostThisMonth;
-
-    private long successCount;
-    private long errorCount;
-    private double successRate; 
+    private long last7DayRequests;
+    private long last7DayTokens;
+    private BigDecimal last7DayCost;
+    private double last7DaySuccessRate;
 }
