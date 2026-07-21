@@ -135,78 +135,78 @@ public enum ErrorCode {
 
     TEXT_EXTRACTION_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to extract text from the document"
+            "Failed to extract text from the document"
     ),
 
     DOCUMENT_CHUNKING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to split the document into chunks"
+            "Failed to split the document into chunks"
     ),
 
     DOCUMENT_TEXT_EMPTY(
             INTERNAL_SERVER_ERROR,
-        "No extractable text found in the document"
+            "No extractable text found in the document"
     ),
 
     DOCUMENT_PROCESSING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to process the document"
+            "Failed to process the document"
     ),
 
     // ===================== Document Filter =====================
 
     INVALID_DATE_RANGE(
             BAD_REQUEST,
-        "From date must be before or equal to to date"
+            "From date must be before or equal to to date"
     ),
 
     INVALID_FILE_SIZE(
             BAD_REQUEST,
-        "File size must be greater than or equal to 0"
+            "File size must be greater than or equal to 0"
     ),
 
     INVALID_FILE_SIZE_RANGE(
             BAD_REQUEST,
-        "Minimum file size must be less than or equal to maximum file size"
+            "Minimum file size must be less than or equal to maximum file size"
     ),
 
     INVALID_SORT_OPTION(
             BAD_REQUEST,
-        "Sort option must be either 'newest' or 'oldest'"
+            "Sort option must be either 'newest' or 'oldest'"
     ),
 
     KEYWORD_TOO_LONG(
             BAD_REQUEST,
-        "Keyword exceeds maximum length"
+            "Keyword exceeds maximum length"
     ),
 
     // ===================== Embedding =====================
 
     EMBEDDING_TEXT_REQUIRED(
             BAD_REQUEST,
-        "Text to embed is required"
+            "Text to embed is required"
     ),
 
     EMBEDDING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to generate embedding"
+            "Failed to generate embedding"
     ),
 
     // ===================== Vector Store =====================
 
     VECTOR_UPSERT_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to save vectors to the vector store"
+            "Failed to save vectors to the vector store"
     ),
 
     VECTOR_DELETE_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to delete vectors from the vector store"
+            "Failed to delete vectors from the vector store"
     ),
 
     VECTOR_SEARCH_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to search the vector store"
+            "Failed to search the vector store"
     ),
 
     VECTOR_POINTS_REQUIRED(
@@ -243,12 +243,12 @@ public enum ErrorCode {
 
     SEARCH_KEYWORD_REQUIRED(
             BAD_REQUEST,
-        "Search keyword is required"
+            "Search keyword is required"
     ),
 
     INVALID_TOP_K(
             BAD_REQUEST,
-        "topK must be between 1 and 50"
+            "topK must be between 1 and 50"
     ),
 
     VECTOR_SEARCH_LIMIT_INVALID(
@@ -258,8 +258,76 @@ public enum ErrorCode {
 
     INVALID_DOCUMENT_ID(
             BAD_REQUEST,
-        "documentId must be a positive number"
+            "documentId must be a positive number"
+    ),
+
+    // ===================== Generated Document =====================
+
+    GENERATED_CONTENT_NOT_FOUND(
+            NOT_FOUND,
+            "Generated content not found"
+    ),
+
+    GENERATED_CONTENT_ID_REQUIRED(
+            BAD_REQUEST,
+            "Generated content ID is required"
+    ),
+
+    GENERATED_CONTENT_TYPE_REQUIRED(
+            BAD_REQUEST,
+            "Generated content type is required"
+    ),
+
+    GENERATED_CONTENT_TITLE_REQUIRED(
+            BAD_REQUEST,
+            "Generated content title is required"
+    ),
+
+    GENERATED_CONTENT_TITLE_TOO_LONG(
+            BAD_REQUEST,
+            "Generated content title must not exceed 500 characters"
+    ),
+
+    GENERATED_CONTENT_BODY_REQUIRED(
+            BAD_REQUEST,
+            "Generated content is required"
+    ),
+
+    GENERATED_CONTENT_ID_INVALID(
+            BAD_REQUEST,
+            "Generated content ID must be greater than 0"
+    ),
+
+    AI_CONVERSATION_ID_INVALID(
+            BAD_REQUEST,
+            "AI conversation ID must be greater than 0"
+    ),
+
+    GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED(
+            BAD_REQUEST,
+            "Generated content update request is required"
+    ),
+
+    PAGEABLE_REQUIRED(
+            BAD_REQUEST,
+            "Pagination information is required"
+    ),
+
+    PAGE_NUMBER_INVALID(
+            BAD_REQUEST,
+            "Page number must not be negative"
+    ),
+
+    PAGE_SIZE_INVALID(
+            BAD_REQUEST,
+            "Page size must be between 1 and 50"
+    ),
+
+    AI_CONVERSATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "AI conversation ID is required"
     );
+
 
 
 
