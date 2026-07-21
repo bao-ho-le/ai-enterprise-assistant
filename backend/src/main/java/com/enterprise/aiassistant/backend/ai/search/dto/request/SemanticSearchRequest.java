@@ -9,7 +9,6 @@ public class SemanticSearchRequest {
 
     private Integer topK;
 
-    // Narrows the search to a single document; omit to search across all documents.
     private Long documentId;
 
 }

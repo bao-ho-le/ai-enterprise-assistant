@@ -19,6 +19,7 @@ public class DocumentProcessingWorker {
     @Async("documentProcessingExecutor")
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onDocumentVersionCreated(DocumentVersionCreatedEvent event) {
+
         submit(event.versionId());
     }
 

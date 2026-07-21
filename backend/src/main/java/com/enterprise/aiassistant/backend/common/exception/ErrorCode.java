@@ -106,6 +106,11 @@ public enum ErrorCode {
             "Document version not found"
     ),
 
+    DOCUMENT_ID_INVALID(
+            BAD_REQUEST,
+            "Document id is invalid"
+    ),
+
     INVALID_DOCUMENT_TYPE(
             HttpStatus.BAD_REQUEST,
             "Invalid document type"
@@ -136,6 +141,11 @@ public enum ErrorCode {
     DOCUMENT_CHUNKING_FAILED(
             INTERNAL_SERVER_ERROR,
         "Failed to split the document into chunks"
+    ),
+
+    DOCUMENT_TEXT_EMPTY(
+            INTERNAL_SERVER_ERROR,
+        "No extractable text found in the document"
     ),
 
     DOCUMENT_PROCESSING_FAILED(
@@ -199,6 +209,36 @@ public enum ErrorCode {
         "Failed to search the vector store"
     ),
 
+    VECTOR_POINTS_REQUIRED(
+            BAD_REQUEST,
+            "Vector points must not be null"
+    ),
+
+    VECTOR_POINT_REQUIRED(
+            BAD_REQUEST,
+            "Vector point must not be null"
+    ),
+
+    VECTOR_POINT_ID_REQUIRED(
+            BAD_REQUEST,
+            "Vector point id must not be blank"
+    ),
+
+    VECTOR_POINT_ID_INVALID(
+            BAD_REQUEST,
+            "Vector point id must be a valid number"
+    ),
+
+    VECTOR_REQUIRED(
+            BAD_REQUEST,
+            "Vector must not be null or empty"
+    ),
+
+    VECTOR_DIMENSION_INVALID(
+            BAD_REQUEST,
+            "Vector dimension is invalid"
+    ),
+
     // ===================== Search =====================
 
     SEARCH_KEYWORD_REQUIRED(
@@ -211,10 +251,16 @@ public enum ErrorCode {
         "topK must be between 1 and 50"
     ),
 
+    VECTOR_SEARCH_LIMIT_INVALID(
+            BAD_REQUEST,
+            "Search limit is invalid"
+    ),
+
     INVALID_DOCUMENT_ID(
             BAD_REQUEST,
         "documentId must be a positive number"
     );
+
 
 
     private final HttpStatus status;

@@ -281,7 +281,6 @@ export default function FileStorageView() {
         open={Boolean(evidenceTarget)}
         onClose={() => setEvidenceTarget(null)}
         doc={evidenceTarget}
-        keyword={trimmedKeyword}
         matches={evidenceTarget ? semanticByDocument.get(evidenceTarget.id)?.matches : null}
       />
 

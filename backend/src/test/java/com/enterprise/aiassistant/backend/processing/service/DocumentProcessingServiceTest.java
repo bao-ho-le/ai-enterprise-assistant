@@ -89,8 +89,8 @@ class DocumentProcessingServiceTest {
         when(fileStorageService.loadAsResource("documents", "key"))
                 .thenReturn(new ByteArrayResource("hi".getBytes()));
         when(textExtractionService.extract(any(), eq("application/pdf")))
-                .thenReturn(ExtractedText.builder().content("hello world").build());
-        when(chunkingService.chunk("hello world")).thenReturn(List.of());
+                .thenReturn(ExtractedText.builder().content("hello world").pages(List.of("hello world")).build());
+        when(chunkingService.chunk(List.of("hello world"))).thenReturn(List.of());
 
         service.process(42L);
 

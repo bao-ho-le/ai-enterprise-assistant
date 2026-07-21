@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -39,11 +41,13 @@ public class ExcelTextExtractor implements TextExtractor {
                 Workbook workbook = WorkbookFactory.create(inputStream)
         ) {
 
-            // Extract all worksheets into a single text
-            String content = extractWorkbookContent(workbook);
+            // Mỗi sheet coi như 1 "trang" cho page-aware chunking.
+            List<String> pages = extractWorkbookPages(workbook);
+            String content = String.join("\n\n", pages);
 
             return processingMapper.toExtractedText(
                     content,
+                    pages,
                     ExtractionMethod.DIRECT_TEXT
             );
 
@@ -57,16 +61,16 @@ public class ExcelTextExtractor implements TextExtractor {
         }
     }
 
-    // Extract text from every sheet in the workbook.
-    private String extractWorkbookContent(Workbook workbook) {
+    // Extract text from every sheet in the workbook, one entry per sheet.
+    private List<String> extractWorkbookPages(Workbook workbook) {
 
-        StringBuilder content = new StringBuilder();
+        List<String> pages = new ArrayList<>();
 
         for (Sheet sheet : workbook) {
-            content.append(extractSheet(sheet));
+            pages.add(extractSheet(sheet));
         }
 
-        return content.toString();
+        return pages;
     }
 
     // Extract text from a single worksheet.

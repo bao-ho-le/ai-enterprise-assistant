@@ -1,4 +1,4 @@
-package com.enterprise.aiassistant.backend.ai.search.validator;
+package com.enterprise.aiassistant.backend.ai.search.helper;
 
 import com.enterprise.aiassistant.backend.ai.search.dto.request.SemanticSearchRequest;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
@@ -6,13 +6,13 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.Se
 import org.springframework.stereotype.Component;
 
 @Component
-public class SemanticSearchValidator {
+public class SearchHelper {
 
     private static final int DEFAULT_TOP_K = 10;
     private static final int MAX_TOP_K = 50;
     private static final int MAX_KEYWORD_LENGTH = 255;
 
-    public void validate(SemanticSearchRequest request) {
+    public void validateSearchRequest(SemanticSearchRequest request) {
 
         if (request == null
                 || request.getKeyword() == null
@@ -39,5 +39,7 @@ public class SemanticSearchValidator {
     public int resolveTopK(Integer topK) {
         return topK != null ? topK : DEFAULT_TOP_K;
     }
+
+
 
 }

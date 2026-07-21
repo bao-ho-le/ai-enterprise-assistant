@@ -11,16 +11,20 @@ import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
 import com.enterprise.aiassistant.backend.processing.dto.TextChunk;
 import org.springframework.stereotype.Component;
 
-
+import java.util.List;
 
 
 @Component
 public class ProcessingMapper {
 
-    public ExtractedText toExtractedText(String content, ExtractionMethod extractionMethod
+    // Ước lượng token: ~4 ký tự/token (quy ước phổ biến cho MVP, xem comment ở DocumentChunk.tokenCount).
+    private static final int CHARS_PER_TOKEN = 4;
+
+    public ExtractedText toExtractedText(String content, List<String> pages, ExtractionMethod extractionMethod
     ) {
         return ExtractedText.builder()
                 .content(content)
+                .pages(pages)
                 .extractionMethod(extractionMethod)
                 .build();
     }
@@ -28,6 +32,7 @@ public class ProcessingMapper {
     public TextChunk toTextChunk(
             int chunkIndex,
             String content,
+            int pageNumber,
             int startChar,
             int endChar
     ) {
@@ -35,9 +40,10 @@ public class ProcessingMapper {
         return TextChunk.builder()
                 .chunkIndex(chunkIndex)
                 .content(content)
+                .pageNumber(pageNumber)
                 .startChar(startChar)
                 .endChar(endChar)
-                .tokenCount(content.length())
+                .tokenCount(content.length() / CHARS_PER_TOKEN)
                 .build();
     }
 
@@ -78,7 +84,7 @@ public class ProcessingMapper {
                 .build();
 
         return VectorPoint.builder()
-                .id(String.valueOf(chunk.getId()))
+                .id(chunk.getId())
                 .vector(embeddingResult.getVector())
                 .payload(payload)
                 .build();

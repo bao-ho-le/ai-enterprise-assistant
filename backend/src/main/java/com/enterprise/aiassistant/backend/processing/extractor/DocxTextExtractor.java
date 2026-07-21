@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -38,7 +39,9 @@ public class DocxTextExtractor implements TextExtractor {
         ) {
 
             String content = extractor.getText();
-            return processingMapper.toExtractedText(content, ExtractionMethod.DIRECT_TEXT);
+
+            // DOCX không có ranh giới trang thật trong model dữ liệu -> coi toàn bộ là 1 trang.
+            return processingMapper.toExtractedText(content, List.of(content), ExtractionMethod.DIRECT_TEXT);
 
         } catch (IOException e) {
 

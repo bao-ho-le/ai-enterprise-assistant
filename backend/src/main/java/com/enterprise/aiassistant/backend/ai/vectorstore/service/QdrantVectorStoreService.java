@@ -3,20 +3,19 @@ package com.enterprise.aiassistant.backend.ai.vectorstore.service;
 import com.enterprise.aiassistant.backend.ai.vectorstore.config.QdrantProperties;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.SearchResult;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPoint;
-import com.enterprise.aiassistant.backend.ai.vectorstore.helper.QdrantPayloadConverter;
+import com.enterprise.aiassistant.backend.ai.vectorstore.helper.VectorStoreHelper;
+import com.enterprise.aiassistant.backend.ai.vectorstore.mapper.VectorStoreMapper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.VectorStoreException;
 import com.google.common.util.concurrent.Futures;
 import io.qdrant.client.ConditionFactory;
 import io.qdrant.client.PointIdFactory;
 import io.qdrant.client.QdrantClient;
-import io.qdrant.client.VectorsFactory;
 import io.qdrant.client.WithPayloadSelectorFactory;
 import io.qdrant.client.grpc.Points;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,7 +26,9 @@ public class QdrantVectorStoreService implements VectorStoreService {
 
     private final QdrantProperties properties;
 
-    private final QdrantPayloadConverter payloadConverter;
+    private final VectorStoreMapper vectorStoreMapper;
+
+    private final VectorStoreHelper vectorStoreHelper;
 
     @Override
     public void upsert(VectorPoint point) {
@@ -37,14 +38,12 @@ public class QdrantVectorStoreService implements VectorStoreService {
     @Override
     public void upsert(List<VectorPoint> points) {
 
-        if (points.isEmpty()) {
-            return;
-        }
+        vectorStoreHelper.validateVectorPoints(points);
 
         try {
 
             List<Points.PointStruct> pointStructs = points.stream()
-                    .map(this::toPointStruct)
+                    .map(vectorStoreMapper::toPointStruct)
                     .toList();
 
             Futures.getUnchecked(
@@ -57,14 +56,16 @@ public class QdrantVectorStoreService implements VectorStoreService {
     }
 
     @Override
-    public void delete(String pointId) {
+    public void delete(Long pointId) {
+
+        vectorStoreHelper.validatePointId(pointId);
 
         try {
 
             Futures.getUnchecked(
                     qdrantClient.deleteAsync(
                             properties.getCollectionName(),
-                            List.of(PointIdFactory.id(Long.parseLong(pointId)))
+                            List.of(PointIdFactory.id(pointId))
                     )
             );
 
@@ -76,55 +77,32 @@ public class QdrantVectorStoreService implements VectorStoreService {
     @Override
     public List<SearchResult> search(float[] queryVector, int limit, Long documentId) {
 
+        vectorStoreHelper.validateSearchRequest(queryVector, limit, documentId);
+
         try {
 
             Points.SearchPoints.Builder request = Points.SearchPoints.newBuilder()
                     .setCollectionName(properties.getCollectionName())
-                    .addAllVector(toFloatList(queryVector))
+                    .addAllVector(vectorStoreMapper.toFloatList(queryVector))
                     .setLimit(limit)
+                    .setScoreThreshold(properties.getScoreThreshold())
                     .setWithPayload(WithPayloadSelectorFactory.enable(true));
 
-            if (documentId != null) {
-                request.setFilter(
-                        Points.Filter.newBuilder()
-                                .addMust(ConditionFactory.match("documentId", documentId))
-                                .build()
-                );
+            // Thêm filter, chỉ search trong 1 document nhất định nếu có truyền document id
+            Points.Filter filter = vectorStoreHelper.buildDocumentFilter(documentId);
+
+            if (filter != null) {
+                request.setFilter(filter);
             }
 
             List<Points.ScoredPoint> scoredPoints =
                     Futures.getUnchecked(qdrantClient.searchAsync(request.build()));
 
-            return scoredPoints.stream()
-                    .map(this::toSearchResult)
-                    .toList();
+            return vectorStoreMapper.toSearchResults(scoredPoints);
 
         } catch (Exception e) {
             throw new VectorStoreException(ErrorCode.VECTOR_SEARCH_FAILED, e);
         }
     }
 
-    private Points.PointStruct toPointStruct(VectorPoint point) {
-        return Points.PointStruct.newBuilder()
-                .setId(PointIdFactory.id(Long.parseLong(point.getId())))
-                .setVectors(VectorsFactory.vectors(point.getVector()))
-                .putAllPayload(payloadConverter.toQdrantPayload(point.getPayload()))
-                .build();
-    }
-
-    private SearchResult toSearchResult(Points.ScoredPoint scoredPoint) {
-        return SearchResult.builder()
-                .pointId(String.valueOf(scoredPoint.getId().getNum()))
-                .score((double) scoredPoint.getScore())
-                .payload(payloadConverter.toVectorPayload(scoredPoint.getPayloadMap()))
-                .build();
-    }
-
-    private static List<Float> toFloatList(float[] vector) {
-        List<Float> list = new ArrayList<>(vector.length);
-        for (float value : vector) {
-            list.add(value);
-        }
-        return list;
-    }
 }

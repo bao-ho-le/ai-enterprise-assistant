@@ -129,10 +129,13 @@ public class DocumentHelper {
     public void validateDocumentId(Long documentId){
 
         if(documentId == null){
-
             throw new DocumentException(
                     ErrorCode.DOCUMENT_ID_REQUIRED
             );
+        }
+
+        if(documentId <= 0){
+            throw new DocumentException(ErrorCode.DOCUMENT_ID_INVALID);
         }
     }
 

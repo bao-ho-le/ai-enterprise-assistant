@@ -5,7 +5,7 @@ import com.enterprise.aiassistant.backend.ai.embedding.service.EmbeddingService;
 import com.enterprise.aiassistant.backend.ai.search.dto.request.SemanticSearchRequest;
 import com.enterprise.aiassistant.backend.ai.search.dto.response.SemanticSearchResult;
 import com.enterprise.aiassistant.backend.ai.search.mapper.SearchMapper;
-import com.enterprise.aiassistant.backend.ai.search.validator.SemanticSearchValidator;
+import com.enterprise.aiassistant.backend.ai.search.helper.SearchHelper;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.SearchResult;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPayload;
 import com.enterprise.aiassistant.backend.ai.vectorstore.service.VectorStoreService;
@@ -32,7 +32,7 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
 
     private final DocumentRepository documentRepository;
 
-    private final SemanticSearchValidator validator;
+    private final SearchHelper searchHelper;
 
     private final SearchMapper searchMapper;
 
@@ -40,9 +40,9 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
     @Transactional(readOnly = true)
     public List<SemanticSearchResult> search(SemanticSearchRequest request) {
 
-        validator.validate(request);
+        searchHelper.validateSearchRequest(request);
 
-        int topK = validator.resolveTopK(request.getTopK());
+        int topK = searchHelper.resolveTopK(request.getTopK());
 
         EmbeddingResult queryEmbedding = embeddingService.embed(request.getKeyword());
 
@@ -58,14 +58,17 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
 
         Map<Long, Document> activeDocumentsById = fetchActiveDocuments(hits);
 
-        // ponytail: only the document's current version is surfaced here; chunks from
-        // superseded versions stay indexed in Qdrant until version cleanup is added.
-        return hits.stream()
+        List<SearchResult> validHits = hits.stream()
                 .filter(hit -> isCurrentVersionHit(hit, activeDocumentsById))
-                .map(searchMapper::toSemanticSearchResult)
                 .toList();
+
+        return searchMapper.toSemanticSearchResults(validHits);
     }
 
+
+    // Helper
+
+    // Chỉ lấy các document không bị delete
     private Map<Long, Document> fetchActiveDocuments(List<SearchResult> hits) {
 
         Set<Long> documentIds = hits.stream()
@@ -77,6 +80,8 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
                 .collect(Collectors.toMap(Document::getId, Function.identity()));
     }
 
+    // Kiểm tra nếu current version giống với bản trong request thì mới cho search
+    // Tránh lấy hits từ version cũ
     private boolean isCurrentVersionHit(SearchResult hit, Map<Long, Document> activeDocumentsById) {
 
         VectorPayload payload = hit.getPayload();

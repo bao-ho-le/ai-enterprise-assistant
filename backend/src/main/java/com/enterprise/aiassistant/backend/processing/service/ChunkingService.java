@@ -21,47 +21,56 @@ public class ChunkingService {
     private static final int OVERLAP_SIZE = 200;
 
 
-    public List<TextChunk> chunk(String text) {
+    // Chunk theo từng trang riêng biệt (không cho chunk tràn qua ranh giới trang),
+    // chunkIndex vẫn tăng liên tục xuyên suốt cả document để không đụng unique
+    // constraint (document_version_id, chunk_index).
+    public List<TextChunk> chunk(List<String> pages) {
 
         try {
 
             List<TextChunk> chunks = new ArrayList<>();
 
-            int start = 0;
             int chunkIndex = 0;
 
+            for (int i = 0; i < pages.size(); i++) {
 
-            while (start < text.length()) {
+                String pageText = pages.get(i);
+                int pageNumber = i + 1;
 
-                int end = Math.min(
-                        start + CHUNK_SIZE,
-                        text.length()
-                );
-
-
-                String content = text.substring(start, end);
-
-
-                chunks.add(
-                        processingMapper.toTextChunk(
-                                chunkIndex++,
-                                content,
-                                start,
-                                end
-                        )
-                );
-
-
-                // Nếu đã tới cuối text thì dừng
-                if (end == text.length()) {
-                    break;
+                if (pageText == null || pageText.isEmpty()) {
+                    continue;
                 }
 
+                int start = 0;
 
-                // Lùi lại overlap
-                start = end - OVERLAP_SIZE;
+                while (start < pageText.length()) {
+
+                    int end = Math.min(
+                            start + CHUNK_SIZE,
+                            pageText.length()
+                    );
+
+                    String content = pageText.substring(start, end);
+
+                    chunks.add(
+                            processingMapper.toTextChunk(
+                                    chunkIndex++,
+                                    content,
+                                    pageNumber,
+                                    start,
+                                    end
+                            )
+                    );
+
+                    // Nếu đã tới cuối trang thì dừng
+                    if (end == pageText.length()) {
+                        break;
+                    }
+
+                    // Lùi lại overlap
+                    start = end - OVERLAP_SIZE;
+                }
             }
-
 
             return chunks;
 

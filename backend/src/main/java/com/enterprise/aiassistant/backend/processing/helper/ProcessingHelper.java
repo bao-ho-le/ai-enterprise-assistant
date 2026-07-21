@@ -6,6 +6,7 @@ import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.enums.ProcessingStep;
 import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
+import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -20,14 +21,7 @@ public class ProcessingHelper {
 
     private final DocumentVersionRepository documentVersionRepository;
 
-    /**
-     * Only guards against reprocessing an already-succeeded version. PENDING,
-     * PROCESSING and FAILED are all allowed through so that a retry attempt (or a
-     * manual re-trigger of a previously failed version) can actually re-run the
-     * pipeline instead of instantly bouncing with DOCUMENT_VERSION_INVALID_STATUS
-     * — which used to defeat @Retryable entirely, since handleFailed() ran on every
-     * attempt and flipped status away from PENDING before the next attempt started.
-     */
+    // Chặn các trường hợp document đã được xử lí thành công
     public void validateStatus(DocumentVersion version) {
 
         if(version.getStatus() == VersionStatus.READY){
@@ -38,14 +32,22 @@ public class ProcessingHelper {
         }
     }
 
-    /**
-     * Independent transaction so this always commits even though the caller's
-     * transaction (DocumentProcessingService#process) is about to roll back.
-     * Deliberately never lets an exception escape: this runs from inside an
-     * exception-handling path, and it being the ORIGINAL bug (an unhandled
-     * exception here previously left versions stuck PENDING with no trace) means
-     * it must degrade to a log line rather than fail the whole failure-handling flow.
-     */
+    // Chặn trường hợp file extract ra rỗng (vd PDF scan không có text layer) —
+    // nếu không chặn, document sẽ bị đánh READY dù 0 chunk / 0 vector.
+    // Dùng BusinessException (không phải ProcessingException) vì đây là lỗi nội
+    // dung tất định, retry lại cũng sẽ rỗng như cũ -> fail fast, không tốn 3 lần retry.
+    public void validateExtractedText(ExtractedText extractedText) {
+
+        if (extractedText == null
+                || extractedText.getContent() == null
+                || extractedText.getContent().isBlank()) {
+
+            throw new BusinessException(ErrorCode.DOCUMENT_TEXT_EMPTY);
+        }
+    }
+
+    // Dùng transaction riêng để trạng thái FAILED luôn được lưu,
+    // kể cả khi transaction xử lý chính bị rollback.
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleFailed(
             Long versionId,
@@ -63,6 +65,27 @@ public class ProcessingHelper {
                         versionId
                 )
         );
+    }
+
+    // Chỉ đánh dấu document là FAILED nếu nó chưa xử lý thành công (READY).
+    // Nếu đã READY thì bỏ qua, tránh ghi đè kết quả thành công.
+    public void handleFailureUnlessAlreadySucceeded(
+            Long versionId,
+            DocumentVersion version,
+            Exception exception
+    ) {
+        boolean alreadySucceeded =
+                version != null
+                && version.getStatus() == VersionStatus.READY;
+
+        if (!alreadySucceeded) {
+            ProcessingStep failedStep =
+                    version != null
+                            ? version.getProcessingStep()
+                            : null;
+
+            handleFailed(versionId, exception, failedStep);
+        }
     }
 
 }

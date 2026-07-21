@@ -14,6 +14,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -36,9 +38,17 @@ public class PdfTextExtractor implements TextExtractor {
         ) {
 
             PDFTextStripper stripper = new PDFTextStripper();
-            String content = stripper.getText(document);
 
-            return processingMapper.toExtractedText(content, ExtractionMethod.DIRECT_TEXT);
+            List<String> pages = new ArrayList<>();
+            for (int page = 1; page <= document.getNumberOfPages(); page++) {
+                stripper.setStartPage(page);
+                stripper.setEndPage(page);
+                pages.add(stripper.getText(document));
+            }
+
+            String content = String.join("\n\n", pages);
+
+            return processingMapper.toExtractedText(content, pages, ExtractionMethod.DIRECT_TEXT);
 
         } catch (IOException e) {
 

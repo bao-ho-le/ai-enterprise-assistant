@@ -191,10 +191,11 @@ export default function DocumentRow({
           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
             <ExtIcon className={`h-4 w-4 ${iconColor}`} />
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 max-w-[220px]">
             <Link
               href={`/file-storage/${doc.id}`}
-              className="text-sm font-medium text-text-primary truncate hover:text-accent transition-colors"
+              className="block truncate text-sm font-medium text-text-primary hover:text-accent transition-colors"
+              title={doc.title}
             >
               {doc.title}
             </Link>
@@ -220,7 +221,7 @@ export default function DocumentRow({
       <td className="px-4 py-4 text-sm">
         {hasMatch ? (
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-20 shrink-0 rounded-full bg-bg-elevated overflow-hidden">
+            <div className="h-1.5 flex-1 rounded-full bg-bg-elevated overflow-hidden">
               <div
                 className="h-full rounded-full bg-accent"
                 style={{ width: `${similarityPercent}%` }}

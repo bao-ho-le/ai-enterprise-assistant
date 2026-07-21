@@ -18,14 +18,16 @@ public class QdrantCollectionManager {
     private final QdrantClient qdrantClient;
     private final QdrantProperties properties;
 
+    // File này đảm bảo collection cho Qdrant được khởi tạo khi ứng dụng khởi động
+    // Nếu đã được khởi tạo rồi thì thôi
     @EventListener(ApplicationReadyEvent.class)
     public void initialize() {
 
-        boolean exists = Futures.getUnchecked(
+        boolean collectionExists = Futures.getUnchecked(
                 qdrantClient.collectionExistsAsync(properties.getCollectionName())
         );
 
-        if (exists) {
+        if (collectionExists) {
             log.info("Collection [{}] already exists.", properties.getCollectionName());
             return;
         }

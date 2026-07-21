@@ -62,16 +62,35 @@ export function filenameFromContentDisposition(header, fallback = "download") {
   return plain ? plain[1].trim() : fallback;
 }
 
-// Splits `text` around case-insensitive matches of `query` into
-// [{ text, match }] segments, for rendering <mark> highlights.
-export function highlightSegments(text, query) {
+// Splits `text` into [{ text, match }] segments, marking the given
+// [start, end) ranges (text-relative, may overlap/be unsorted) for
+// rendering <mark> highlights.
+export function rangeSegments(text, ranges) {
   if (!text) return [];
-  const trimmed = (query || "").trim();
-  if (!trimmed) return [{ text, match: false }];
+  if (!ranges || ranges.length === 0) return [{ text, match: false }];
 
-  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
-  return parts.map((part, i) => ({ text: part, match: i % 2 === 1 }));
+  const merged = [...ranges]
+    .map(([start, end]) => [Math.max(0, start), Math.min(text.length, end)])
+    .filter(([start, end]) => end > start)
+    .sort((a, b) => a[0] - b[0])
+    .reduce((acc, [start, end]) => {
+      const last = acc[acc.length - 1];
+      if (last && start <= last[1]) last[1] = Math.max(last[1], end);
+      else acc.push([start, end]);
+      return acc;
+    }, []);
+
+  if (merged.length === 0) return [{ text, match: false }];
+
+  const segments = [];
+  let cursor = 0;
+  for (const [start, end] of merged) {
+    if (start > cursor) segments.push({ text: text.slice(cursor, start), match: false });
+    segments.push({ text: text.slice(start, end), match: true });
+    cursor = end;
+  }
+  if (cursor < text.length) segments.push({ text: text.slice(cursor), match: false });
+  return segments;
 }
 
 // Save a Blob to disk from the browser.

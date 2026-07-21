@@ -19,6 +19,9 @@ public class QdrantProperties {
 
     private Integer vectorSize;
 
+    // Ngưỡng cosine similarity tối thiểu để 1 kết quả search được coi là liên quan.
+    private Float scoreThreshold;
+
     private Boolean useTls;
 
     private String apiKey;

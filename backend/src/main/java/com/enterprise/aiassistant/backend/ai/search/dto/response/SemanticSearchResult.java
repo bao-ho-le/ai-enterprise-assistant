@@ -21,6 +21,10 @@ public class SemanticSearchResult {
 
     private Integer page;
 
+    private Integer startChar;
+
+    private Integer endChar;
+
     private String content;
 
 }

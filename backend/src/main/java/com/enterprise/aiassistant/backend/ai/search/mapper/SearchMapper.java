@@ -5,6 +5,8 @@ import com.enterprise.aiassistant.backend.ai.vectorstore.dto.SearchResult;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPayload;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 public class SearchMapper {
 
@@ -18,8 +20,19 @@ public class SearchMapper {
                 .chunkId(payload.getChunkId())
                 .score(searchResult.getScore())
                 .page(payload.getPageNumber())
+                .startChar(payload.getStartChar())
+                .endChar(payload.getEndChar())
                 .content(payload.getContent())
                 .build();
     }
+
+    public List<SemanticSearchResult> toSemanticSearchResults(
+            List<SearchResult> hits
+    ) {
+        return hits.stream()
+                .map(this::toSemanticSearchResult)
+                .toList();
+    }
+
 
 }

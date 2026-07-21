@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -35,6 +36,7 @@ public class TxtTextExtractor implements TextExtractor {
 
             return processingMapper.toExtractedText(
                     content,
+                    List.of(content),
                     ExtractionMethod.DIRECT_TEXT
             );
 

@@ -22,24 +22,37 @@ public class GeminiEmbeddingService implements EmbeddingService {
     @Override
     public EmbeddingResult embed(String text) {
 
-        if (text == null || text.isBlank()) {
-            throw new EmbeddingException(ErrorCode.EMBEDDING_TEXT_REQUIRED);
-        }
+        validateText(text);
 
         try {
             Response<Embedding> response = embeddingModel.embed(text);
             Embedding embedding = response.content();
 
-            return EmbeddingResult.builder()
-                    .vector(embedding.vector())
-                    .dimension(embedding.dimension())
-                    .model(properties.getEmbeddingModel())
-                    .build();
+            return toEmbeddingResult(embedding, properties);
 
         } catch (Exception ex) {
-            log.error("Gemini embedding call failed", ex);
+            log.error(ErrorCode.EMBEDDING_FAILED.getMessage(), ex);
             throw new EmbeddingException(ErrorCode.EMBEDDING_FAILED, ex);
         }
+    }
+
+
+    // Helper
+
+    private void validateText(String text){
+        if (text == null || text.isBlank()) {
+            throw new EmbeddingException(ErrorCode.EMBEDDING_TEXT_REQUIRED);
+        }
+    }
+
+    // Mapper
+
+    public EmbeddingResult toEmbeddingResult(Embedding embedding, GeminiProperties properties) {
+        return EmbeddingResult.builder()
+                .vector(embedding.vector())
+                .dimension(embedding.dimension())
+                .model(properties.getEmbeddingModel())
+                .build();
     }
 
 }
