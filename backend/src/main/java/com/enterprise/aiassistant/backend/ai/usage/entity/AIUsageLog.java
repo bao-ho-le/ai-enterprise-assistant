@@ -3,6 +3,8 @@ package com.enterprise.aiassistant.backend.ai.usage.entity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 
@@ -14,14 +16,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 @Entity
 @Table(
         name = "ai_usage_logs",
@@ -51,16 +51,13 @@ public class AIUsageLog {
     private String model;
 
     @Column(name = "input_tokens", nullable = false)
-    @Builder.Default
-    private Integer inputTokens = 0;
+    private Integer inputTokens ;
 
     @Column(name = "output_tokens", nullable = false)
-    @Builder.Default
-    private Integer outputTokens = 0;
+    private Integer outputTokens ;
 
     @Column(name = "total_tokens", nullable = false)
-    @Builder.Default
-    private Integer totalTokens = 0;
+    private Integer totalTokens;
 
     @Column(name = "estimated_cost", nullable = false, precision = 12, scale = 6)
     @Builder.Default
@@ -74,13 +71,8 @@ public class AIUsageLog {
     private String errorMessage;
 
     @Column(name = "created_at", nullable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        if (inputTokens != null && outputTokens != null) {
-            totalTokens = inputTokens + outputTokens;
-        }
-    }
+    
 }

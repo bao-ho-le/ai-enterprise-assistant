@@ -4,30 +4,35 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageLogFilterRequest;
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
-import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 
-public class AIUsageLogSpecifications {
+@Component
+public class UsageHelpful {
 
-    private AIUsageLogSpecifications() {}
-
-    public static AIUsageLogFilterRequest fromDateFilter(LocalDateTime from) {
+    public AIUsageLogFilterRequest fromDateFilter(LocalDateTime from) {
         var filter = new AIUsageLogFilterRequest();
         filter.setFromDate(from);
         return filter;
     }
 
-    public static double calculateSuccessRate(long successCount, long totalRequests) {
+    public int calculateTotalTokens(Integer inputTokens, Integer outputTokens) {
+        int in = inputTokens != null ? inputTokens : 0;
+        int out = outputTokens != null ? outputTokens : 0;
+        return in + out;
+    }
+
+    public double calculateSuccessRate(long successCount, long totalRequests) {
         return totalRequests == 0
                 ? 0
                 : (double) successCount / totalRequests * 100;
     }
 
-    public static double calculateSuccessRate(List<AIUsageLog> logs) {
+    public double calculateSuccessRate(List<AIUsageLog> logs) {
         if (logs.isEmpty()) {
             return 0;
         }
@@ -37,7 +42,7 @@ public class AIUsageLogSpecifications {
         return (double) successCount / logs.size() * 100;
     }
 
-    public static Specification<AIUsageLog> byFilter(AIUsageLogFilterRequest filter) {
+    public Specification<AIUsageLog> byFilter(AIUsageLogFilterRequest filter) {
         return (root, query, cb) -> {
             var predicates = cb.conjunction();
 
@@ -49,20 +54,14 @@ public class AIUsageLogSpecifications {
                 predicates = cb.and(predicates,
                         cb.lessThanOrEqualTo(root.get("createdAt"), filter.getToDate()));
             }
-            if (StringUtils.hasText(filter.getFeatureType())) {
-                // ✅ Sửa: convert String -> enum ConversationType và query đúng field "conversationType"
-                try {
-                    var conversationType = ConversationType.valueOf(filter.getFeatureType());
-                    predicates = cb.and(predicates,
-                            cb.equal(root.get("conversationType"), conversationType));
-                } catch (IllegalArgumentException ex) {
-                    // Giá trị featureType không khớp enum nào -> không match record nào
-                    predicates = cb.and(predicates, cb.disjunction());
-                }
-            }
+
             if (StringUtils.hasText(filter.getModel())) {
                 predicates = cb.and(predicates,
                         cb.equal(root.get("model"), filter.getModel()));
+            }
+            if (filter.getConversationType() != null) {
+                predicates = cb.and(predicates,
+                        cb.equal(root.get("conversationType"), filter.getConversationType()));
             }
             if (filter.getStatus() != null) {
                 predicates = cb.and(predicates,

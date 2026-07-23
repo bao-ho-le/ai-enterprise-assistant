@@ -3,6 +3,7 @@ package com.enterprise.aiassistant.backend.ai.usage.controller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -23,7 +24,7 @@ public class AIUsageLogController {
 
     @GetMapping
     public Page<AIUsageLogResponse> getUsageLogs(
-            AIUsageLogFilterRequest filter,
+            @Valid AIUsageLogFilterRequest filter,
             @PageableDefault(page = 0, size = 10) Pageable pageable
     ) {
         return aiUsageLogService.getUsageLogs(filter, pageable);

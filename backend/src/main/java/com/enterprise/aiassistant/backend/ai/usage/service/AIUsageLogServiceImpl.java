@@ -13,7 +13,7 @@ import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageLogResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageSummaryResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
-import com.enterprise.aiassistant.backend.ai.usage.helper.AIUsageLogSpecifications;
+import com.enterprise.aiassistant.backend.ai.usage.helper.UsageHelpful;
 import com.enterprise.aiassistant.backend.ai.usage.mapper.AIUsageLogMapper;
 import com.enterprise.aiassistant.backend.ai.usage.repository.AIUsageLogRepository;
 
@@ -25,6 +25,7 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
 
     private final AIUsageLogMapper mapper;
     private final AIUsageLogRepository repository;
+    private final UsageHelpful usageHelpful;
 
     @Override
     @Transactional
@@ -35,7 +36,7 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
 
     @Override
     public Page<AIUsageLogResponse> getUsageLogs(AIUsageLogFilterRequest filter, Pageable pageable) {
-        return repository.findAll(AIUsageLogSpecifications.byFilter(filter), pageable)
+        return repository.findAll(usageHelpful.byFilter(filter), pageable)
                 .map(mapper::toResponse);
     }
 
@@ -45,10 +46,10 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
         LocalDateTime startOfLast7Days = LocalDate.now().minusDays(6).atStartOfDay();
 
         var todayLogs = repository.findAll(
-                AIUsageLogSpecifications.byFilter(AIUsageLogSpecifications.fromDateFilter(startOfToday))
+                usageHelpful.byFilter(usageHelpful.fromDateFilter(startOfToday))
         );
         var last7DayLogs = repository.findAll(
-                AIUsageLogSpecifications.byFilter(AIUsageLogSpecifications.fromDateFilter(startOfLast7Days))
+                usageHelpful.byFilter(usageHelpful.fromDateFilter(startOfLast7Days))
         );
 
         return mapper.toSummaryResponse(todayLogs, last7DayLogs);

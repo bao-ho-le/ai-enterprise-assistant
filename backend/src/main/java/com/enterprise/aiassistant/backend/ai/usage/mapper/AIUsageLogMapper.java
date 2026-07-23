@@ -11,17 +11,29 @@ import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogRequest
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.usage.helper.AIUsageLogSpecifications;
+import com.enterprise.aiassistant.backend.ai.usage.helper.UsageHelpful;
+
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class AIUsageLogMapper {
 
+    private final UsageHelpful usageHelpful;
+
     public AIUsageLog toEntity(AIUsageLogRequest request) {
+    Integer input = request.getInputTokens();
+    Integer output = request.getOutputTokens();
+
+    int inputTokens = input != null ? input : 0;
+    int outputTokens = output != null ? output : 0;
+
         return AIUsageLog.builder()
                 .conversationType(request.getConversationType())
                 .model(request.getModel())
-                .inputTokens(request.getInputTokens() != null ? request.getInputTokens() : 0)
-                .outputTokens(request.getOutputTokens() != null ? request.getOutputTokens() : 0)
+                .inputTokens(inputTokens)
+                .outputTokens(outputTokens)
+                .totalTokens(usageHelpful.calculateTotalTokens(inputTokens, outputTokens))
                 .estimatedCost(request.getEstimatedCost() != null ? request.getEstimatedCost() : BigDecimal.ZERO)
                 .status(request.getStatus())
                 .errorMessage(request.getErrorMessage())
@@ -37,18 +49,21 @@ public class AIUsageLogMapper {
             AIUsageStatus status,
             String errorMessage
     ) {
+        int in = inputTokens != null ? inputTokens : 0;
+        int out = outputTokens != null ? outputTokens : 0;
+
         return AIUsageLog.builder()
                 .conversationType(conversationType)
                 .model(model)
-                .inputTokens(inputTokens != null ? inputTokens : 0)
-                .outputTokens(outputTokens != null ? outputTokens : 0)
+                .inputTokens(in)
+                .outputTokens(out)
+                .totalTokens(usageHelpful.calculateTotalTokens(in, out))
                 .estimatedCost(estimatedCost != null ? estimatedCost : BigDecimal.ZERO)
                 .status(status)
                 .errorMessage(errorMessage)
                 .build();
     }
 
-    // ➕ Method còn thiếu — nguyên nhân chính gây lỗi biên dịch ở ServiceImpl
     public AIUsageLogResponse toResponse(AIUsageLog entity) {
         return AIUsageLogResponse.builder()
                 .createdAt(entity.getCreatedAt())
@@ -70,11 +85,11 @@ public class AIUsageLogMapper {
                 .todayRequest(todayLogs.size())
                 .todayToken(sumTokens(todayLogs))
                 .todayCost(sumCost(todayLogs))
-                .todaySuccessRate(AIUsageLogSpecifications.calculateSuccessRate(todayLogs))
+                .todaySuccessRate(usageHelpful.calculateSuccessRate(todayLogs))
                 .last7DayRequests(last7DayLogs.size())
                 .last7DayTokens(sumTokens(last7DayLogs))
                 .last7DayCost(sumCost(last7DayLogs))
-                .last7DaySuccessRate(AIUsageLogSpecifications.calculateSuccessRate(last7DayLogs))
+                .last7DaySuccessRate(usageHelpful.calculateSuccessRate(last7DayLogs))
                 .build();
     }
 
