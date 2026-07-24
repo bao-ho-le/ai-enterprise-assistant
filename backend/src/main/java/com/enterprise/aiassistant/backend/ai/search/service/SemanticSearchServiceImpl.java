@@ -6,6 +6,7 @@ import com.enterprise.aiassistant.backend.ai.search.dto.request.SemanticSearchRe
 import com.enterprise.aiassistant.backend.ai.search.dto.response.SemanticSearchResult;
 import com.enterprise.aiassistant.backend.ai.search.mapper.SearchMapper;
 import com.enterprise.aiassistant.backend.ai.search.helper.SearchHelper;
+import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.SearchResult;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPayload;
 import com.enterprise.aiassistant.backend.ai.vectorstore.service.VectorStoreService;
@@ -44,25 +45,40 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
 
         int topK = searchHelper.resolveTopK(request.getTopK());
 
-        EmbeddingResult queryEmbedding = embeddingService.embed(request.getKeyword());
+        String model = embeddingService.getModelName();
+        Integer inputTokens = null;
 
-        List<SearchResult> hits = vectorStoreService.search(
-                queryEmbedding.getVector(),
-                topK,
-                request.getDocumentId()
-        );
+        try {
+            EmbeddingResult queryEmbedding = embeddingService.embed(request.getKeyword());
+            model = queryEmbedding.getModel();
+            inputTokens = queryEmbedding.getInputTokens();
 
-        if (hits.isEmpty()) {
-            return List.of();
+            List<SearchResult> hits = vectorStoreService.search(
+                    queryEmbedding.getVector(),
+                    topK,
+                    request.getDocumentId()
+            );
+
+            List<SemanticSearchResult> results;
+            if (hits.isEmpty()) {
+                results = List.of();
+            } else {
+                Map<Long, Document> activeDocumentsById = fetchActiveDocuments(hits);
+
+                List<SearchResult> validHits = hits.stream()
+                        .filter(hit -> isCurrentVersionHit(hit, activeDocumentsById))
+                        .toList();
+
+                results = searchMapper.toSemanticSearchResults(validHits);
+            }
+
+            searchHelper.logUsage(model, inputTokens, AIUsageStatus.SUCCESS, null);
+            return results;
+
+        } catch (RuntimeException ex) {
+            searchHelper.logUsage(model, inputTokens, AIUsageStatus.FAILED, ex.getMessage());
+            throw ex;
         }
-
-        Map<Long, Document> activeDocumentsById = fetchActiveDocuments(hits);
-
-        List<SearchResult> validHits = hits.stream()
-                .filter(hit -> isCurrentVersionHit(hit, activeDocumentsById))
-                .toList();
-
-        return searchMapper.toSemanticSearchResults(validHits);
     }
 
 

@@ -1,10 +1,12 @@
 package com.enterprise.aiassistant.backend.ai.usage.mapper;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageSummaryResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogRequest;
@@ -12,6 +14,7 @@ import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.ai.usage.helper.AiUsageHelper;
+import com.enterprise.aiassistant.backend.ai.usage.repository.AIUsageDailyProjection;
 
 import lombok.RequiredArgsConstructor;
 
@@ -90,6 +93,25 @@ public class AIUsageLogMapper {
                 .last7DayTokens(sumTokens(last7DayLogs))
                 .last7DayCost(sumCost(last7DayLogs))
                 .last7DaySuccessRate(usageHelpful.calculateSuccessRate(last7DayLogs))
+                .build();
+    }
+
+    public AIUsageDailyResponse toDailyResponse(LocalDate date, AIUsageDailyProjection row) {
+        if (row == null) {
+            return AIUsageDailyResponse.builder()
+                    .date(date)
+                    .cost(BigDecimal.ZERO)
+                    .build();
+        }
+        return AIUsageDailyResponse.builder()
+                .date(date)
+                .requestCount(row.getRequestCount())
+                .inputTokens(row.getInputTokens())
+                .outputTokens(row.getOutputTokens())
+                .totalTokens(row.getTotalTokens())
+                .cost(row.getCost())
+                .successCount(row.getSuccessCount())
+                .failedCount(row.getFailedCount())
                 .build();
     }
 

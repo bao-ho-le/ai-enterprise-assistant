@@ -1,9 +1,14 @@
 package com.enterprise.aiassistant.backend.ai.usage.helper;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
+import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
+import com.enterprise.aiassistant.backend.ai.usage.mapper.AIUsageLogMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -19,6 +24,7 @@ import jakarta.persistence.criteria.Predicate;
 
 @Component
 public class AiUsageHelper {
+
 
     public AIUsageLogFilterRequest fromDateFilter(LocalDateTime from) {
         AIUsageLogFilterRequest filter = new AIUsageLogFilterRequest();
@@ -83,6 +89,12 @@ public class AiUsageHelper {
         }
     }
 
+    public void validateDays(int days) {
+        if (days < 1 || days > 90) {
+            throw new BusinessException(ErrorCode.AI_USAGE_INVALID_DAYS);
+        }
+    }
+
     public Specification<AIUsageLog> byFilter(AIUsageLogFilterRequest filter) {
         return (root, query, cb) -> {
             Predicate predicates = cb.conjunction();
@@ -111,4 +123,5 @@ public class AiUsageHelper {
             return predicates;
         };
     }
+
 }

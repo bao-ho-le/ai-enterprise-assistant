@@ -295,6 +295,11 @@ public enum ErrorCode {
     AI_USAGE_MODEL_TOO_LONG(
             BAD_REQUEST,
         "Model name exceeds maximum length"
+    ),
+
+    AI_USAGE_INVALID_DAYS(
+            BAD_REQUEST,
+        "days must be between 1 and 90"
     );
 
 

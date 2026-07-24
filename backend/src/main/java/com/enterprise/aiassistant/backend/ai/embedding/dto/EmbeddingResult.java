@@ -13,4 +13,6 @@ public class EmbeddingResult {
 
     private String model;
 
+    private Integer inputTokens;
+
 }

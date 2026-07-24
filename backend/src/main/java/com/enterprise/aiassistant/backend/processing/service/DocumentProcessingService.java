@@ -1,6 +1,8 @@
 package com.enterprise.aiassistant.backend.processing.service;
 
+import com.enterprise.aiassistant.backend.ai.embedding.dto.EmbeddingResult;
 import com.enterprise.aiassistant.backend.ai.embedding.service.EmbeddingService;
+import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.vectorstore.dto.VectorPoint;
 import com.enterprise.aiassistant.backend.ai.vectorstore.service.VectorStoreService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
@@ -132,14 +134,24 @@ public class DocumentProcessingService {
 
             version.setProcessingStep(ProcessingStep.EMBEDDING);
 
-            // ponytail: sequential embedding calls (one per chunk); parallelize with a
-            // bounded executor if large documents make this a throughput bottleneck.
-            List<VectorPoint> vectorPoints = savedChunks.stream()
-                    .map(chunk -> processingMapper.toVectorPoint(
-                            chunk,
-                            embeddingService.embed(chunk.getContent())
-                    ))
-                    .toList();
+            List<VectorPoint> vectorPoints = new ArrayList<>();
+
+            for (DocumentChunk chunk : savedChunks) {
+
+                String model = embeddingService.getModelName();
+
+                try {
+                    EmbeddingResult embeddingResult = embeddingService.embed(chunk.getContent());
+                    processingHelper.logUsage(
+                            embeddingResult.getModel(), embeddingResult.getInputTokens(), AIUsageStatus.SUCCESS, null);
+
+                    vectorPoints.add(processingMapper.toVectorPoint(chunk, embeddingResult));
+
+                } catch (RuntimeException e) {
+                    processingHelper.logUsage(model, null, AIUsageStatus.FAILED, e.getMessage());
+                    throw e;
+                }
+            }
 
             vectorStoreService.upsert(vectorPoints);
 
