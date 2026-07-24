@@ -5,13 +5,13 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageLogResponse;
-import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageSummaryResponse;
+import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
+import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageSummaryResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.usage.helper.UsageHelpful;
+import com.enterprise.aiassistant.backend.ai.usage.helper.AiUsageHelper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AIUsageLogMapper {
 
-    private final UsageHelpful usageHelpful;
+    private final AiUsageHelper usageHelpful;
 
     public AIUsageLog toEntity(AIUsageLogRequest request) {
     Integer input = request.getInputTokens();

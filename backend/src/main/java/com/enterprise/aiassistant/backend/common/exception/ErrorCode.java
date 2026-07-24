@@ -168,6 +168,43 @@ public enum ErrorCode {
     KEYWORD_TOO_LONG(
             BAD_REQUEST,
         "Keyword exceeds maximum length"
+    ),
+
+    // ===================== AI Usage =====================
+
+    AI_USAGE_REQUEST_REQUIRED(
+            BAD_REQUEST,
+        "AI usage log request is required"
+    ),
+
+    AI_USAGE_CONVERSATION_TYPE_REQUIRED(
+            BAD_REQUEST,
+        "Conversation type is required"
+    ),
+
+    AI_USAGE_MODEL_REQUIRED(
+            BAD_REQUEST,
+        "Model is required"
+    ),
+
+    AI_USAGE_STATUS_REQUIRED(
+            BAD_REQUEST,
+        "Status is required"
+    ),
+
+    AI_USAGE_INVALID_TOKEN_COUNT(
+            BAD_REQUEST,
+        "Input/output tokens must not be negative"
+    ),
+
+    AI_USAGE_INVALID_ESTIMATED_COST(
+            BAD_REQUEST,
+        "Estimated cost must not be negative"
+    ),
+
+    AI_USAGE_MODEL_TOO_LONG(
+            BAD_REQUEST,
+        "Model name exceeds maximum length"
     );
 
 

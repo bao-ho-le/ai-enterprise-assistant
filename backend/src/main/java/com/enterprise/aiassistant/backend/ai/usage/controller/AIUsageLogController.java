@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageLogFilterRequest;
-import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageLogResponse;
-import com.enterprise.aiassistant.backend.ai.usage.dto.AIUsageSummaryResponse;
+import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogFilterRequest;
+import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
+import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageSummaryResponse;
 import com.enterprise.aiassistant.backend.ai.usage.service.AIUsageLogService;
 
 import lombok.RequiredArgsConstructor;

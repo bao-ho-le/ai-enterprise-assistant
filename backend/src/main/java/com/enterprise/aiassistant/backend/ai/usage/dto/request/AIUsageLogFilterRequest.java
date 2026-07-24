@@ -1,4 +1,4 @@
-package com.enterprise.aiassistant.backend.ai.usage.dto;
+package com.enterprise.aiassistant.backend.ai.usage.dto.request;
 
 import java.time.LocalDateTime;
 

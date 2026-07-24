@@ -27,7 +27,7 @@ import lombok.Setter;
         name = "ai_usage_logs",
         indexes = {
                 @Index(name = "idx_ai_usage_created_at", columnList = "created_at"),
-                @Index(name = "idx_ai_usage_feature_type", columnList = "feature_type"),
+                @Index(name = "idx_ai_usage_conversation_type", columnList = "conversation_type"),
                 @Index(name = "idx_ai_usage_status", columnList = "status")
         }
 )

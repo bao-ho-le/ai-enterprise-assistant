@@ -1,4 +1,4 @@
-package com.enterprise.aiassistant.backend.ai.usage.dto;
+package com.enterprise.aiassistant.backend.ai.usage.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
