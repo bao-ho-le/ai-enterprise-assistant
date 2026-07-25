@@ -1,0 +1,54 @@
+```properties
+spring.application.name=backend
+api.prefix=/api/v1
+
+# ===============================
+# Database connection
+# ===============================
+spring.datasource.url=jdbc:postgresql://localhost:5432/your_database
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+
+# ===============================
+# JPA / Hibernate
+# ===============================
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+
+# ===============================
+# File Upload Configuration
+# ===============================
+spring.servlet.multipart.max-file-size=500MB
+spring.servlet.multipart.max-request-size=500MB
+file.upload.max-size=500MB
+
+# ===============================
+# MinIO Configuration
+# ===============================
+minio.provider=MINIO
+minio.endpoint=http://localhost:9000
+minio.access-key=your_minio_access_key
+minio.secret-key=your_minio_secret_key
+minio.bucket=files
+
+# ===============================
+# Qdrant Configuration
+# ===============================
+qdrant.host=localhost
+qdrant.grpc-port=6334
+qdrant.rest-port=6333
+qdrant.collection-name=document_chunks
+qdrant.vector-size=3072
+qdrant.score-threshold=0.65
+qdrant.use-tls=false
+qdrant.api-key=
+
+# ===============================
+# Gemini Configuration
+# ===============================
+gemini.api-key=your_gemini_api_key
+gemini.embedding-model=gemini-embedding-001
+```
