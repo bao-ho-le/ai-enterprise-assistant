@@ -300,6 +300,13 @@ public enum ErrorCode {
     AI_USAGE_INVALID_DAYS(
             BAD_REQUEST,
         "days must be between 1 and 90"
+    ),
+
+    // ===================== AI Conversation =====================
+
+    CONVERSATION_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "Conversation not found"
     );
 
 
