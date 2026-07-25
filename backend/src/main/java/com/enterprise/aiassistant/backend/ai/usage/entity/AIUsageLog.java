@@ -42,6 +42,10 @@ public class AIUsageLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Tạm thời lưu ID theo pattern giống GeneratedContent (chưa map quan hệ JPA trực tiếp)
+    @Column(name = "ai_conversation_id")
+    private Long aiConversationId;
+
     // "WRITE_EMAIL" | "WRITE_REPORT" | "SUMMARY" | "DOCUMENT_QA"
     @Column(name = "conversation_type", nullable = false, length = 50)
     private ConversationType conversationType;

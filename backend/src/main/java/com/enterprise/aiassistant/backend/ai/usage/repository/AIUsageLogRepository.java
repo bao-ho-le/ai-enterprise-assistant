@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -35,4 +36,11 @@ public interface AIUsageLogRepository
 
     @Query("SELECT DISTINCT a.model FROM AIUsageLog a ORDER BY a.model")
     List<String> findDistinctModels();
+
+    // === Dùng cho GET /ai-conversations/{id} — tổng hợp token/cost theo conversation ===
+    @Query("SELECT COALESCE(SUM(u.totalTokens), 0) FROM AIUsageLog u WHERE u.aiConversationId = :conversationId")
+    Long sumTotalTokensByConversationId(@Param("conversationId") Long conversationId);
+
+    @Query("SELECT COALESCE(SUM(u.estimatedCost), 0) FROM AIUsageLog u WHERE u.aiConversationId = :conversationId")
+    BigDecimal sumEstimatedCostByConversationId(@Param("conversationId") Long conversationId);
 }
