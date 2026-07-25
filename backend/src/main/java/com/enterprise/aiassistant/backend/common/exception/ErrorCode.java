@@ -380,11 +380,23 @@ public enum ErrorCode {
     DOCUMENT_NOT_ATTACHED_TO_CONVERSATION(
             HttpStatus.BAD_REQUEST,
             "Document is not attached to the conversation"
+    ),
+
+    // ===================== AI Conversation Message =====================
+    CONVERSATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "Conversation ID is required"
+    ),
+
+    MESSAGE_CONTENT_REQUIRED(
+            BAD_REQUEST,
+            "Message content is required"
+    ),
+
+    MESSAGE_CONTENT_TOO_LONG(
+            BAD_REQUEST,
+            "Message content exceeds maximum length"
     );
-
-
-
-
 
     private final HttpStatus status;
     private final String message;
