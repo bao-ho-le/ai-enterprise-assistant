@@ -2,7 +2,9 @@ package com.enterprise.aiassistant.backend.ai.conversation.helper;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.SendMessageRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
+import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
 
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class AIMessageHelper {
 
     private final AIConversationRepository conversationRepository;
+    private final AIMessageRepository aiMessageRepository;
 
     /**
      * Dùng cho:
@@ -62,6 +65,15 @@ public class AIMessageHelper {
         }
     }
 
+    public void validateMessageId(Long messageId) {
+
+        if (messageId == null) {
+            throw new ConversationException(
+                    ErrorCode.MESSAGE_ID_REQUIRED
+            );
+        }
+    }
+
     /**
      * Dùng cho:
      * - AIMessageService.sendMessage()
@@ -75,5 +87,25 @@ public class AIMessageHelper {
                         new ConversationException(
                                 ErrorCode.CONVERSATION_NOT_FOUND
                         ));
+    }
+
+    /**
+     * Dùng cho:
+     * - AIMessageService.getMessage()
+     */
+    public AIMessage getMessageOrThrow(
+            Long conversationId,
+            Long messageId
+    ) {
+
+        validateMessageId(messageId);
+
+        return aiMessageRepository
+                .findByIdAndConversationId(messageId, conversationId)
+                .orElseThrow(() ->
+                        new ConversationException(
+                                ErrorCode.MESSAGE_NOT_FOUND
+                        )
+                );
     }
 }

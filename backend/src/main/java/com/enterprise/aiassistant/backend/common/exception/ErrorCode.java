@@ -373,12 +373,12 @@ public enum ErrorCode {
     // ===================== AI Conversation =====================
 
     CONVERSATION_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
+            NOT_FOUND,
             "Conversation not found"
     ),
 
     DOCUMENT_NOT_ATTACHED_TO_CONVERSATION(
-            HttpStatus.BAD_REQUEST,
+            BAD_REQUEST,
             "Document is not attached to the conversation"
     ),
 
@@ -396,6 +396,16 @@ public enum ErrorCode {
     MESSAGE_CONTENT_TOO_LONG(
             BAD_REQUEST,
             "Message content exceeds maximum length"
+    ),
+
+    MESSAGE_ID_REQUIRED(
+            BAD_REQUEST,
+            "Message ID is required"
+    ),
+
+    MESSAGE_NOT_FOUND(
+            NOT_FOUND,
+            "Message not found"
     );
 
     private final HttpStatus status;

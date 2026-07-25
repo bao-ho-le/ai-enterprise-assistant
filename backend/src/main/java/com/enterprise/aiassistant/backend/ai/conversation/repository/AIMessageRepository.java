@@ -19,32 +19,8 @@ public interface AIMessageRepository extends JpaRepository<AIMessage, Long> {
             Pageable pageable
     );
 
-    /**
-     * Lấy message cuối cùng của conversation.
-     */
-    Optional<AIMessage> findFirstByConversationIdOrderByCreatedAtDesc(
-            Long conversationId
-    );
-
-    /**
-     * Lấy message cuối cùng theo role.
-     */
-    Optional<AIMessage> findFirstByConversationIdAndRoleOrderByCreatedAtDesc(
-            Long conversationId,
-            AIMessageRole role
-    );
-
-    /**
-     * Kiểm tra conversation có message hay chưa.
-     */
-    boolean existsByConversationId(
-            Long conversationId
-    );
-
-    /**
-     * Đếm số message trong conversation.
-     */
-    long countByConversationId(
+    Optional<AIMessage> findByIdAndConversationId(
+            Long id,
             Long conversationId
     );
 }

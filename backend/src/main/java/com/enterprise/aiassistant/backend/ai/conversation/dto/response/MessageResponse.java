@@ -12,7 +12,6 @@ public class MessageResponse {
 
     private AIMessageResponse assistantMessage;
 
-    private List<MessageSourceResponse> sources;
 
 
 }

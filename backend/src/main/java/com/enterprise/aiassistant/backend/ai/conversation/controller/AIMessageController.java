@@ -2,6 +2,7 @@ package com.enterprise.aiassistant.backend.ai.conversation.controller;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.SendMessageRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.AIMessageResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.response.MessageDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.MessageResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.service.AIMessageService;
 import jakarta.validation.Valid;
@@ -40,5 +41,13 @@ public class AIMessageController {
                 conversationId,
                 pageable
         );
+    }
+
+    @GetMapping("/{messageId}")
+    public MessageDetailResponse getMessageDetail(
+            @PathVariable Long conversationId,
+            @PathVariable Long messageId
+    ) {
+        return messageService.getMessageDetail(conversationId, messageId);
     }
 }

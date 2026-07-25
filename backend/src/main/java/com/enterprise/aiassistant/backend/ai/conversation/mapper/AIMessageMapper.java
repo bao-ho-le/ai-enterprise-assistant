@@ -1,6 +1,7 @@
 package com.enterprise.aiassistant.backend.ai.conversation.mapper;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.AIMessageResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.response.MessageDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.MessageResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.MessageSourceResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
@@ -57,8 +58,7 @@ public class AIMessageMapper {
      */
     public MessageResponse toMessageResponse(
             AIMessage userMessage,
-            AIMessage assistantMessage,
-            List<AIMessageSource> sources
+            AIMessage assistantMessage
     ) {
 
         return MessageResponse.builder()
@@ -67,11 +67,6 @@ public class AIMessageMapper {
                         assistantMessage == null
                                 ? null
                                 : toResponse(assistantMessage)
-                )
-                .sources(
-                        sources == null
-                                ? List.of()
-                                : toSourceResponses(sources)
                 )
                 .build();
     }
@@ -89,6 +84,20 @@ public class AIMessageMapper {
                 .conversation(conversation)
                 .role(role)
                 .content(content.trim())
+                .build();
+    }
+
+    public MessageDetailResponse toDetailResponse(
+            AIMessage message,
+            List<AIMessageSource> sources
+    ) {
+
+        return MessageDetailResponse.builder()
+                .id(message.getId())
+                .role(message.getRole())
+                .content(message.getContent())
+                .createdAt(message.getCreatedAt())
+                .sources(toSourceResponses(sources))
                 .build();
     }
 }
