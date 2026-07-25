@@ -1,10 +1,10 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-export default function Pagination({ number, totalPages, totalElements, shown, onPrev, onNext }) {
+export default function Pagination({ number, totalPages, totalElements, shown, onPrev, onNext, itemLabel = "documents" }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-t border-border-subtle bg-bg-secondary">
       <p className="text-sm text-text-muted">
-        Showing {shown} of {totalElements} documents
+        Showing {shown} of {totalElements} {itemLabel}
       </p>
       <div className="flex items-center gap-2">
         <button
