@@ -11,16 +11,16 @@ import java.util.Optional;
 
 public interface AIMessageRepository extends JpaRepository<AIMessage, Long> {
 
-    /**
-     * Lấy toàn bộ message theo thứ tự
-     */
+    // Lấy toàn bộ message theo thứ tự thời gian tăng dần
     Slice<AIMessage> findByConversationIdOrderByCreatedAtAsc(
             Long conversationId,
             Pageable pageable
     );
 
     Optional<AIMessage> findByIdAndConversationId(
-            Long id,
+            Long messageId,
             Long conversationId
     );
+
+    void deleteByConversationId(Long conversationId);
 }

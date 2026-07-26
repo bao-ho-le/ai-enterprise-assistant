@@ -12,11 +12,24 @@ import com.enterprise.aiassistant.backend.ai.conversation.helper.ConversationHel
 import com.enterprise.aiassistant.backend.ai.conversation.mapper.ConversationMapper;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
+import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
+import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageSourceRepository;
+import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
+import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
+import com.enterprise.aiassistant.backend.generated.dto.response.GeneratedContentResponse;
+import com.enterprise.aiassistant.backend.generated.mapper.GeneratedMapper;
+import com.enterprise.aiassistant.backend.generated.repository.GeneratedContentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -27,13 +40,25 @@ public class AIConversationServiceImpl implements AIConversationService {
 
     private final AIConversationDocumentRepository conversationDocumentRepository;
 
+    private final AIMessageRepository messageRepository;
+
+    private final AIMessageSourceRepository messageSourceRepository;
+
+    private final DocumentVersionRepository documentVersionRepository;
+
+    private final GeneratedContentRepository generatedContentRepository;
+
     private final ConversationMapper conversationMapper;
+
+    private final GeneratedMapper generatedMapper;
 
     private final ConversationHelper conversationHelper;
 
     @Override
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request) {
+
+        validateCreateConversationRequest(request);
 
         AIConversation conversation = conversationMapper.toEntity(request);
         conversationRepository.save(conversation);
@@ -43,9 +68,9 @@ public class AIConversationServiceImpl implements AIConversationService {
 
     @Override
     @Transactional
-    public ConversationResponse updateConversation(Long id, UpdateConversationRequest request) {
+    public ConversationResponse updateConversation(Long conversationId, UpdateConversationRequest request) {
 
-        AIConversation conversation = conversationHelper.getConversationOrThrow(id);
+        AIConversation conversation = getActiveConversationOrThrow(conversationId);
 
         conversation.setTitle(request.getTitle());
         conversationRepository.save(conversation);
@@ -55,27 +80,45 @@ public class AIConversationServiceImpl implements AIConversationService {
 
     @Override
     @Transactional
-    public void deleteConversation(Long id) {
+    public void softDeleteConversation(Long conversationId) {
 
-        AIConversation conversation = conversationHelper.getConversationOrThrow(id);
+        AIConversation conversation = getActiveConversationOrThrow(conversationId);
 
-        conversationRepository.deleteMessagesByConversationId(id);
-        conversationRepository.deleteGeneratedContentByConversationId(id);
-        conversationDocumentRepository.deleteByAiConversationId(id);
+        conversation.setDeleted(true);
+        conversation.setDeletedAt(LocalDateTime.now());
+        conversationRepository.save(conversation);
+    }
+
+    @Override
+    @Transactional
+    public void hardDeleteConversation(Long conversationId) {
+
+        // Hard delete must reach conversations already soft-deleted too, so no deletedFalse filter here.
+        AIConversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+        messageSourceRepository.deleteByMessage_ConversationId(conversationId);
+        messageRepository.deleteByConversationId(conversationId);
+        conversationDocumentRepository.deleteByAiConversationId(conversationId);
+        generatedContentRepository.deleteByAiConversationId(conversationId);
         conversationRepository.delete(conversation);
     }
 
     @Override
     @Transactional
-    public ConversationDetailResponse attachDocuments(Long id, AttachDocumentsRequest request) {
+    public ConversationDetailResponse attachDocuments(Long conversationId, AttachDocumentsRequest request) {
 
-        AIConversation conversation = conversationHelper.getConversationOrThrow(id);
+        AIConversation conversation = getActiveConversationOrThrow(conversationId);
 
         List<Long> versionIds = request.getDocumentVersionIds().stream().distinct().toList();
-        List<DocumentVersion> versions = conversationHelper.getDocumentVersionsOrThrow(versionIds);
+        List<DocumentVersion> versions = documentVersionRepository.findAllById(versionIds);
+
+        if (versions.size() != versionIds.size()) {
+            throw new DocumentException(ErrorCode.DOCUMENT_VERSION_NOT_FOUND);
+        }
 
         List<Long> alreadyAttachedIds =
-                conversationDocumentRepository.findDocumentVersionIdsByAiConversationId(id);
+                conversationDocumentRepository.findDocumentVersionIdsByAiConversationId(conversationId);
 
         List<DocumentVersion> newVersions =
                 conversationHelper.filterNewVersions(versions, alreadyAttachedIds);
@@ -87,7 +130,7 @@ public class AIConversationServiceImpl implements AIConversationService {
         conversationDocumentRepository.saveAll(newLinks);
 
         List<AIConversationDocument> allLinks =
-                conversationDocumentRepository.findByAiConversationIdWithDocument(id);
+                conversationDocumentRepository.findByAiConversationIdWithDocument(conversationId);
 
         return conversationMapper.toDetailResponse(conversation, allLinks);
     }
@@ -96,7 +139,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional(readOnly = true)
     public List<ConversationDocumentResponse> getConversationDocuments(Long conversationId) {
 
-                conversationHelper.getConversationOrThrow(conversationId);
+        getActiveConversationOrThrow(conversationId);
 
         return conversationDocumentRepository
                 .findByAiConversationIdWithDocument(conversationId)
@@ -109,12 +152,39 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public void removeDocument(Long conversationId, Long documentVersionId) {
 
-        conversationHelper.getConversationOrThrow(conversationId);
+        getActiveConversationOrThrow(conversationId);
 
-        AIConversationDocument conversationDocument = conversationHelper.validateAttachedDocument(
-                        conversationId,
-                        documentVersionId);
+        AIConversationDocument conversationDocument = conversationDocumentRepository
+                .findByAiConversationIdAndDocumentVersionId(conversationId, documentVersionId)
+                .orElseThrow(() -> new ConversationException(ErrorCode.DOCUMENT_NOT_ATTACHED_TO_CONVERSATION));
 
         conversationDocumentRepository.delete(conversationDocument);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Slice<GeneratedContentResponse> getConversationGeneratedContents(
+            Long conversationId,
+            Pageable pageable
+    ) {
+
+        conversationHelper.validatePageable(pageable);
+        getActiveConversationOrThrow(conversationId);
+
+        return generatedContentRepository
+                .findByAiConversationIdOrderByCreatedAtDesc(conversationId, pageable)
+                .map(generatedMapper::toGeneratedContentResponse);
+    }
+
+    private AIConversation getActiveConversationOrThrow(Long conversationId) {
+        return conversationRepository.findByIdAndDeletedFalse(conversationId)
+                .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
+    }
+
+    private void validateCreateConversationRequest(CreateConversationRequest request) {
+        if (request == null || request.getTitle() == null || request.getTitle().isBlank()
+                || request.getConversationType() == null) {
+            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
+        }
     }
 }

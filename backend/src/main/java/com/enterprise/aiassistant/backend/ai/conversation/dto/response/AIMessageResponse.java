@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Builder
@@ -18,6 +17,4 @@ public class AIMessageResponse {
     private String content;
 
     private LocalDateTime createdAt;
-
-    private List<MessageSourceResponse> sources;
 }

@@ -18,7 +18,8 @@ public class ConversationException extends BusinessException {
     ){
         super(
                 errorCode,
-                errorCode.getMessage()
+                errorCode.getMessage(),
+                cause
         );
     }
 

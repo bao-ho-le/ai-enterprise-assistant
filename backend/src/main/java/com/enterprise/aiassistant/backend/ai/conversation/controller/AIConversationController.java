@@ -7,8 +7,12 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.response.Conversat
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationDocumentResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.service.AIConversationService;
+import com.enterprise.aiassistant.backend.generated.dto.response.GeneratedContentResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,26 +32,32 @@ public class AIConversationController {
         return ResponseEntity.ok(conversationService.createConversation(request));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{conversationId}")
     public ResponseEntity<ConversationResponse> updateConversation(
-            @PathVariable Long id,
+            @PathVariable Long conversationId,
             @Valid @RequestBody UpdateConversationRequest request
     ) {
-        return ResponseEntity.ok(conversationService.updateConversation(id, request));
+        return ResponseEntity.ok(conversationService.updateConversation(conversationId, request));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteConversation(@PathVariable Long id) {
-        conversationService.deleteConversation(id);
+    @DeleteMapping("/{conversationId}")
+    public ResponseEntity<Void> softDeleteConversation(@PathVariable Long conversationId) {
+        conversationService.softDeleteConversation(conversationId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/documents")
+    @DeleteMapping("/{conversationId}/hard")
+    public ResponseEntity<Void> hardDeleteConversation(@PathVariable Long conversationId) {
+        conversationService.hardDeleteConversation(conversationId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{conversationId}/documents")
     public ResponseEntity<ConversationDetailResponse> attachDocuments(
-            @PathVariable Long id,
+            @PathVariable Long conversationId,
             @Valid @RequestBody AttachDocumentsRequest request
     ) {
-        return ResponseEntity.ok(conversationService.attachDocuments(id, request));
+        return ResponseEntity.ok(conversationService.attachDocuments(conversationId, request));
     }
 
     @GetMapping("/{conversationId}/documents")
@@ -59,5 +69,22 @@ public class AIConversationController {
         );
     }
 
+    @DeleteMapping("/{conversationId}/documents/{documentVersionId}")
+    public ResponseEntity<Void> removeDocument(
+            @PathVariable Long conversationId,
+            @PathVariable Long documentVersionId
+    ) {
+        conversationService.removeDocument(conversationId, documentVersionId);
+        return ResponseEntity.noContent().build();
+    }
 
+    @GetMapping("/{conversationId}/generated-content")
+    public ResponseEntity<Slice<GeneratedContentResponse>> getConversationGeneratedContents(
+            @PathVariable Long conversationId,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                conversationService.getConversationGeneratedContents(conversationId, pageable)
+        );
+    }
 }

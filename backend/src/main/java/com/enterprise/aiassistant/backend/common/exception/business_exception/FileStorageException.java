@@ -17,7 +17,8 @@ public class FileStorageException extends BusinessException {
     ){
         super(
                 errorCode,
-                errorCode.getMessage()
+                errorCode.getMessage(),
+                cause
         );
     }
 

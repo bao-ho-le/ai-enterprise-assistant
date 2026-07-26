@@ -1,43 +1,17 @@
 package com.enterprise.aiassistant.backend.ai.conversation.helper;
 
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
-import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
-import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
-import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
-import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-@RequiredArgsConstructor
 public class ConversationHelper {
 
-    private final AIConversationRepository conversationRepository;
-
-    private final DocumentVersionRepository documentVersionRepository;
-
-    private final AIConversationDocumentRepository aiConversationDocumentRepository;
-
-    public AIConversation getConversationOrThrow(Long id) {
-        return conversationRepository.findById(id)
-                .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
-    }
-
-    public List<DocumentVersion> getDocumentVersionsOrThrow(List<Long> documentVersionIds) {
-        List<DocumentVersion> versions = documentVersionRepository.findAllById(documentVersionIds);
-
-        if (versions.size() != documentVersionIds.size()) {
-            throw new DocumentException(ErrorCode.DOCUMENT_VERSION_NOT_FOUND);
-        }
-
-        return versions;
-    }
+    private static final int MAX_PAGE_SIZE = 50;
 
     public List<DocumentVersion> filterNewVersions(
             List<DocumentVersion> versions,
@@ -48,16 +22,17 @@ public class ConversationHelper {
                 .toList();
     }
 
-    public AIConversationDocument validateAttachedDocument(
-            Long conversationId,
-            Long documentVersionId) {
+    public void validatePageable(Pageable pageable) {
+        if (pageable == null) {
+            throw new ConversationException(ErrorCode.PAGEABLE_REQUIRED);
+        }
 
-         return aiConversationDocumentRepository.findByAiConversationIdAndDocumentVersionId(
-                        conversationId,
-                        documentVersionId)
-                .orElseThrow(() -> new ConversationException(
-                        ErrorCode.DOCUMENT_NOT_ATTACHED_TO_CONVERSATION));
+        if (pageable.getPageNumber() < 0) {
+            throw new ConversationException(ErrorCode.PAGE_NUMBER_INVALID);
+        }
+
+        if (pageable.getPageSize() <= 0 || pageable.getPageSize() > MAX_PAGE_SIZE) {
+            throw new ConversationException(ErrorCode.PAGE_SIZE_INVALID);
+        }
     }
-
-
 }

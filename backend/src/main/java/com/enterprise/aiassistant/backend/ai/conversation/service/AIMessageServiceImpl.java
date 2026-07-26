@@ -14,22 +14,30 @@ import com.enterprise.aiassistant.backend.ai.conversation.mapper.AIMessageMapper
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageSourceRepository;
+import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
+import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
+import com.enterprise.aiassistant.backend.document.repository.DocumentChunkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AIMessageServiceImpl implements AIMessageService {
 
     private final AIConversationRepository conversationRepository;
-    private final AIMessageRepository aiMessageRepository;
     private final AIMessageRepository messageRepository;
-    private final AIMessageSourceRepository aiMessageSourceRepository;
+    private final AIMessageSourceRepository messageSourceRepository;
+    private final DocumentChunkRepository documentChunkRepository;
 
     private final AIMessageMapper messageMapper;
     private final AIMessageHelper messageHelper;
@@ -44,7 +52,7 @@ public class AIMessageServiceImpl implements AIMessageService {
 
         messageHelper.validateRequest(request);
 
-        AIConversation conversation = conversationHelper.getConversationOrThrow(conversationId);
+        AIConversation conversation = getConversationOrThrow(conversationId);
 
         AIMessage userMessage = messageMapper.toMessage(conversation, AIMessageRole.USER, request.getContent());
 
@@ -60,10 +68,11 @@ public class AIMessageServiceImpl implements AIMessageService {
             Pageable pageable
     ) {
 
-        conversationHelper.getConversationOrThrow(conversationId);
+        conversationHelper.validatePageable(pageable);
+        getConversationOrThrow(conversationId);
 
         Slice<AIMessage> messages =
-                aiMessageRepository.findByConversationIdOrderByCreatedAtAsc(
+                messageRepository.findByConversationIdOrderByCreatedAtAsc(
                         conversationId,
                         pageable
                 );
@@ -78,23 +87,43 @@ public class AIMessageServiceImpl implements AIMessageService {
             Long messageId
     ) {
 
-        conversationHelper.getConversationOrThrow(conversationId);
+        getConversationOrThrow(conversationId);
 
-        AIMessage message =
-                messageHelper.getMessageOrThrow(
-                        conversationId,
-                        messageId
-                );
+        AIMessage message = getMessageOrThrow(conversationId, messageId);
 
         List<AIMessageSource> sources =
-                aiMessageSourceRepository
-                        .findByMessageIdOrderByIdAsc(
-                                messageId
-                        );
+                messageSourceRepository.findByMessageIdOrderByIdAsc(messageId);
 
-        return messageMapper.toDetailResponse(
-                message,
-                sources
-        );
+        Map<Long, DocumentChunk> chunksById = loadChunksById(sources);
+
+        return messageMapper.toDetailResponse(message, sources, chunksById);
+    }
+
+    private Map<Long, DocumentChunk> loadChunksById(List<AIMessageSource> sources) {
+
+        List<Long> chunkIds = sources.stream().map(AIMessageSource::getChunkId).distinct().toList();
+
+        if (chunkIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return documentChunkRepository.findAllById(chunkIds).stream()
+                .collect(Collectors.toMap(DocumentChunk::getId, Function.identity()));
+    }
+
+    private AIConversation getConversationOrThrow(Long conversationId) {
+
+        messageHelper.validateConversationId(conversationId);
+
+        return conversationRepository.findByIdAndDeletedFalse(conversationId)
+                .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
+    }
+
+    private AIMessage getMessageOrThrow(Long conversationId, Long messageId) {
+
+        messageHelper.validateMessageId(messageId);
+
+        return messageRepository.findByIdAndConversationId(messageId, conversationId)
+                .orElseThrow(() -> new ConversationException(ErrorCode.MESSAGE_NOT_FOUND));
     }
 }

@@ -46,16 +46,7 @@ public class GeneratedContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /*
-     * Tạm thời lưu ID để module generated chưa phụ thuộc
-     * trực tiếp vào AIConversation entity.
-     *
-     * Sau khi AIConversation được triển khai, có thể đổi thành:
-     *
-     * @ManyToOne(fetch = FetchType.LAZY, optional = false)
-     * @JoinColumn(name = "ai_conversation_id", nullable = false)
-     * private AIConversation aiConversation;
-     */
+    // Lưu raw ID thay vì @ManyToOne để tránh phụ thuộc trực tiếp vào AIConversation entity
     @Column(name = "ai_conversation_id", nullable = false)
     private Long aiConversationId;
 

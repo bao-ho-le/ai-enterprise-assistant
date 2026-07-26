@@ -8,16 +8,15 @@ import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessageSource;
 import com.enterprise.aiassistant.backend.ai.conversation.enums.AIMessageRole;
+import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class AIMessageMapper {
 
-    /**
-     * AIMessage -> AIMessageResponse
-     */
     public AIMessageResponse toResponse(AIMessage message) {
 
         return AIMessageResponse.builder()
@@ -28,34 +27,31 @@ public class AIMessageMapper {
                 .build();
     }
 
-    /**
-     * AIMessageSource -> MessageSourceResponse
-     */
     public MessageSourceResponse toSourceResponse(
-            AIMessageSource source
+            AIMessageSource source,
+            Map<Long, DocumentChunk> chunksById
     ) {
+
+        DocumentChunk chunk = chunksById.get(source.getChunkId());
 
         return MessageSourceResponse.builder()
                 .chunkId(source.getChunkId())
+                .documentTitle(chunk == null ? null : chunk.getDocumentVersion().getDocument().getTitle())
+                .pageNumber(chunk == null ? null : chunk.getPageNumber())
                 .score(source.getScore())
                 .build();
     }
 
-    /**
-     * List<AIMessageSource> -> List<MessageSourceResponse>
-     */
     public List<MessageSourceResponse> toSourceResponses(
-            List<AIMessageSource> sources
+            List<AIMessageSource> sources,
+            Map<Long, DocumentChunk> chunksById
     ) {
 
         return sources.stream()
-                .map(this::toSourceResponse)
+                .map(source -> toSourceResponse(source, chunksById))
                 .toList();
     }
 
-    /**
-     * Build response cho POST /messages
-     */
     public MessageResponse toMessageResponse(
             AIMessage userMessage,
             AIMessage assistantMessage
@@ -71,9 +67,6 @@ public class AIMessageMapper {
                 .build();
     }
 
-    /**
-     * Build message cho sendMessage
-     */
     public AIMessage toMessage(
             AIConversation conversation,
             AIMessageRole role,
@@ -89,7 +82,8 @@ public class AIMessageMapper {
 
     public MessageDetailResponse toDetailResponse(
             AIMessage message,
-            List<AIMessageSource> sources
+            List<AIMessageSource> sources,
+            Map<Long, DocumentChunk> chunksById
     ) {
 
         return MessageDetailResponse.builder()
@@ -97,7 +91,7 @@ public class AIMessageMapper {
                 .role(message.getRole())
                 .content(message.getContent())
                 .createdAt(message.getCreatedAt())
-                .sources(toSourceResponses(sources))
+                .sources(toSourceResponses(sources, chunksById))
                 .build();
     }
 }

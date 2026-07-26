@@ -28,28 +28,19 @@ public class AIMessageSource {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Assistant message sử dụng source này.
-     */
+    // Assistant message sử dụng source này.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "ai_message_id", nullable = false)
     private AIMessage message;
 
-    /**
-     * Document version chứa chunk được retrieve.
-     */
+    // Document version chứa chunk được retrieve.
     @Column(name = "document_version_id", nullable = false)
     private Long documentVersionId;
 
-    /**
-     * Chunk được retrieve.
-     */
+    // Chunk được retrieve.
     @Column(name = "chunk_id", nullable = false)
     private Long chunkId;
 
-    /**
-     * Similarity score của retriever.
-     */
     @Column(name = "score")
     private Double score;
 }

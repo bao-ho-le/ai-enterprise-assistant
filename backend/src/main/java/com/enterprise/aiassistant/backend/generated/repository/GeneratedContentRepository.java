@@ -26,6 +26,11 @@ public interface GeneratedContentRepository
             Long aiConversationId
     );
 
+    Slice<GeneratedContent> findByAiConversationIdOrderByCreatedAtDesc(
+            Long aiConversationId,
+            Pageable pageable
+    );
+
     Optional<GeneratedContent>
     findFirstByAiConversationIdAndGeneratedTypeOrderByCreatedAtDesc(
             Long aiConversationId,
@@ -35,5 +40,7 @@ public interface GeneratedContentRepository
     boolean existsByAiConversationId(
             Long aiConversationId
     );
+
+    void deleteByAiConversationId(Long aiConversationId);
 }
 

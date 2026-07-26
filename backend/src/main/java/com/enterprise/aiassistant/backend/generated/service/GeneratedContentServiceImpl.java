@@ -1,7 +1,7 @@
-
 package com.enterprise.aiassistant.backend.generated.service;
 
-
+import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.GeneratedException;
 import com.enterprise.aiassistant.backend.generated.dto.request.UpdateGeneratedContentRequest;
 import com.enterprise.aiassistant.backend.generated.dto.response.GeneratedContentDetailResponse;
 import com.enterprise.aiassistant.backend.generated.dto.response.GeneratedContentResponse;
@@ -30,32 +30,21 @@ public class GeneratedContentServiceImpl implements GeneratedContentService {
             GeneratedDocumentType generatedType,
             Pageable pageable
     ) {
-        Slice<GeneratedContent> generatedContents;
-
         generatedHelper.validatePageable(pageable);
 
-        if (generatedType == null) {
-            generatedContents =
-                    generatedContentRepository
-                            .findAllByOrderByCreatedAtDesc(pageable);
-        } else {
-            generatedContents =
-                    generatedContentRepository
-                            .findByGeneratedTypeOrderByCreatedAtDesc(
-                                    generatedType,
-                                    pageable
-                            );
-        }
+        Slice<GeneratedContent> generatedContents = generatedType == null
+                ? generatedContentRepository.findAllByOrderByCreatedAtDesc(pageable)
+                : generatedContentRepository.findByGeneratedTypeOrderByCreatedAtDesc(generatedType, pageable);
 
         return generatedContents.map(generatedMapper::toGeneratedContentResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public GeneratedContentDetailResponse getGeneratedContentById(Long id) {
-        generatedHelper.validateGeneratedContentId(id);
+    public GeneratedContentDetailResponse getGeneratedContentById(Long generatedContentId) {
+        generatedHelper.validateGeneratedContentId(generatedContentId);
 
-        GeneratedContent generatedContent = generatedHelper.findGeneratedContentById(id);
+        GeneratedContent generatedContent = getGeneratedContentOrThrow(generatedContentId);
 
         return generatedMapper.toGeneratedContentDetailResponse(generatedContent);
     }
@@ -63,13 +52,13 @@ public class GeneratedContentServiceImpl implements GeneratedContentService {
     @Override
     @Transactional
     public GeneratedContentDetailResponse updateGeneratedContent(
-            Long id,
+            Long generatedContentId,
             UpdateGeneratedContentRequest request
     ) {
-        generatedHelper.validateGeneratedContentId(id);
+        generatedHelper.validateGeneratedContentId(generatedContentId);
         generatedHelper.validateUpdateRequest(request);
 
-        GeneratedContent generatedContent = generatedHelper.findGeneratedContentById(id);
+        GeneratedContent generatedContent = getGeneratedContentOrThrow(generatedContentId);
 
         generatedContent.setTitle(request.getTitle().trim());
         generatedContent.setContent(request.getContent().trim());
@@ -85,8 +74,6 @@ public class GeneratedContentServiceImpl implements GeneratedContentService {
             String title,
             String content
     ) {
-
-
         generatedHelper.validateCreateData(
                 aiConversationId,
                 generatedType,
@@ -101,13 +88,13 @@ public class GeneratedContentServiceImpl implements GeneratedContentService {
                 content
         );
 
-        GeneratedContent savedContent =
-                generatedContentRepository.save(generatedContent);
+        GeneratedContent savedContent = generatedContentRepository.save(generatedContent);
 
         return generatedMapper.toGeneratedContentDetailResponse(savedContent);
     }
 
-
-
+    private GeneratedContent getGeneratedContentOrThrow(Long generatedContentId) {
+        return generatedContentRepository.findById(generatedContentId)
+                .orElseThrow(() -> new GeneratedException(ErrorCode.GENERATED_CONTENT_NOT_FOUND));
+    }
 }
-

@@ -18,7 +18,8 @@ public class DocumentException extends BusinessException {
     ){
         super(
                 errorCode,
-                errorCode.getMessage()
+                errorCode.getMessage(),
+                cause
         );
     }
 

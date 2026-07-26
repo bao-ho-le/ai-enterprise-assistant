@@ -8,5 +8,9 @@ import lombok.Getter;
 public class MessageSourceResponse {
     private Long chunkId;
 
+    private String documentTitle;
+
+    private Integer pageNumber;
+
     private Double score;
 }

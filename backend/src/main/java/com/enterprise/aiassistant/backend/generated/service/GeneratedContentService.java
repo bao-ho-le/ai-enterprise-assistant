@@ -1,4 +1,3 @@
-
 package com.enterprise.aiassistant.backend.generated.service;
 
 import com.enterprise.aiassistant.backend.generated.dto.request.UpdateGeneratedContentRequest;
@@ -15,10 +14,10 @@ public interface GeneratedContentService {
             Pageable pageable
     );
 
-    GeneratedContentDetailResponse getGeneratedContentById(Long id);
+    GeneratedContentDetailResponse getGeneratedContentById(Long generatedContentId);
 
     GeneratedContentDetailResponse updateGeneratedContent(
-            Long id,
+            Long generatedContentId,
             UpdateGeneratedContentRequest request
     );
 
@@ -29,4 +28,3 @@ public interface GeneratedContentService {
             String content
     );
 }
-
