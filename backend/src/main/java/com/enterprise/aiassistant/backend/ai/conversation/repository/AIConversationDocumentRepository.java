@@ -9,8 +9,6 @@ import java.util.List;
 
 public interface AIConversationDocumentRepository extends JpaRepository<AIConversationDocument, Long> {
 
-    void deleteByAiConversationId(Long aiConversationId);
-
     @Query("SELECT acd.documentVersion.id FROM AIConversationDocument acd WHERE acd.aiConversation.id = :conversationId")
     List<Long> findDocumentVersionIdsByAiConversationId(@Param("conversationId") Long conversationId);
 

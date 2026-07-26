@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class UpdateConversationRequest {
+public class RenameConversationRequest {
 
     @NotBlank(message = "Title is required")
     private String title;

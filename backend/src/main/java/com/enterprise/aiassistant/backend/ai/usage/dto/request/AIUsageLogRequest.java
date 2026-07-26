@@ -18,6 +18,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AIUsageLogRequest {
 
+    // Optional: only set by callers running inside an AIConversation (generation/QA flows).
+    private Long conversationId;
+
+    private Long messageId;
+
     private ConversationType conversationType;
     private String model;
     private Integer inputTokens;

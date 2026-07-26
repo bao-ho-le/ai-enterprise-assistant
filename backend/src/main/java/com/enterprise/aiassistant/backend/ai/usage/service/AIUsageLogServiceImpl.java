@@ -14,6 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
+import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
+import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogFilterRequest;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
@@ -34,13 +38,23 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
     private final AIUsageLogMapper mapper;
     private final AIUsageLogRepository repository;
     private final AiUsageHelper aiUsageHelper;
+    private final AIConversationRepository conversationRepository;
+    private final AIMessageRepository messageRepository;
 
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logAiUsage(AIUsageLogRequest request) {
         aiUsageHelper.validateLogRequest(request);
-        AIUsageLog entity = mapper.toEntity(request);
+
+        AIConversation aiConversation = request.getConversationId() != null
+                ? conversationRepository.getReferenceById(request.getConversationId())
+                : null;
+        AIMessage aiMessage = request.getMessageId() != null
+                ? messageRepository.getReferenceById(request.getMessageId())
+                : null;
+
+        AIUsageLog entity = mapper.toEntity(request, aiConversation, aiMessage);
         repository.save(entity);
     }
 

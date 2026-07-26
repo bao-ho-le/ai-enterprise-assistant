@@ -2,7 +2,7 @@ package com.enterprise.aiassistant.backend.ai.conversation.controller;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.AttachDocumentsRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConversationRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.request.UpdateConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.service.AIConversationService;
@@ -25,25 +25,31 @@ public class AIConversationController {
         return ResponseEntity.ok(conversationService.createConversation(request));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<ConversationResponse> updateConversation(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateConversationRequest request
+    @PutMapping("/{conversationId}")
+    public ResponseEntity<ConversationResponse> renameConversation(
+            @PathVariable Long conversationId,
+            @Valid @RequestBody RenameConversationRequest request
     ) {
-        return ResponseEntity.ok(conversationService.updateConversation(id, request));
+        return ResponseEntity.ok(conversationService.renameConversation(conversationId, request));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteConversation(@PathVariable Long id) {
-        conversationService.deleteConversation(id);
+    @DeleteMapping("/{conversationId}")
+    public ResponseEntity<Void> softDeleteConversation(@PathVariable Long conversationId) {
+        conversationService.softDeleteConversation(conversationId);
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{id}/documents")
+    @DeleteMapping("/{conversationId}/hard")
+    public ResponseEntity<Void> hardDeleteConversation(@PathVariable Long conversationId) {
+        conversationService.hardDeleteConversation(conversationId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{conversationId}/documents")
     public ResponseEntity<ConversationDetailResponse> attachDocuments(
-            @PathVariable Long id,
+            @PathVariable Long conversationId,
             @Valid @RequestBody AttachDocumentsRequest request
     ) {
-        return ResponseEntity.ok(conversationService.attachDocuments(id, request));
+        return ResponseEntity.ok(conversationService.attachDocuments(conversationId, request));
     }
 }
