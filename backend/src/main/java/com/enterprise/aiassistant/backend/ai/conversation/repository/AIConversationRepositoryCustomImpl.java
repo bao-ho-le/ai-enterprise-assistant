@@ -2,6 +2,7 @@ package com.enterprise.aiassistant.backend.ai.conversation.repository;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.ConversationFilterRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.enums.ConversationStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -106,9 +107,13 @@ public class AIConversationRepositoryCustomImpl implements AIConversationReposit
             params.put("conversationType", filter.getConversationType());
         }
 
+        // No status filter given -> hide DELETED conversations by default instead of exposing everything.
         if (filter.getStatus() != null) {
             jpql.append(" AND c.status = :status");
             params.put("status", filter.getStatus());
+        } else {
+            jpql.append(" AND c.status = :status");
+            params.put("status", ConversationStatus.ACTIVE);
         }
 
         if (filter.getFromDate() != null) {

@@ -12,10 +12,7 @@ public class ConversationFilterRequest {
 
     private String keyword;
 
-    /**
-     * newest
-     * oldest
-     */
+    // Accepted values: "newest" or "oldest"
     private String sort;
 
     private ConversationType conversationType;

@@ -32,18 +32,19 @@ public class AIConversationController {
         return conversationService.getConversations(filter, pageable);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{conversationId}")
     public ConversationDetailResponse getConversationDetail(
-            @PathVariable Long id,
+            @PathVariable Long conversationId,
             @RequestParam(defaultValue = "20") int recentMessagesLimit
     ) {
-        return conversationService.getConversationDetail(id, recentMessagesLimit);
+        return conversationService.getConversationDetail(conversationId, recentMessagesLimit);
     }
-    @GetMapping("/{id}/messages")
+
+    @GetMapping("/{conversationId}/messages")
     public Page<MessageResponse> getConversationMessages(
-            @PathVariable Long id,
+            @PathVariable Long conversationId,
             @PageableDefault(page = 0, size = 20) Pageable pageable
     ) {
-        return conversationService.getConversationMessages(id, pageable);
+        return conversationService.getConversationMessages(conversationId, pageable);
     }
 }

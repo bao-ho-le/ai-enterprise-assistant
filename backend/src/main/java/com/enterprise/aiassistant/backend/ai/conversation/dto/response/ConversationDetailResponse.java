@@ -32,8 +32,8 @@ public class ConversationDetailResponse {
 
     private List<AttachedDocumentItem> documents;
 
-    // Chỉ chứa N message gần nhất (mặc định 20, chỉnh bằng query param `recentMessages`).
-    // Lấy đầy đủ + phân trang: gọi GET /ai-conversations/{id}/messages
+    // Chỉ chứa N message gần nhất (mặc định 20, chỉnh bằng query param `recentMessagesLimit`).
+    // Lấy đầy đủ + phân trang: gọi GET /ai-conversations/{conversationId}/messages
     private List<MessageResponse> recentMessages;
 
     private Long totalMessages;

@@ -8,6 +8,7 @@ import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessageSource;
+import com.enterprise.aiassistant.backend.ai.conversation.enums.ConversationStatus;
 import com.enterprise.aiassistant.backend.ai.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.ai.conversation.mapper.AIConversationMapper;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
@@ -76,7 +77,7 @@ public class AIConversationServiceImpl implements AIConversationService {
         conversationHelper.validateConversationId(conversationId);
         conversationHelper.validateRecentMessagesLimit(recentMessagesLimit);
 
-        AIConversation conversation = conversationRepository.findById(conversationId)
+        AIConversation conversation = conversationRepository.findByIdAndStatus(conversationId, ConversationStatus.ACTIVE)
                 .orElseThrow(() -> new AIConversationException(CONVERSATION_NOT_FOUND));
 
         List<AIConversationDocument> documents =
@@ -85,7 +86,7 @@ public class AIConversationServiceImpl implements AIConversationService {
         // Lấy N message gần nhất (giảm dần), rồi đảo lại thành thứ tự thời gian tăng dần để hiển thị.
         Page<AIMessage> recentPage = messageRepository.findByConversationIdOrderByCreatedAtDesc(
                 conversationId,
-                PageRequest.of(0, Math.max(recentMessagesLimit, 1))
+                PageRequest.of(0, recentMessagesLimit)
         );
 
         List<AIMessage> recentMessagesAsc = recentPage.getContent().stream()
@@ -124,7 +125,7 @@ public class AIConversationServiceImpl implements AIConversationService {
         conversationHelper.validateConversationId(conversationId);
         conversationHelper.validatePageable(pageable);
 
-        if (!conversationRepository.existsById(conversationId)) {
+        if (!conversationRepository.existsByIdAndStatus(conversationId, ConversationStatus.ACTIVE)) {
             throw new AIConversationException(CONVERSATION_NOT_FOUND);
         }
 
