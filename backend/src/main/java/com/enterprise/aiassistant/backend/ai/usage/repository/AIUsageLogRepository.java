@@ -2,16 +2,15 @@ package com.enterprise.aiassistant.backend.ai.usage.repository;
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AIUsageLogRepository
-        extends JpaRepository<AIUsageLog, Long>, JpaSpecificationExecutor<AIUsageLog> {
+        extends JpaRepository<AIUsageLog, Long>, AIUsageLogRepositoryCustom {
 
     long countByCreatedAtGreaterThanEqual(LocalDateTime from);
 
@@ -37,10 +36,13 @@ public interface AIUsageLogRepository
     @Query("SELECT DISTINCT a.model FROM AIUsageLog a ORDER BY a.model")
     List<String> findDistinctModels();
 
-    // AIUsageLog has no back-reference to AIConversation; set the FK directly instead of
-    // loading conversation.getUsageLogs() (would pull every past log just to append one row).
-    @Modifying
-    @Query(value = "UPDATE ai_usage_logs SET ai_conversation_id = :conversationId WHERE id = :usageLogId",
-            nativeQuery = true)
-    void attachConversation(@Param("usageLogId") Long usageLogId, @Param("conversationId") Long conversationId);
+    // === Dùng cho GET /ai-conversations/{id} — tổng hợp token/cost theo conversation ===
+    @Query("SELECT COALESCE(SUM(u.totalTokens), 0) FROM AIUsageLog u WHERE u.aiConversation.id = :conversationId")
+    Long sumTotalTokensByConversationId(@Param("conversationId") Long conversationId);
+
+    @Query("SELECT COALESCE(SUM(u.estimatedCost), 0) FROM AIUsageLog u WHERE u.aiConversation.id = :conversationId")
+    BigDecimal sumEstimatedCostByConversationId(@Param("conversationId") Long conversationId);
+
+    // No cascade from AIConversation anymore (unidirectional, child-owned) - hard delete needs this explicitly.
+    void deleteByAiConversationId(Long aiConversationId);
 }

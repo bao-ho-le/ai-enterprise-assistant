@@ -302,11 +302,73 @@ public enum ErrorCode {
         "days must be between 1 and 90"
     ),
 
-    // ===================== AI Conversation =====================
+    // ===================== Conversation =====================
 
     CONVERSATION_NOT_FOUND(
-            HttpStatus.NOT_FOUND,
+            NOT_FOUND,
             "Conversation not found"
+    ),
+
+    CONVERSATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "Conversation id is required"
+    ),
+
+    CONVERSATION_ID_INVALID(
+            BAD_REQUEST,
+            "Conversation id is invalid"
+    ),
+
+    RECENT_MESSAGES_LIMIT_INVALID(
+            BAD_REQUEST,
+            "recentMessagesLimit must be between 1 and 100"
+    ),
+
+    // ===================== Generated Content =====================
+
+    GENERATED_CONTENT_ID_REQUIRED(
+            BAD_REQUEST,
+            "Generated content id is required"
+    ),
+
+    GENERATED_CONTENT_ID_INVALID(
+            BAD_REQUEST,
+            "Generated content id is invalid"
+    ),
+
+    GENERATED_CONTENT_NOT_FOUND(
+            NOT_FOUND,
+            "Generated content not found"
+    ),
+
+    GENERATED_CONTENT_TYPE_REQUIRED(
+            BAD_REQUEST,
+            "Generated content type is required"
+    ),
+
+    GENERATED_CONTENT_TITLE_REQUIRED(
+            BAD_REQUEST,
+            "Generated content title is required"
+    ),
+
+    GENERATED_CONTENT_TITLE_TOO_LONG(
+            BAD_REQUEST,
+            "Generated content title exceeds maximum length"
+    ),
+
+    GENERATED_CONTENT_BODY_REQUIRED(
+            BAD_REQUEST,
+            "Generated content body is required"
+    ),
+
+    GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED(
+            BAD_REQUEST,
+            "Update generated content request is required"
+    ),
+
+    AI_CONVERSATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "AI conversation id is required"
     );
 
 

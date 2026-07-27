@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
+import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogFilterRequest;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
@@ -36,6 +38,7 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
     private final AIUsageLogMapper mapper;
     private final AIUsageLogRepository repository;
     private final AiUsageHelper aiUsageHelper;
+    private final AIConversationRepository conversationRepository;
     private final AIMessageRepository messageRepository;
 
 
@@ -44,22 +47,21 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
     public void logAiUsage(AIUsageLogRequest request) {
         aiUsageHelper.validateLogRequest(request);
 
+        AIConversation aiConversation = request.getConversationId() != null
+                ? conversationRepository.getReferenceById(request.getConversationId())
+                : null;
         AIMessage aiMessage = request.getMessageId() != null
                 ? messageRepository.getReferenceById(request.getMessageId())
                 : null;
 
-        AIUsageLog entity = mapper.toEntity(request, aiMessage);
+        AIUsageLog entity = mapper.toEntity(request, aiConversation, aiMessage);
         repository.save(entity);
-
-        if (request.getConversationId() != null) {
-            repository.attachConversation(entity.getId(), request.getConversationId());
-        }
     }
 
     @Override
     public Page<AIUsageLogResponse> getUsageLogs(AIUsageLogFilterRequest filter, Pageable pageable) {
         aiUsageHelper.validateFilter(filter);
-        return repository.findAll(aiUsageHelper.byFilter(filter), pageable)
+        return repository.filterUsageLogs(filter, pageable)
                 .map(mapper::toResponse);
     }
 
@@ -68,12 +70,8 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime startOfLast7Days = LocalDate.now().minusDays(6).atStartOfDay();
 
-        List<AIUsageLog> todayLogs = repository.findAll(
-                aiUsageHelper.byFilter(aiUsageHelper.fromDateFilter(startOfToday))
-        );
-        List<AIUsageLog> last7DayLogs = repository.findAll(
-                aiUsageHelper.byFilter(aiUsageHelper.fromDateFilter(startOfLast7Days))
-        );
+        List<AIUsageLog> todayLogs = repository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfToday));
+        List<AIUsageLog> last7DayLogs = repository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfLast7Days));
 
         return mapper.toSummaryResponse(todayLogs, last7DayLogs);
     }

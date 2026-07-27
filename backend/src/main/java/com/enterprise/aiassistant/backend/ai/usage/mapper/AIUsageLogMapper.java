@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
@@ -25,7 +26,7 @@ public class AIUsageLogMapper {
 
     private final AiUsageHelper usageHelpful;
 
-    public AIUsageLog toEntity(AIUsageLogRequest request, AIMessage aiMessage) {
+    public AIUsageLog toEntity(AIUsageLogRequest request, AIConversation aiConversation, AIMessage aiMessage) {
     Integer input = request.getInputTokens();
     Integer output = request.getOutputTokens();
 
@@ -33,6 +34,7 @@ public class AIUsageLogMapper {
     int outputTokens = output != null ? output : 0;
 
         return AIUsageLog.builder()
+                .aiConversation(aiConversation)
                 .aiMessage(aiMessage)
                 .conversationType(request.getConversationType())
                 .model(request.getModel())

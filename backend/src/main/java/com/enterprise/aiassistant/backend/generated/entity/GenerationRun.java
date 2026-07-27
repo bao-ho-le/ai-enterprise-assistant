@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.generated.entity;
 
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.generated.enums.GeneratedType;
 import com.enterprise.aiassistant.backend.generated.enums.GenerationStatus;
 import jakarta.persistence.*;
@@ -28,6 +29,14 @@ public class GenerationRun {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "ai_conversation_id", nullable = false)
+    private AIConversation aiConversation;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "generated_content_id")
+    private GeneratedContent generatedContent;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "generated_type", nullable = false)

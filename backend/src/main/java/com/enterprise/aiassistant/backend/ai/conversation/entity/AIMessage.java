@@ -6,14 +6,14 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(
         name = "ai_messages",
         indexes = {
-                @Index(name = "idx_ai_message_conversation_id", columnList = "ai_conversation_id")
+
+                @Index(name = "idx_ai_message_conversation_id", columnList = "ai_conversation_id"),
+                @Index(name = "idx_ai_message_created_at", columnList = "created_at")
         }
 )
 @Getter
@@ -27,6 +27,10 @@ public class AIMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "ai_conversation_id", nullable = false)
+    private AIConversation conversation;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AIMessageRole role;
@@ -38,7 +42,4 @@ public class AIMessage {
     @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "aiMessage", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<AIMessageSource> sources = new ArrayList<>();
 }

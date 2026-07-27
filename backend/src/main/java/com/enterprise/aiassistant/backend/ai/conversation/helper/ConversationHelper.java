@@ -4,8 +4,8 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.request.AttachDocu
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConversationRequest;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
-import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +25,7 @@ public class ConversationHelper {
 
     public void validateConversationId(Long conversationId) {
         if (conversationId == null || conversationId <= 0) {
-            throw new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND);
+            throw new AIConversationException(ErrorCode.CONVERSATION_NOT_FOUND);
         }
     }
 

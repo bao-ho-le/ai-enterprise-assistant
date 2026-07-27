@@ -1,15 +1,11 @@
 package com.enterprise.aiassistant.backend.ai.conversation.mapper;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConversationRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
-import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class ConversationMapper {
@@ -28,47 +24,20 @@ public class ConversationMapper {
                 .id(conversation.getId())
                 .title(conversation.getTitle())
                 .conversationType(conversation.getConversationType())
+                .status(conversation.getStatus())
                 .createdAt(conversation.getCreatedAt())
                 .updatedAt(conversation.getUpdatedAt())
                 .build();
     }
 
-    public AIConversationDocument toConversationDocument(DocumentVersion documentVersion) {
-
-        return AIConversationDocument.builder()
-                .documentVersion(documentVersion)
-                .build();
-    }
-
-    public ConversationDetailResponse toDetailResponse(
+    public AIConversationDocument toConversationDocument(
             AIConversation conversation,
-            List<AIConversationDocument> conversationDocuments
+            DocumentVersion documentVersion
     ) {
 
-        List<ConversationDetailResponse.DocumentInfo> documents = conversationDocuments.stream()
-                .map(this::toDocumentInfo)
-                .toList();
-
-        return ConversationDetailResponse.builder()
-                .id(conversation.getId())
-                .title(conversation.getTitle())
-                .conversationType(conversation.getConversationType())
-                .createdAt(conversation.getCreatedAt())
-                .updatedAt(conversation.getUpdatedAt())
-                .documents(documents)
+        return AIConversationDocument.builder()
+                .conversation(conversation)
+                .documentVersion(documentVersion)
                 .build();
-    }
-
-    private ConversationDetailResponse.DocumentInfo toDocumentInfo(AIConversationDocument conversationDocument) {
-
-        DocumentVersion version = conversationDocument.getDocumentVersion();
-        Document document = version.getDocument();
-
-        return new ConversationDetailResponse.DocumentInfo(
-                version.getId(),
-                document.getId(),
-                document.getTitle(),
-                version.getVersionNumber()
-        );
     }
 }

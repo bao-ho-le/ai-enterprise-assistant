@@ -9,13 +9,16 @@ import java.util.List;
 
 public interface AIConversationDocumentRepository extends JpaRepository<AIConversationDocument, Long> {
 
-    // AIConversationDocument no longer has a back-reference, so navigate the join from AIConversation.
-    @Query("SELECT acd.documentVersion.id FROM AIConversation c JOIN c.conversationDocuments acd WHERE c.id = :conversationId")
-    List<Long> findDocumentVersionIdsByAiConversationId(@Param("conversationId") Long conversationId);
+    @Query("SELECT acd.documentVersion.id FROM AIConversationDocument acd WHERE acd.conversation.id = :conversationId")
+    List<Long> findDocumentVersionIdsByConversationId(@Param("conversationId") Long conversationId);
 
-    @Query("SELECT acd FROM AIConversation c JOIN c.conversationDocuments acd " +
+    @Query("SELECT acd FROM AIConversationDocument acd " +
             "JOIN FETCH acd.documentVersion dv " +
             "JOIN FETCH dv.document " +
-            "WHERE c.id = :conversationId")
-    List<AIConversationDocument> findByAiConversationIdWithDocument(@Param("conversationId") Long conversationId);
+            "WHERE acd.conversation.id = :conversationId " +
+            "ORDER BY acd.createdAt ASC")
+    List<AIConversationDocument> findByConversationIdOrderByCreatedAtAsc(@Param("conversationId") Long conversationId);
+
+    // No cascade from AIConversation anymore (unidirectional, child-owned) - hard delete needs this explicitly.
+    void deleteByConversationId(Long conversationId);
 }
