@@ -9,7 +9,6 @@ import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessageSource;
 import com.enterprise.aiassistant.backend.ai.conversation.enums.AIMessageRole;
 import com.enterprise.aiassistant.backend.ai.conversation.helper.AIMessageHelper;
-import com.enterprise.aiassistant.backend.ai.conversation.helper.ConversationHelper;
 import com.enterprise.aiassistant.backend.ai.conversation.mapper.AIMessageMapper;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
@@ -41,7 +40,6 @@ public class AIMessageServiceImpl implements AIMessageService {
 
     private final AIMessageMapper messageMapper;
     private final AIMessageHelper messageHelper;
-    private final ConversationHelper conversationHelper;
 
     @Override
     @Transactional
@@ -68,7 +66,6 @@ public class AIMessageServiceImpl implements AIMessageService {
             Pageable pageable
     ) {
 
-        conversationHelper.validatePageable(pageable);
         getConversationOrThrow(conversationId);
 
         Slice<AIMessage> messages =

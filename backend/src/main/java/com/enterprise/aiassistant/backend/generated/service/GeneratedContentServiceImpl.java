@@ -30,8 +30,6 @@ public class GeneratedContentServiceImpl implements GeneratedContentService {
             GeneratedDocumentType generatedType,
             Pageable pageable
     ) {
-        generatedHelper.validatePageable(pageable);
-
         Slice<GeneratedContent> generatedContents = generatedType == null
                 ? generatedContentRepository.findAllByOrderByCreatedAtDesc(pageable)
                 : generatedContentRepository.findByGeneratedTypeOrderByCreatedAtDesc(generatedType, pageable);

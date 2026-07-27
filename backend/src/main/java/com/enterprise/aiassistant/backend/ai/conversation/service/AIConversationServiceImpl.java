@@ -15,7 +15,6 @@ import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversat
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageSourceRepository;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
-import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
@@ -58,7 +57,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request) {
 
-        validateCreateConversationRequest(request);
+        conversationHelper.validateCreateConversationRequest(request);
 
         AIConversation conversation = conversationMapper.toEntity(request);
         conversationRepository.save(conversation);
@@ -168,7 +167,6 @@ public class AIConversationServiceImpl implements AIConversationService {
             Pageable pageable
     ) {
 
-        conversationHelper.validatePageable(pageable);
         getActiveConversationOrThrow(conversationId);
 
         return generatedContentRepository
@@ -179,12 +177,5 @@ public class AIConversationServiceImpl implements AIConversationService {
     private AIConversation getActiveConversationOrThrow(Long conversationId) {
         return conversationRepository.findByIdAndDeletedFalse(conversationId)
                 .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
-    }
-
-    private void validateCreateConversationRequest(CreateConversationRequest request) {
-        if (request == null || request.getTitle() == null || request.getTitle().isBlank()
-                || request.getConversationType() == null) {
-            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
-        }
     }
 }

@@ -308,21 +308,6 @@ public enum ErrorCode {
             "Generated content update request is required"
     ),
 
-    PAGEABLE_REQUIRED(
-            BAD_REQUEST,
-            "Pagination information is required"
-    ),
-
-    PAGE_NUMBER_INVALID(
-            BAD_REQUEST,
-            "Page number must not be negative"
-    ),
-
-    PAGE_SIZE_INVALID(
-            BAD_REQUEST,
-            "Page size must be between 1 and 50"
-    ),
-
     AI_CONVERSATION_ID_REQUIRED(
             BAD_REQUEST,
             "AI conversation ID is required"
