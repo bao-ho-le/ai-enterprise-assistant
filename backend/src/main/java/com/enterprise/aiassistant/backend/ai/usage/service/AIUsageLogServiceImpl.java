@@ -47,7 +47,7 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
     @Override
     public Page<AIUsageLogResponse> getUsageLogs(AIUsageLogFilterRequest filter, Pageable pageable) {
         aiUsageHelper.validateFilter(filter);
-        return repository.findAll(aiUsageHelper.byFilter(filter), pageable)
+        return repository.filterUsageLogs(filter, pageable)
                 .map(mapper::toResponse);
     }
 
@@ -56,12 +56,8 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime startOfLast7Days = LocalDate.now().minusDays(6).atStartOfDay();
 
-        List<AIUsageLog> todayLogs = repository.findAll(
-                aiUsageHelper.byFilter(aiUsageHelper.fromDateFilter(startOfToday))
-        );
-        List<AIUsageLog> last7DayLogs = repository.findAll(
-                aiUsageHelper.byFilter(aiUsageHelper.fromDateFilter(startOfLast7Days))
-        );
+        List<AIUsageLog> todayLogs = repository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfToday));
+        List<AIUsageLog> last7DayLogs = repository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfLast7Days));
 
         return mapper.toSummaryResponse(todayLogs, last7DayLogs);
     }

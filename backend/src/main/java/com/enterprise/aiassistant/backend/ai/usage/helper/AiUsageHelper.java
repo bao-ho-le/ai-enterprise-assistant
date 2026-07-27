@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
-import com.enterprise.aiassistant.backend.ai.usage.mapper.AIUsageLogMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -19,8 +16,6 @@ import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
-
-import jakarta.persistence.criteria.Predicate;
 
 @Component
 public class AiUsageHelper {
@@ -93,35 +88,6 @@ public class AiUsageHelper {
         if (days < 1 || days > 90) {
             throw new BusinessException(ErrorCode.AI_USAGE_INVALID_DAYS);
         }
-    }
-
-    public Specification<AIUsageLog> byFilter(AIUsageLogFilterRequest filter) {
-        return (root, query, cb) -> {
-            Predicate predicates = cb.conjunction();
-
-            if (filter.getFromDate() != null) {
-                predicates = cb.and(predicates,
-                        cb.greaterThanOrEqualTo(root.get("createdAt"), filter.getFromDate()));
-            }
-            if (filter.getToDate() != null) {
-                predicates = cb.and(predicates,
-                        cb.lessThanOrEqualTo(root.get("createdAt"), filter.getToDate()));
-            }
-
-            if (StringUtils.hasText(filter.getModel())) {
-                predicates = cb.and(predicates,
-                        cb.equal(root.get("model"), filter.getModel()));
-            }
-            if (filter.getConversationType() != null) {
-                predicates = cb.and(predicates,
-                        cb.equal(root.get("conversationType"), filter.getConversationType()));
-            }
-            if (filter.getStatus() != null) {
-                predicates = cb.and(predicates,
-                        cb.equal(root.get("status"), filter.getStatus()));
-            }
-            return predicates;
-        };
     }
 
 }

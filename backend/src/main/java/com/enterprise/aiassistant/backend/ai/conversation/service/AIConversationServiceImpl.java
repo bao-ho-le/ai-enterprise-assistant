@@ -61,10 +61,11 @@ public class AIConversationServiceImpl implements AIConversationService {
             ConversationFilterRequest filter,
             Pageable pageable
     ) {
-        conversationHelper.validateFilter(filter);
         conversationHelper.validatePageable(pageable);
 
-        return conversationRepository.filterConversations(filter, pageable);
+        ConversationStatus status = filter.getStatus() != null ? filter.getStatus() : ConversationStatus.ACTIVE;
+
+        return conversationRepository.filterConversations(filter.getConversationType(), status, pageable);
     }
 
     @Override
