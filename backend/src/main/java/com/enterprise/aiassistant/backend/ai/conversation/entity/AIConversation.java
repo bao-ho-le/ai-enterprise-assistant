@@ -58,23 +58,37 @@ public class AIConversation {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "aiConversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Unidirectional: AIMessage has no back-reference, nothing navigates child -> parent.
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "ai_conversation_id")
     @Builder.Default
     private List<AIMessage> messages = new ArrayList<>();
 
-    @OneToMany(mappedBy = "aiConversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Unidirectional: AIConversationDocument has no back-reference. Loaded/joined via
+    // AIConversationDocumentRepository queries that navigate through this collection.
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "ai_conversation_id")
     @Builder.Default
     private List<AIConversationDocument> conversationDocuments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "aiConversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Unidirectional: AIUsageLog has no back-reference. Written via AIUsageLogRepository#attachConversation
+    // (ponytail: raw FK UPDATE, not collection.add - avoids loading every past log to append one row;
+    // revisit if usage logs ever need to be created through the parent's cascade instead).
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "ai_conversation_id")
     @Builder.Default
     private List<AIUsageLog> usageLogs = new ArrayList<>();
 
-    @OneToMany(mappedBy = "aiConversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Unidirectional: GeneratedContent has no back-reference, nothing navigates child -> parent.
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "ai_conversation_id")
     @Builder.Default
     private List<GeneratedContent> generatedContents = new ArrayList<>();
 
-    @OneToMany(mappedBy = "aiConversation", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Unidirectional: GenerationRun has no back-reference. Kept directly on AIConversation (not
+    // only reachable via GeneratedContent.generationRuns) because generated_content_id is nullable.
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "ai_conversation_id")
     @Builder.Default
     private List<GenerationRun> generationRuns = new ArrayList<>();
 }

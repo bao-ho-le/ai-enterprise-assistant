@@ -35,10 +35,6 @@ public class AIConversationDocument {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ai_conversation_id", nullable = false)
-    private AIConversation aiConversation;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "document_version_id", nullable = false)
     private DocumentVersion documentVersion;
 

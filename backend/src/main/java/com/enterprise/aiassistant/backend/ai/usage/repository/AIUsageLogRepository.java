@@ -3,6 +3,7 @@ import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -35,4 +36,11 @@ public interface AIUsageLogRepository
 
     @Query("SELECT DISTINCT a.model FROM AIUsageLog a ORDER BY a.model")
     List<String> findDistinctModels();
+
+    // AIUsageLog has no back-reference to AIConversation; set the FK directly instead of
+    // loading conversation.getUsageLogs() (would pull every past log just to append one row).
+    @Modifying
+    @Query(value = "UPDATE ai_usage_logs SET ai_conversation_id = :conversationId WHERE id = :usageLogId",
+            nativeQuery = true)
+    void attachConversation(@Param("usageLogId") Long usageLogId, @Param("conversationId") Long conversationId);
 }

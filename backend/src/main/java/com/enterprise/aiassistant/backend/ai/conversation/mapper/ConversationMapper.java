@@ -33,13 +33,9 @@ public class ConversationMapper {
                 .build();
     }
 
-    public AIConversationDocument toConversationDocument(
-            AIConversation conversation,
-            DocumentVersion documentVersion
-    ) {
+    public AIConversationDocument toConversationDocument(DocumentVersion documentVersion) {
 
         return AIConversationDocument.builder()
-                .aiConversation(conversation)
                 .documentVersion(documentVersion)
                 .build();
     }

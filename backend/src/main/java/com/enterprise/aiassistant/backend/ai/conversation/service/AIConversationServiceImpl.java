@@ -12,7 +12,6 @@ import com.enterprise.aiassistant.backend.ai.conversation.mapper.ConversationMap
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
-import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
@@ -42,7 +41,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request) {
 
-        validateCreateRequest(request);
+        conversationHelper.validateCreateRequest(request);
 
         AIConversation conversation = conversationMapper.toEntity(request);
         conversationRepository.save(conversation);
@@ -54,7 +53,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public ConversationResponse renameConversation(Long conversationId, RenameConversationRequest request) {
 
-        validateRenameRequest(conversationId, request);
+        conversationHelper.validateRenameRequest(conversationId, request);
 
         AIConversation conversation = conversationRepository.findByIdAndDeletedFalse(conversationId)
                 .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
@@ -69,7 +68,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public void softDeleteConversation(Long conversationId) {
 
-        validateConversationId(conversationId);
+        conversationHelper.validateConversationId(conversationId);
 
         AIConversation conversation = conversationRepository.findByIdAndDeletedFalse(conversationId)
                 .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
@@ -83,7 +82,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public void hardDeleteConversation(Long conversationId) {
 
-        validateConversationId(conversationId);
+        conversationHelper.validateConversationId(conversationId);
 
         // Hard delete must reach conversations already soft-deleted too, so no deletedFalse filter here.
         AIConversation conversation = conversationRepository.findById(conversationId)
@@ -97,7 +96,7 @@ public class AIConversationServiceImpl implements AIConversationService {
     @Transactional
     public ConversationDetailResponse attachDocuments(Long conversationId, AttachDocumentsRequest request) {
 
-        validateAttachRequest(conversationId, request);
+        conversationHelper.validateAttachRequest(conversationId, request);
 
         AIConversation conversation = conversationRepository.findByIdAndDeletedFalse(conversationId)
                 .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
@@ -116,41 +115,16 @@ public class AIConversationServiceImpl implements AIConversationService {
                 conversationHelper.filterNewVersions(versions, alreadyAttachedIds);
 
         List<AIConversationDocument> newLinks = newVersions.stream()
-                .map(version -> conversationMapper.toConversationDocument(conversation, version))
+                .map(conversationMapper::toConversationDocument)
                 .toList();
 
-        conversationDocumentRepository.saveAll(newLinks);
+        // AIConversationDocument has no back-reference, so the FK is only set when saved via this collection.
+        conversation.getConversationDocuments().addAll(newLinks);
+        conversationRepository.save(conversation);
 
         List<AIConversationDocument> allLinks =
                 conversationDocumentRepository.findByAiConversationIdWithDocument(conversationId);
 
         return conversationMapper.toDetailResponse(conversation, allLinks);
-    }
-
-    private void validateConversationId(Long conversationId) {
-        if (conversationId == null || conversationId <= 0) {
-            throw new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND);
-        }
-    }
-
-    private void validateCreateRequest(CreateConversationRequest request) {
-        if (request == null || request.getTitle() == null || request.getTitle().isBlank()
-                || request.getConversationType() == null) {
-            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
-        }
-    }
-
-    private void validateRenameRequest(Long conversationId, RenameConversationRequest request) {
-        validateConversationId(conversationId);
-        if (request == null || request.getTitle() == null || request.getTitle().isBlank()) {
-            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
-        }
-    }
-
-    private void validateAttachRequest(Long conversationId, AttachDocumentsRequest request) {
-        validateConversationId(conversationId);
-        if (request == null || request.getDocumentVersionIds() == null || request.getDocumentVersionIds().isEmpty()) {
-            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
-        }
     }
 }

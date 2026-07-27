@@ -1,6 +1,5 @@
 package com.enterprise.aiassistant.backend.generated.entity;
 
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.generated.enums.GeneratedType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,10 +29,6 @@ public class GeneratedContent {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ai_conversation_id", nullable = false)
-    private AIConversation aiConversation;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "generated_type", nullable = false)
     private GeneratedType generatedType;
@@ -52,7 +47,9 @@ public class GeneratedContent {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "generatedContent", cascade = CascadeType.ALL, orphanRemoval = true)
+    // Unidirectional: GenerationRun has no back-reference, nothing navigates child -> parent.
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "generated_content_id")
     @Builder.Default
     private List<GenerationRun> generationRuns = new ArrayList<>();
 }

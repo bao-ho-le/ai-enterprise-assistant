@@ -27,10 +27,6 @@ public class AIMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "ai_conversation_id", nullable = false)
-    private AIConversation aiConversation;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AIMessageRole role;
