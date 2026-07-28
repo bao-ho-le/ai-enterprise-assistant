@@ -4,46 +4,25 @@ package com.enterprise.aiassistant.backend.generated.helper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.GeneratedException;
 import com.enterprise.aiassistant.backend.generated.dto.request.UpdateGeneratedContentRequest;
+
 import com.enterprise.aiassistant.backend.generated.entity.GeneratedContent;
 import com.enterprise.aiassistant.backend.generated.enums.GeneratedDocumentType;
-import com.enterprise.aiassistant.backend.generated.repository.GeneratedContentRepository;
-import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@AllArgsConstructor
 public class GeneratedHelper {
-    private final GeneratedContentRepository generatedContentRepository;
 
     private static final int MAX_TITLE_LENGTH = 500;
 
-    /**
-     * Dùng cho:
-     * - getGeneratedContentById(Long id)
-     * - updateGeneratedContent(Long id, UpdateGeneratedContentRequest request)
-     *
-     * Kiểm tra ID không null và phải lớn hơn 0.
-     */
-    public void validateGeneratedContentId(Long id) {
-        if (id == null) {
-            throw new GeneratedException(
-                    ErrorCode.GENERATED_CONTENT_ID_REQUIRED
-            );
+    public void validateGeneratedContentId(Long generatedContentId) {
+        if (generatedContentId == null) {
+            throw new GeneratedException(ErrorCode.GENERATED_CONTENT_ID_REQUIRED);
         }
 
-        if (id <= 0) {
-            throw new GeneratedException(
-                    ErrorCode.GENERATED_CONTENT_ID_INVALID
-            );
+        if (generatedContentId <= 0) {
+            throw new GeneratedException(ErrorCode.GENERATED_CONTENT_ID_INVALID);
         }
     }
-
-   /**
-    * Dùng cho:
-    * - createGeneratedContent(...)
-    *
-    * Kiểm tra toàn bộ dữ liệu trước khi tạo generated content.
-    */
 
     public void validateCreateData(
             Long aiConversationId,
@@ -82,19 +61,10 @@ public class GeneratedHelper {
         }
     }
 
-    /**
-     * Dùng cho:
-     * - updateGeneratedContent(Long id, UpdateGeneratedContentRequest request)
-     *
-     * Kiểm tra request update và các field được phép chỉnh sửa.
-     */
-    public void validateUpdateRequest(
-            UpdateGeneratedContentRequest request
-    ) {
+    public void validateUpdateRequest(UpdateGeneratedContentRequest request) {
         if (request == null) {
-            throw new GeneratedException(
-                    ErrorCode.GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED
-            );
+            throw new GeneratedException(ErrorCode.GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED);
+
         }
 
         validateTitle(request.getTitle());
@@ -132,19 +102,7 @@ public class GeneratedHelper {
             );
         }
     }
-
-    public GeneratedContent findGeneratedContentById(Long id) {
-        if (id == null) {
-            throw new GeneratedException(
-                    ErrorCode.GENERATED_CONTENT_ID_REQUIRED
-            );
-        }
-
-        return generatedContentRepository.findById(id)
-                .orElseThrow(() -> new GeneratedException(
-                        ErrorCode.GENERATED_CONTENT_NOT_FOUND
-                ));
-    }
-
 }
+
+
 

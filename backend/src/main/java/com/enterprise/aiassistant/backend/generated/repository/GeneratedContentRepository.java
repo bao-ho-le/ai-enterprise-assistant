@@ -1,3 +1,4 @@
+
 package com.enterprise.aiassistant.backend.generated.repository;
 
 import com.enterprise.aiassistant.backend.generated.entity.GeneratedContent;
@@ -8,9 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
-
 public interface GeneratedContentRepository
-        extends JpaRepository<GeneratedContent, Long> {
+        extends JpaRepository<GeneratedContent,
+        Long> {
 
     Slice<GeneratedContent> findAllByOrderByCreatedAtDesc(
             Pageable pageable
@@ -25,6 +26,12 @@ public interface GeneratedContentRepository
             Long aiConversationId
     );
 
+    Slice<GeneratedContent> findByAiConversationIdOrderByCreatedAtDesc(
+            Long aiConversationId,
+            Pageable pageable
+    );
+
+
     Optional<GeneratedContent>
     findFirstByAiConversationIdAndGeneratedTypeOrderByCreatedAtDesc(
             Long aiConversationId,
@@ -35,7 +42,9 @@ public interface GeneratedContentRepository
             Long aiConversationId
     );
 
+
     // No cascade from AIConversation anymore (unidirectional, child-owned) - hard delete needs this
     // explicitly, and must run after GenerationRunRepository#deleteByAiConversationId (FK dependency).
     void deleteByAiConversationId(Long aiConversationId);
 }
+

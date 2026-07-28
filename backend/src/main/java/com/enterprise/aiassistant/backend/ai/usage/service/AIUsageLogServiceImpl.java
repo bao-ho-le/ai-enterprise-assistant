@@ -18,6 +18,7 @@ import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
+
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogFilterRequest;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
@@ -35,11 +36,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AIUsageLogServiceImpl implements AIUsageLogService {
 
-    private final AIUsageLogMapper mapper;
-    private final AIUsageLogRepository repository;
+    private final AIUsageLogMapper aiUsageLogMapper;
+    private final AIUsageLogRepository aiUsageLogRepository;
     private final AiUsageHelper aiUsageHelper;
-    private final AIConversationRepository conversationRepository;
-    private final AIMessageRepository messageRepository;
+
+    private final AIConversationRepository aiConversationRepository;
+    private final AIMessageRepository aiMessageRepository;
+
 
 
     @Override
@@ -47,22 +50,26 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
     public void logAiUsage(AIUsageLogRequest request) {
         aiUsageHelper.validateLogRequest(request);
 
+        // Dùng cho embedding, vẫn tính log nhưng không có conversation
         AIConversation aiConversation = request.getConversationId() != null
-                ? conversationRepository.getReferenceById(request.getConversationId())
+                ? aiConversationRepository.getReferenceById(request.getConversationId())
                 : null;
         AIMessage aiMessage = request.getMessageId() != null
-                ? messageRepository.getReferenceById(request.getMessageId())
+                ? aiMessageRepository.getReferenceById(request.getMessageId())
                 : null;
 
-        AIUsageLog entity = mapper.toEntity(request, aiConversation, aiMessage);
-        repository.save(entity);
+        AIUsageLog entity = aiUsageLogMapper.toEntity(request, aiConversation, aiMessage);
+
+        aiUsageLogRepository.save(entity);
     }
 
     @Override
     public Page<AIUsageLogResponse> getUsageLogs(AIUsageLogFilterRequest filter, Pageable pageable) {
         aiUsageHelper.validateFilter(filter);
-        return repository.filterUsageLogs(filter, pageable)
-                .map(mapper::toResponse);
+
+        return aiUsageLogRepository.filterUsageLogs(filter, pageable)
+
+                .map(aiUsageLogMapper::toResponse);
     }
 
     @Override
@@ -70,10 +77,12 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime startOfLast7Days = LocalDate.now().minusDays(6).atStartOfDay();
 
-        List<AIUsageLog> todayLogs = repository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfToday));
-        List<AIUsageLog> last7DayLogs = repository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfLast7Days));
 
-        return mapper.toSummaryResponse(todayLogs, last7DayLogs);
+        List<AIUsageLog> todayLogs = aiUsageLogRepository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfToday));
+        List<AIUsageLog> last7DayLogs = aiUsageLogRepository.filterUsageLogs(aiUsageHelper.fromDateFilter(startOfLast7Days));
+
+
+        return aiUsageLogMapper.toSummaryResponse(todayLogs, last7DayLogs);
     }
 
     @Override
@@ -83,20 +92,20 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
         LocalDate today = LocalDate.now();
         LocalDate start = today.minusDays(days - 1L);
 
-        Map<LocalDate, AIUsageDailyProjection> byDay = repository
+        Map<LocalDate, AIUsageDailyProjection> byDay = aiUsageLogRepository
                 .findDailyStats(start.atStartOfDay())
                 .stream()
                 .collect(Collectors.toMap(AIUsageDailyProjection::getDay, Function.identity()));
 
         List<AIUsageDailyResponse> result = new ArrayList<>();
         for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
-            result.add(mapper.toDailyResponse(date, byDay.get(date)));
+            result.add(aiUsageLogMapper.toDailyResponse(date, byDay.get(date)));
         }
         return result;
     }
 
     @Override
     public List<String> getDistinctModels() {
-        return repository.findDistinctModels();
+        return aiUsageLogRepository.findDistinctModels();
     }
 }

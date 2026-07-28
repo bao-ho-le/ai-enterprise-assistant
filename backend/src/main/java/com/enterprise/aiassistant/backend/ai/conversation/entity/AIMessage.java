@@ -11,9 +11,13 @@ import java.time.LocalDateTime;
 @Table(
         name = "ai_messages",
         indexes = {
-
                 @Index(name = "idx_ai_message_conversation_id", columnList = "ai_conversation_id"),
-                @Index(name = "idx_ai_message_created_at", columnList = "created_at")
+                @Index(name = "idx_ai_message_created_at", columnList = "created_at"),
+                @Index(
+                        name = "idx_ai_messages_role",
+                        columnList = "role"
+                ),
+
         }
 )
 @Getter
@@ -32,14 +36,14 @@ public class AIMessage {
     private AIConversation conversation;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false, length = 20)
     private AIMessageRole role;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @CreationTimestamp
-    @Column(nullable = false, name = "created_at")
+    @Column(nullable = false, name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
 }

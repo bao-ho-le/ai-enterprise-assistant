@@ -2,6 +2,7 @@ package com.enterprise.aiassistant.backend.ai.conversation.repository;
 
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessageSource;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,4 +20,10 @@ public interface AIMessageSourceRepository extends JpaRepository<AIMessageSource
 
     // No cascade from AIMessage anymore (unidirectional, child-owned) - hard delete needs this explicitly.
     void deleteByAiMessage_ConversationId(Long conversationId);
+
+    List<AIMessageSource> findByAiMessageIdOrderByIdAsc(
+            Long messageId
+    );
 }
+
+

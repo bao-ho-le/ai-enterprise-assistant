@@ -1,7 +1,10 @@
 package com.enterprise.aiassistant.backend.ai.conversation.entity;
 
 
+
 import com.enterprise.aiassistant.backend.ai.conversation.enums.ConversationStatus;
+
+
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -14,11 +17,9 @@ import java.time.LocalDateTime;
 @Table(
         name = "ai_conversations",
         indexes = {
-
                 @Index(name = "idx_ai_conversation_type", columnList = "conversation_type"),
                 @Index(name = "idx_ai_conversation_status", columnList = "status"),
                 @Index(name = "idx_ai_conversation_created_at", columnList = "created_at")
-
         }
 )
 @Getter
@@ -32,17 +33,19 @@ public class AIConversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String title;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "conversation_type", length = 50)
     private ConversationType conversationType;
 
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
     private ConversationStatus status = ConversationStatus.ACTIVE;
+
 
     @CreationTimestamp
     @Column(nullable = false, name = "created_at")

@@ -135,78 +135,78 @@ public enum ErrorCode {
 
     TEXT_EXTRACTION_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to extract text from the document"
+            "Failed to extract text from the document"
     ),
 
     DOCUMENT_CHUNKING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to split the document into chunks"
+            "Failed to split the document into chunks"
     ),
 
     DOCUMENT_TEXT_EMPTY(
             INTERNAL_SERVER_ERROR,
-        "No extractable text found in the document"
+            "No extractable text found in the document"
     ),
 
     DOCUMENT_PROCESSING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to process the document"
+            "Failed to process the document"
     ),
 
     // ===================== Document Filter =====================
 
     INVALID_DATE_RANGE(
             BAD_REQUEST,
-        "From date must be before or equal to to date"
+            "From date must be before or equal to to date"
     ),
 
     INVALID_FILE_SIZE(
             BAD_REQUEST,
-        "File size must be greater than or equal to 0"
+            "File size must be greater than or equal to 0"
     ),
 
     INVALID_FILE_SIZE_RANGE(
             BAD_REQUEST,
-        "Minimum file size must be less than or equal to maximum file size"
+            "Minimum file size must be less than or equal to maximum file size"
     ),
 
     INVALID_SORT_OPTION(
             BAD_REQUEST,
-        "Sort option must be either 'newest' or 'oldest'"
+            "Sort option must be either 'newest' or 'oldest'"
     ),
 
     KEYWORD_TOO_LONG(
             BAD_REQUEST,
-        "Keyword exceeds maximum length"
+            "Keyword exceeds maximum length"
     ),
 
     // ===================== Embedding =====================
 
     EMBEDDING_TEXT_REQUIRED(
             BAD_REQUEST,
-        "Text to embed is required"
+            "Text to embed is required"
     ),
 
     EMBEDDING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to generate embedding"
+            "Failed to generate embedding"
     ),
 
     // ===================== Vector Store =====================
 
     VECTOR_UPSERT_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to save vectors to the vector store"
+            "Failed to save vectors to the vector store"
     ),
 
     VECTOR_DELETE_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to delete vectors from the vector store"
+            "Failed to delete vectors from the vector store"
     ),
 
     VECTOR_SEARCH_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to search the vector store"
+            "Failed to search the vector store"
     ),
 
     VECTOR_POINTS_REQUIRED(
@@ -243,12 +243,12 @@ public enum ErrorCode {
 
     SEARCH_KEYWORD_REQUIRED(
             BAD_REQUEST,
-        "Search keyword is required"
+            "Search keyword is required"
     ),
 
     INVALID_TOP_K(
             BAD_REQUEST,
-        "topK must be between 1 and 50"
+            "topK must be between 1 and 50"
     ),
 
     VECTOR_SEARCH_LIMIT_INVALID(
@@ -324,6 +324,18 @@ public enum ErrorCode {
             "recentMessagesLimit must be between 1 and 100"
     ),
 
+    CONVERSATION_TYPE_NOT_GENERATION(
+            BAD_REQUEST,
+            "Conversation type is not a generation type"
+    ),
+
+    // ===================== Generation Run =====================
+
+    GENERATION_RUN_NOT_FOUND(
+            NOT_FOUND,
+            "Generation run not found for this conversation"
+    ),
+
     // ===================== Generated Content =====================
 
     GENERATED_CONTENT_ID_REQUIRED(
@@ -336,10 +348,17 @@ public enum ErrorCode {
             "Generated content id is invalid"
     ),
 
+
+
+    // ===================== Generated Document =====================
+
+
     GENERATED_CONTENT_NOT_FOUND(
             NOT_FOUND,
             "Generated content not found"
     ),
+
+
 
     GENERATED_CONTENT_TYPE_REQUIRED(
             BAD_REQUEST,
@@ -361,6 +380,12 @@ public enum ErrorCode {
             "Generated content body is required"
     ),
 
+
+    AI_CONVERSATION_ID_INVALID(
+            BAD_REQUEST,
+            "AI conversation ID must be greater than 0"
+    ),
+
     GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED(
             BAD_REQUEST,
             "Update generated content request is required"
@@ -368,10 +393,39 @@ public enum ErrorCode {
 
     AI_CONVERSATION_ID_REQUIRED(
             BAD_REQUEST,
-            "AI conversation id is required"
+            "AI conversation ID is required"
+    ),
+
+    // ===================== AI Conversation =====================
+
+
+    DOCUMENT_NOT_ATTACHED_TO_CONVERSATION(
+            BAD_REQUEST,
+            "Document is not attached to the conversation"
+    ),
+
+    // ===================== AI Conversation Message =====================
+
+
+    MESSAGE_CONTENT_REQUIRED(
+            BAD_REQUEST,
+            "Message content is required"
+    ),
+
+    MESSAGE_CONTENT_TOO_LONG(
+            BAD_REQUEST,
+            "Message content exceeds maximum length"
+    ),
+
+    MESSAGE_ID_REQUIRED(
+            BAD_REQUEST,
+            "Message ID is required"
+    ),
+
+    MESSAGE_NOT_FOUND(
+            NOT_FOUND,
+            "Message not found"
     );
-
-
 
     private final HttpStatus status;
     private final String message;

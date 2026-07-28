@@ -1,12 +1,11 @@
 package com.enterprise.aiassistant.backend.ai.usage.helper;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
-import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
+import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -90,4 +89,34 @@ public class AiUsageHelper {
         }
     }
 
+
+    public Specification<AIUsageLog> byFilter(AIUsageLogFilterRequest filter) {
+        return (root, query, cb) -> {
+            Predicate predicates = cb.conjunction();
+
+            if (filter.getFromDate() != null) {
+                predicates = cb.and(predicates,
+                        cb.greaterThanOrEqualTo(root.get("createdAt"), filter.getFromDate()));
+            }
+            if (filter.getToDate() != null) {
+                predicates = cb.and(predicates,
+                        cb.lessThanOrEqualTo(root.get("createdAt"), filter.getToDate()));
+            }
+
+            if (StringUtils.hasText(filter.getModel())) {
+                predicates = cb.and(predicates,
+                        cb.equal(root.get("model"), filter.getModel()));
+            }
+            if (filter.getConversationType() != null) {
+                predicates = cb.and(predicates,
+                        cb.equal(root.get("conversationType"), filter.getConversationType()));
+            }
+            if (filter.getStatus() != null) {
+                predicates = cb.and(predicates,
+                        cb.equal(root.get("status"), filter.getStatus()));
+            }
+            return predicates;
+        };
+    }
 }
+

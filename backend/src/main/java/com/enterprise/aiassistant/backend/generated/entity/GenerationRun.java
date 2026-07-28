@@ -3,10 +3,13 @@ package com.enterprise.aiassistant.backend.generated.entity;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.generated.enums.GeneratedType;
 import com.enterprise.aiassistant.backend.generated.enums.GenerationStatus;
+import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -49,12 +52,14 @@ public class GenerationRun {
     private String userPrompt;
 
     // No JsonNode/@Convert infra in this project; stored as raw JSON text like other text columns.
-    @Column(name = "input_data", columnDefinition = "json")
-    private String inputData;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "input_data", columnDefinition = "jsonb")
+    private JsonNode inputData;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private GenerationStatus status;
+    @Builder.Default
+    private GenerationStatus status = GenerationStatus.PENDING;
 
     @Column(name = "error_message", columnDefinition = "text")
     private String errorMessage;

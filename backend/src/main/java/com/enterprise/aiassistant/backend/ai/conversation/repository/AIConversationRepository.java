@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.ai.conversation.repository;
 
+
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.enums.ConversationStatus;
@@ -9,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
 
 import java.util.Optional;
 
@@ -47,4 +49,5 @@ public interface AIConversationRepository extends JpaRepository<AIConversation, 
             @Param("status") ConversationStatus status,
             Pageable pageable
     );
+
 }

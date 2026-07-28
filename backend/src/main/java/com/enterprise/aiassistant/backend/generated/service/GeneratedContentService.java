@@ -15,10 +15,10 @@ public interface GeneratedContentService {
             Pageable pageable
     );
 
-    GeneratedContentDetailResponse getGeneratedContentById(Long id);
+    GeneratedContentDetailResponse getGeneratedContentById(Long generatedContentId);
 
     GeneratedContentDetailResponse updateGeneratedContent(
-            Long id,
+            Long generatedContentId,
             UpdateGeneratedContentRequest request
     );
 

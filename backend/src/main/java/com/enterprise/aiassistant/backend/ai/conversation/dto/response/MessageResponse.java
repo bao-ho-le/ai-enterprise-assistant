@@ -1,27 +1,14 @@
 package com.enterprise.aiassistant.backend.ai.conversation.dto.response;
 
-import com.enterprise.aiassistant.backend.ai.conversation.enums.AIMessageRole;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-import java.time.OffsetDateTime;
-import java.util.List;
 
-@Data
+@Getter
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class MessageResponse {
+    private AIMessageResponse userMessage;
 
-    private Long id;
+    private AIMessageResponse assistantMessage;
 
-    private AIMessageRole role;
-
-    private String content;
-
-    private OffsetDateTime createdAt;
-
-    private List<MessageSourceResponse> sources;
 }

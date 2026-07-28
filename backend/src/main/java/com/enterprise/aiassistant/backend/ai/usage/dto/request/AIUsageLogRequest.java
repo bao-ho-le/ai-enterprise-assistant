@@ -22,7 +22,6 @@ public class AIUsageLogRequest {
     private Long conversationId;
 
     private Long messageId;
-
     private ConversationType conversationType;
     private String model;
     private Integer inputTokens;
