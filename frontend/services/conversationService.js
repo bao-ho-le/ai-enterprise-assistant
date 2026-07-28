@@ -69,3 +69,9 @@ export function getConversationGeneratedContents(conversationId, params, signal)
     signal,
   });
 }
+
+// POST /ai-conversations/{conversationId}/generate  { inputData } -> TriggerGenerationResponse
+// { generationRunId, status, generatedContentId, errorMessage }
+export function triggerGeneration(conversationId, inputData) {
+  return apiClient.postJson(`/ai-conversations/${conversationId}/generate`, { inputData });
+}

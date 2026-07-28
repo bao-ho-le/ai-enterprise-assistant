@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Quote } from "lucide-react";
+import { Send, Loader2, Quote, FileText } from "lucide-react";
 import LoadMore from "@/components/ui/LoadMore";
 import MessageSourcesDialog from "./MessageSourcesDialog";
 import { getDocumentQaConversationDetail } from "@/services/conversationService";
@@ -121,7 +121,15 @@ export default function DocumentQaDetailView({ conversationId }) {
 
           <LoadMore hasMore={hasMore} loading={loadingMore} onClick={loadMore} label="Load earlier messages" />
 
-          {messages.length === 0 ? (
+          {messages.length === 0 && !conversation?.attachedDocuments?.length ? (
+            <div className="flex flex-col items-center gap-2 text-center py-10">
+              <FileText className="h-6 w-6 text-text-muted" />
+              <p className="text-sm text-text-muted">No document selected yet.</p>
+              <p className="text-xs text-text-muted">
+                Attach a document from the panel on the right to start asking questions.
+              </p>
+            </div>
+          ) : messages.length === 0 ? (
             <p className="text-sm text-text-muted text-center py-10">
               No messages yet. Ask a question about your attached documents below.
             </p>

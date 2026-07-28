@@ -425,6 +425,48 @@ public enum ErrorCode {
     MESSAGE_NOT_FOUND(
             NOT_FOUND,
             "Message not found"
+    ),
+
+    CONVERSATION_TYPE_NOT_CHAT(
+            BAD_REQUEST,
+            "Conversation type does not support chat messages"
+    ),
+
+    // ===================== Generation =====================
+
+    GENERATION_INPUT_DATA_REQUIRED(
+            BAD_REQUEST,
+            "Generation input data is required"
+    ),
+
+    GENERATION_INPUT_DATA_INVALID(
+            BAD_REQUEST,
+            "Generation input data is invalid"
+    ),
+
+    GENERATION_HANDLER_NOT_FOUND(
+            BAD_REQUEST,
+            "No generation handler available for this conversation type"
+    ),
+
+    EMAIL_GENERATION_PURPOSE_REQUIRED(
+            BAD_REQUEST,
+            "Email purpose is required"
+    ),
+
+    REPORT_GENERATION_TITLE_REQUIRED(
+            BAD_REQUEST,
+            "Report title is required"
+    ),
+
+    SUMMARY_GENERATION_STYLE_REQUIRED(
+            BAD_REQUEST,
+            "Summary style is required"
+    ),
+
+    FORM_GENERATION_PURPOSE_REQUIRED(
+            BAD_REQUEST,
+            "Form purpose is required"
     );
 
     private final HttpStatus status;

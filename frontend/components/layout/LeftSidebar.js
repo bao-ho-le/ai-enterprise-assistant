@@ -14,6 +14,7 @@ import {
   softDeleteConversation,
   hardDeleteConversation,
 } from "@/services/conversationService";
+import { isGenerationConversationType, ROUTED_CONVERSATION_TYPES } from "@/constants/conversation";
 
 // conversationType: which ConversationType this sidebar lists (e.g. "DOCUMENT_QA").
 // basePath: route prefix conversations of this type live under (e.g. "/document-qa"),
@@ -31,6 +32,14 @@ export default function LeftSidebar({ conversationType, basePath }) {
   const [reloadKey, setReloadKey] = useState(0);
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
+  // Defaults to this screen's own type; the dropdown lets the user browse another
+  // type's history without leaving this sidebar. List items route to wherever that
+  // type's screen actually lives, not necessarily this page's basePath.
+  const [selectedType, setSelectedType] = useState(conversationType);
+  const selectedBasePath =
+    ROUTED_CONVERSATION_TYPES.find((t) => t.value === selectedType)?.basePath || basePath;
+
+  const isGeneration = isGenerationConversationType(conversationType);
   const [createOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -43,7 +52,7 @@ export default function LeftSidebar({ conversationType, basePath }) {
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    getConversations({ conversationType }, controller.signal)
+    getConversations({ conversationType: selectedType }, controller.signal)
       .then((page) => {
         if (controller.signal.aborted) return;
         setConversations(page?.content || []);
@@ -56,7 +65,7 @@ export default function LeftSidebar({ conversationType, basePath }) {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [conversationType, reloadKey]);
+  }, [selectedType, reloadKey]);
 
   const onCreated = (conversation) => {
     setCreateOpen(false);
@@ -108,12 +117,27 @@ export default function LeftSidebar({ conversationType, basePath }) {
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border-subtle bg-bg-secondary">
       <button
         type="button"
-        onClick={() => setCreateOpen(true)}
+        onClick={() => (isGeneration ? router.push(basePath) : setCreateOpen(true))}
         className="flex h-14 items-center gap-2 px-4 transition-colors hover:bg-bg-elevated mb-2"
       >
         <SquarePen className="h-5 w-5 text-text-secondary" />
         <span className="text-sm font-medium text-text-secondary">New conversation</span>
       </button>
+
+      <div className="px-3 pb-2">
+        <select
+          className="select-field w-full text-sm py-2"
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          aria-label="Filter conversation history by type"
+        >
+          {ROUTED_CONVERSATION_TYPES.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="flex-1 overflow-y-auto p-3">
         {loading ? (
@@ -132,7 +156,7 @@ export default function LeftSidebar({ conversationType, basePath }) {
               return (
                 <li key={c.id} className="group relative">
                   <Link
-                    href={`${basePath}/${c.id}`}
+                    href={`${selectedBasePath}/${c.id}`}
                     className={
                       active
                         ? "flex items-center gap-1 rounded-lg pl-2.5 pr-1 py-2.5 bg-bg-elevated border border-border-subtle transition-colors hover:border-border-default"

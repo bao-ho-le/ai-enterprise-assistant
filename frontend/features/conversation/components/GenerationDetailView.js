@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, FileText, FileOutput } from "lucide-react";
 import LoadMore from "@/components/ui/LoadMore";
+import GenerationForm from "./GenerationForm";
 import {
   getGenerationConversationDetail,
   getConversationGeneratedContents,
@@ -25,25 +26,37 @@ export default function GenerationDetailView({ conversationId }) {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
 
+  const loadDetail = useCallback(
+    (signal) => {
+      setLoading(true);
+      setNotFound(false);
+      setError("");
+      return getGenerationConversationDetail(conversationId, signal)
+        .then((d) => {
+          if (!signal?.aborted) setDetail(d);
+        })
+        .catch((err) => {
+          if (signal?.aborted || err.name === "AbortError") return;
+          if (err.status === 404) setNotFound(true);
+          else setError(err.message || "Failed to load generation detail");
+        })
+        .finally(() => {
+          if (!signal?.aborted) setLoading(false);
+        });
+    },
+    [conversationId]
+  );
+
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setNotFound(false);
-    setError("");
-    getGenerationConversationDetail(conversationId, controller.signal)
-      .then((d) => {
-        if (!controller.signal.aborted) setDetail(d);
-      })
-      .catch((err) => {
-        if (controller.signal.aborted || err.name === "AbortError") return;
-        if (err.status === 404) setNotFound(true);
-        else setError(err.message || "Failed to load generation detail");
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setLoading(false);
-      });
+    loadDetail(controller.signal);
     return () => controller.abort();
-  }, [conversationId]);
+  }, [loadDetail]);
+
+  const onRegenerated = () => {
+    loadDetail();
+    loadHistoryPage(0, false);
+  };
 
   useEffect(() => {
     const onRenamed = (e) => {
@@ -113,6 +126,13 @@ export default function GenerationDetailView({ conversationId }) {
               </div>
               <p className="text-xs text-text-muted">Last updated {formatDateTime(detail.updatedAt)}</p>
             </div>
+
+            <GenerationForm
+              conversationType={detail.conversationType}
+              conversationId={conversationId}
+              initialValues={detail.inputData}
+              onGenerated={onRegenerated}
+            />
 
             {detail.generatedContentId != null && (
               <Link
