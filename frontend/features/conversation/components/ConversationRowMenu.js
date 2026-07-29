@@ -70,7 +70,7 @@ export default function ConversationRowMenu({ conversation, onRename, onDelete, 
       <button
         ref={buttonRef}
         type="button"
-        className="btn-ghost p-1"
+        className="flex h-5 w-5 items-center justify-center rounded-md text-text-secondary transition-colors hover:text-text-primary hover:bg-bg-elevated"
         aria-label="Conversation actions"
         onClick={toggleOpen}
       >

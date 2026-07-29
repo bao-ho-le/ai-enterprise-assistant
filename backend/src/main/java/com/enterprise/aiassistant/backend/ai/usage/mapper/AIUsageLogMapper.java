@@ -5,16 +5,12 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageSummaryResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
-import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
-import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.usage.helper.AiUsageHelper;
+import com.enterprise.aiassistant.backend.ai.usage.helper.AIUsageHelper;
 import com.enterprise.aiassistant.backend.ai.usage.repository.AIUsageDailyProjection;
 
 import lombok.RequiredArgsConstructor;
@@ -23,52 +19,26 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AIUsageLogMapper {
 
-    private final AiUsageHelper usageHelpful;
+    private final AIUsageHelper aiUsageHelper;
 
-
-    public AIUsageLog toEntity(AIUsageLogRequest request, AIConversation aiConversation, AIMessage aiMessage) {
-
-    Integer input = request.getInputTokens();
-    Integer output = request.getOutputTokens();
-
-    int inputTokens = input != null ? input : 0;
-    int outputTokens = output != null ? output : 0;
+    public AIUsageLog toEntity(AIUsageLogRequest request) {
 
         return AIUsageLog.builder()
-                .aiConversation(aiConversation)
-                .aiMessage(aiMessage)
+                .aiConversationId(request.getConversationId())
+                .aiMessageId(request.getMessageId())
+                .generationId(request.getGenerationId())
                 .conversationType(request.getConversationType())
                 .model(request.getModel())
-                .inputTokens(inputTokens)
-                .outputTokens(outputTokens)
-                .totalTokens(usageHelpful.calculateTotalTokens(inputTokens, outputTokens))
+                .inputTokens(request.getInputTokens())
+                .outputTokens(request.getOutputTokens())
+                .totalTokens(
+                        aiUsageHelper.calculateTotalTokens(
+                                request.getInputTokens(), request.getOutputTokens()
+                        )
+                )
                 .estimatedCost(request.getEstimatedCost() != null ? request.getEstimatedCost() : BigDecimal.ZERO)
                 .status(request.getStatus())
                 .errorMessage(request.getErrorMessage())
-                .build();
-    }
-
-    public AIUsageLog toEntity(
-            ConversationType conversationType,
-            String model,
-            Integer inputTokens,
-            Integer outputTokens,
-            BigDecimal estimatedCost,
-            AIUsageStatus status,
-            String errorMessage
-    ) {
-        int in = inputTokens != null ? inputTokens : 0;
-        int out = outputTokens != null ? outputTokens : 0;
-
-        return AIUsageLog.builder()
-                .conversationType(conversationType)
-                .model(model)
-                .inputTokens(in)
-                .outputTokens(out)
-                .totalTokens(usageHelpful.calculateTotalTokens(in, out))
-                .estimatedCost(estimatedCost != null ? estimatedCost : BigDecimal.ZERO)
-                .status(status)
-                .errorMessage(errorMessage)
                 .build();
     }
 
@@ -93,11 +63,11 @@ public class AIUsageLogMapper {
                 .todayRequest(todayLogs.size())
                 .todayToken(sumTokens(todayLogs))
                 .todayCost(sumCost(todayLogs))
-                .todaySuccessRate(usageHelpful.calculateSuccessRate(todayLogs))
+                .todaySuccessRate(aiUsageHelper.calculateSuccessRate(todayLogs))
                 .last7DayRequests(last7DayLogs.size())
                 .last7DayTokens(sumTokens(last7DayLogs))
                 .last7DayCost(sumCost(last7DayLogs))
-                .last7DaySuccessRate(usageHelpful.calculateSuccessRate(last7DayLogs))
+                .last7DaySuccessRate(aiUsageHelper.calculateSuccessRate(last7DayLogs))
                 .build();
     }
 

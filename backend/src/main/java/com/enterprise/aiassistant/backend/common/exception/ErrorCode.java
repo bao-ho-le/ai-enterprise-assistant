@@ -329,11 +329,21 @@ public enum ErrorCode {
             "Conversation type is not a generation type"
     ),
 
-    // ===================== Generation Run =====================
+    // ===================== Generation =====================
 
-    GENERATION_RUN_NOT_FOUND(
+    GENERATION_NOT_FOUND(
             NOT_FOUND,
-            "Generation run not found for this conversation"
+            "Generation not found"
+    ),
+
+    GENERATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "Generation ID is required"
+    ),
+
+    GENERATION_ID_INVALID(
+            BAD_REQUEST,
+            "Generation ID must be greater than 0"
     ),
 
     // ===================== Generated Content =====================
@@ -360,11 +370,6 @@ public enum ErrorCode {
 
 
 
-    GENERATED_CONTENT_TYPE_REQUIRED(
-            BAD_REQUEST,
-            "Generated content type is required"
-    ),
-
     GENERATED_CONTENT_TITLE_REQUIRED(
             BAD_REQUEST,
             "Generated content title is required"
@@ -380,20 +385,9 @@ public enum ErrorCode {
             "Generated content body is required"
     ),
 
-
-    AI_CONVERSATION_ID_INVALID(
-            BAD_REQUEST,
-            "AI conversation ID must be greater than 0"
-    ),
-
     GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED(
             BAD_REQUEST,
             "Update generated content request is required"
-    ),
-
-    AI_CONVERSATION_ID_REQUIRED(
-            BAD_REQUEST,
-            "AI conversation ID is required"
     ),
 
     // ===================== AI Conversation =====================
@@ -467,6 +461,23 @@ public enum ErrorCode {
     FORM_GENERATION_PURPOSE_REQUIRED(
             BAD_REQUEST,
             "Form purpose is required"
+    ),
+
+    GENERATION_SOURCE_DOCUMENTS_REQUIRED(
+            BAD_REQUEST,
+            "At least one source document must be attached"
+    ),
+
+    // ===================== AI/LLM =====================
+
+    LLM_GENERATION_FAILED(
+            INTERNAL_SERVER_ERROR,
+            "Không thể tạo nội dung từ LLM"
+    ),
+
+    LLM_INVALID_PROMPT(
+            BAD_REQUEST,
+            "Prompt is required"
     );
 
     private final HttpStatus status;

@@ -1,11 +1,11 @@
 package com.enterprise.aiassistant.backend.ai.generation.dto;
 
-import com.enterprise.aiassistant.backend.generated.enums.GeneratedType;
+import com.enterprise.aiassistant.backend.ai.generation.enums.GeneratedType;
 import lombok.Builder;
 import lombok.Getter;
 
 // What a GenerationHandler hands back to GenerationService: the prompt to send to the
-// LLM, plus enough to persist the GenerationRun/GeneratedContent rows.
+// LLM, plus enough to persist the Generation/GeneratedContent rows.
 @Getter
 @Builder
 public class GenerationContext {

@@ -1,9 +1,9 @@
-import GenerationForm from "@/features/conversation/components/GenerationForm";
+import GenerationCreateScreen from "@/features/conversation/components/GenerationCreateScreen";
 
 export const metadata = {
   title: "Summary — Enterprise AI Assistant",
 };
 
 export default function SummaryPage() {
-  return <GenerationForm conversationType="SUMMARY_GENERATION" basePath="/summary" />;
+  return <GenerationCreateScreen conversationType="SUMMARY_GENERATION" basePath="/summary" />;
 }

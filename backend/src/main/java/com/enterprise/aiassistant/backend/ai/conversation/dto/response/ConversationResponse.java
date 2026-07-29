@@ -33,4 +33,7 @@ public class ConversationResponse {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    // Null for ACTIVE conversations, set only on soft delete.
+    private LocalDateTime deletedAt;
 }

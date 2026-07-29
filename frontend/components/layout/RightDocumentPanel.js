@@ -6,6 +6,7 @@ import ConfirmDialog from "@/features/document/components/ConfirmDialog";
 import Toast from "@/components/ui/Toast";
 import AttachDocumentsModal from "@/features/conversation/components/AttachDocumentsModal";
 import { getConversationDocuments, removeDocument } from "@/services/conversationService";
+import { attachmentIconStyle } from "@/utils/format";
 
 export default function RightDocumentPanel({ conversationId }) {
   const [documents, setDocuments] = useState([]);
@@ -19,6 +20,12 @@ export default function RightDocumentPanel({ conversationId }) {
   const [removing, setRemoving] = useState(false);
   const [toast, setToast] = useState(null);
   const notify = useCallback((type, text) => setToast({ type, text }), []);
+
+  // DocumentQaDetailView fetches its own copy of attachedDocuments independently —
+  // nudge it to resync so the chat-lock state reacts without a page reload.
+  const notifyDocumentsChanged = useCallback(() => {
+    window.dispatchEvent(new CustomEvent("conversation-documents-changed", { detail: { conversationId } }));
+  }, [conversationId]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -45,6 +52,7 @@ export default function RightDocumentPanel({ conversationId }) {
       notify("success", "Document removed");
       setRemoveTarget(null);
       reload();
+      notifyDocumentsChanged();
     } catch (err) {
       notify("error", err.message || "Failed to remove document");
     } finally {
@@ -53,7 +61,7 @@ export default function RightDocumentPanel({ conversationId }) {
   };
 
   return (
-    <aside className="hidden xl:flex w-80 shrink-0 flex-col border-l border-border-subtle bg-bg-secondary">
+    <aside className="hidden xl:flex w-80 shrink-0 flex-col border-l border-border-subtle bg-bg-primary">
       <div className="flex h-14 items-center justify-between p-4">
         <button
           type="button"
@@ -81,10 +89,10 @@ export default function RightDocumentPanel({ conversationId }) {
           <p className="text-sm text-text-muted">No documents attached yet.</p>
         ) : (
           <ul className="space-y-2">
-            {documents.map((doc) => (
+            {documents.map((doc, i) => (
               <li key={doc.documentVersionId} className="card flex items-center gap-3 p-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-bg-elevated">
-                  <FileText className="h-4 w-4 text-text-secondary" />
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${attachmentIconStyle(i).bg}`}>
+                  <FileText className={`h-4 w-4 ${attachmentIconStyle(i).color}`} />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-text-primary" title={doc.documentTitle}>
@@ -115,6 +123,7 @@ export default function RightDocumentPanel({ conversationId }) {
           setAttachOpen(false);
           notify("success", "Document(s) attached");
           reload();
+          notifyDocumentsChanged();
         }}
       />
 

@@ -1,6 +1,6 @@
 package com.enterprise.aiassistant.backend.ai.generation.dto.response;
 
-import com.enterprise.aiassistant.backend.generated.enums.GenerationStatus;
+import com.enterprise.aiassistant.backend.ai.generation.enums.GenerationStatus;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +8,7 @@ import lombok.Getter;
 @Builder
 public class TriggerGenerationResponse {
 
-    private Long generationRunId;
+    private Long generationId;
 
     private GenerationStatus status;
 

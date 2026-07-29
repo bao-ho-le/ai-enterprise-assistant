@@ -3,6 +3,8 @@ package com.enterprise.aiassistant.backend.ai.conversation.helper;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.AttachDocumentsRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartDocumentQaConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartGenerationConversationRequest;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
@@ -102,6 +104,24 @@ public class AIConversationHelper {
         if (recentMessagesLimit < MIN_RECENT_MESSAGES_LIMIT
                 || recentMessagesLimit > MAX_RECENT_MESSAGES_LIMIT) {
             throw new AIConversationException(ErrorCode.RECENT_MESSAGES_LIMIT_INVALID);
+        }
+    }
+
+    // Field-level checks (documentVersionIds, content) are already enforced by the
+    // reused createConversation/attachDocuments/sendMessage calls downstream — this
+    // is just the top-level null-request guard, consistent with the other public methods.
+    public void validateStartDocumentQaRequest(StartDocumentQaConversationRequest request) {
+        if (request == null) {
+            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
+        }
+    }
+
+    // Field-level checks (documentVersionIds, inputData) are already enforced by the
+    // reused createConversation/attachDocuments/generate calls downstream — this
+    // is just the top-level null-request guard, consistent with the other public methods.
+    public void validateStartGenerationRequest(StartGenerationConversationRequest request) {
+        if (request == null || request.getConversationType() == null || request.getInputData() == null) {
+            throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
         }
     }
 

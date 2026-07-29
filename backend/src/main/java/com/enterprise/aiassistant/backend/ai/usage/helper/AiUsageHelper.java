@@ -17,7 +17,7 @@ import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 
 @Component
-public class AiUsageHelper {
+public class AIUsageHelper {
 
 
     public AIUsageLogFilterRequest fromDateFilter(LocalDateTime from) {
@@ -48,10 +48,12 @@ public class AiUsageHelper {
         }
     }
 
+    public static int normalizeToken(Integer token) {
+        return token != null ? token : 0;
+    }
+
     public int calculateTotalTokens(Integer inputTokens, Integer outputTokens) {
-        int in = inputTokens != null ? inputTokens : 0;
-        int out = outputTokens != null ? outputTokens : 0;
-        return in + out;
+        return normalizeToken(inputTokens) + normalizeToken(outputTokens);
     }
 
     public double calculateSuccessRate(long successCount, long totalRequests) {

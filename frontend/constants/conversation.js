@@ -31,6 +31,14 @@ export function isGenerationConversationType(value) {
   return GENERATION_CONVERSATION_TYPES.includes(value);
 }
 
+// Generation types grounded in attached documents — the backend refuses to generate
+// these without at least one source document (GENERATION_SOURCE_DOCUMENTS_REQUIRED).
+export const DOCUMENT_GROUNDED_CONVERSATION_TYPES = ["REPORT_GENERATION", "SUMMARY_GENERATION"];
+
+export function requiresSourceDocuments(value) {
+  return DOCUMENT_GROUNDED_CONVERSATION_TYPES.includes(value);
+}
+
 // conversationType values that actually have a screen in this app, and where that
 // screen lives — backs the sidebar's type filter dropdown (LeftSidebar) and the
 // cross-type routing for its conversation list items.

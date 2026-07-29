@@ -8,16 +8,14 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
-import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
-import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogFilterRequest;
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageDailyResponse;
@@ -25,7 +23,8 @@ import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageLogRespon
 import com.enterprise.aiassistant.backend.ai.usage.dto.response.AIUsageSummaryResponse;
 import com.enterprise.aiassistant.backend.ai.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.usage.entity.AIUsageLog;
-import com.enterprise.aiassistant.backend.ai.usage.helper.AiUsageHelper;
+import com.enterprise.aiassistant.backend.ai.usage.event.AIUsageLogEvent;
+import com.enterprise.aiassistant.backend.ai.usage.helper.AIUsageHelper;
 import com.enterprise.aiassistant.backend.ai.usage.mapper.AIUsageLogMapper;
 import com.enterprise.aiassistant.backend.ai.usage.repository.AIUsageDailyProjection;
 import com.enterprise.aiassistant.backend.ai.usage.repository.AIUsageLogRepository;
@@ -38,27 +37,29 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
 
     private final AIUsageLogMapper aiUsageLogMapper;
     private final AIUsageLogRepository aiUsageLogRepository;
-    private final AiUsageHelper aiUsageHelper;
-
-    private final AIConversationRepository aiConversationRepository;
-    private final AIMessageRepository aiMessageRepository;
+    private final AIUsageHelper aiUsageHelper;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
 
-
+    // Don't persist immediately. The referenced conversation/message/generation is usually
+    // created in the same transaction and isn't committed yet, so inserting the usage log
+    // now (even via REQUIRES_NEW) may violate FK constraints. Publishing an event lets the
+    // log be persisted only after the outer transaction successfully commits.
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logAiUsage(AIUsageLogRequest request) {
         aiUsageHelper.validateLogRequest(request);
 
-        // Dùng cho embedding, vẫn tính log nhưng không có conversation
-        AIConversation aiConversation = request.getConversationId() != null
-                ? aiConversationRepository.getReferenceById(request.getConversationId())
-                : null;
-        AIMessage aiMessage = request.getMessageId() != null
-                ? aiMessageRepository.getReferenceById(request.getMessageId())
-                : null;
+        applicationEventPublisher.publishEvent(new AIUsageLogEvent(request));
+    }
 
-        AIUsageLog entity = aiUsageLogMapper.toEntity(request, aiConversation, aiMessage);
+    // The outer transaction has already committed by this point, so the thread's transaction
+    // resources haven't been unbound yet — without REQUIRES_NEW, save() below would silently
+    // "join" the just-completed transaction instead of opening a new one, and the insert would
+    // never actually flush to the database (no error, no SQL logged, id stays null).
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onAIUsageLogEvent(AIUsageLogEvent event) {
+        AIUsageLog entity = aiUsageLogMapper.toEntity(event.request());
 
         aiUsageLogRepository.save(entity);
     }

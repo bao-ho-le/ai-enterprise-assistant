@@ -6,10 +6,6 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
-import com.enterprise.aiassistant.backend.ai.conversation.entity.AIMessage;
-
 import com.enterprise.aiassistant.backend.ai.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 
@@ -18,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 @Entity
 @Table(
         name = "ai_usage_logs",
@@ -38,27 +35,26 @@ public class AIUsageLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ai_conversation_id")
-    private AIConversation aiConversation;
+    @Column(name = "ai_conversation_id")
+    private Long aiConversationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ai_message_id")
-    private AIMessage aiMessage;
+    @Column(name = "ai_message_id")
+    private Long aiMessageId;
 
-    // "WRITE_EMAIL" | "WRITE_REPORT" | "SUMMARY" | "DOCUMENT_QA"
+    @Column(name = "generation_id")
+    private Long generationId;
+
     @Column(name = "conversation_type", nullable = false, length = 50)
     private ConversationType conversationType;
 
-    // "gpt-4o" | "claude-sonnet" | "gemini-pro" ...
     @Column(nullable = false, length = 100)
     private String model;
 
     @Column(name = "input_tokens", nullable = false)
-    private Integer inputTokens ;
+    private Integer inputTokens;
 
     @Column(name = "output_tokens", nullable = false)
-    private Integer outputTokens ;
+    private Integer outputTokens;
 
     @Column(name = "total_tokens", nullable = false)
     private Integer totalTokens;
@@ -77,6 +73,4 @@ public class AIUsageLog {
     @Column(name = "created_at", nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
-
-    
 }

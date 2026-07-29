@@ -18,17 +18,21 @@ public class PromptBuilderService {
                 Draft a professional email.
                 Recipient: %s
                 Purpose: %s
+                Additional context: %s
                 Tone: %s
                 Length: %s
                 Language: %s
+                Audience: %s
                 Sender: %s
                 """.formatted(
                 valueOrDefault(input.getRecipient(), "the recipient"),
                 input.getPurpose(),
+                valueOrDefault(input.getOptionalContext(), "None"),
                 valueOrDefault(input.getTone(), "Formal"),
                 valueOrDefault(input.getLength(), "Medium"),
                 valueOrDefault(input.getLanguage(), "English"),
-                valueOrDefault(input.getSenderName(), "[Your Name]")
+                valueOrDefault(input.getAudience(), "General"),
+                valueOrDefault(input.getSender(), "[Your Name]")
         );
     }
 

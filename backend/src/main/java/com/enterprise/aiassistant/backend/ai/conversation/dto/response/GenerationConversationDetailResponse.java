@@ -1,7 +1,7 @@
 package com.enterprise.aiassistant.backend.ai.conversation.dto.response;
 
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.generated.enums.GenerationStatus;
+import com.enterprise.aiassistant.backend.ai.generation.enums.GenerationStatus;
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 public class GenerationConversationDetailResponse {
 
+    private Long generationId;
+
     private Long conversationId;
 
     private String title;
@@ -26,6 +28,12 @@ public class GenerationConversationDetailResponse {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    // Timestamps of the latest GenerationRun itself — createdAt/updatedAt above are the
+    // conversation's, which don't move when a run is re-triggered.
+    private LocalDateTime runCreatedAt;
+
+    private LocalDateTime runUpdatedAt;
 
     private GenerationStatus status;
 

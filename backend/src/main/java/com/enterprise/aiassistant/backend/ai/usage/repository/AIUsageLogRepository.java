@@ -42,13 +42,12 @@ public interface AIUsageLogRepository
     List<String> findDistinctModels();
 
     // === Dùng cho GET /ai-conversations/{id} — tổng hợp token/cost theo conversation ===
-    @Query("SELECT COALESCE(SUM(u.totalTokens), 0) FROM AIUsageLog u WHERE u.aiConversation.id = :conversationId")
+    @Query("SELECT COALESCE(SUM(u.totalTokens), 0) FROM AIUsageLog u WHERE u.aiConversationId = :conversationId")
     Long sumTotalTokensByConversationId(@Param("conversationId") Long conversationId);
 
-    @Query("SELECT COALESCE(SUM(u.estimatedCost), 0) FROM AIUsageLog u WHERE u.aiConversation.id = :conversationId")
+    @Query("SELECT COALESCE(SUM(u.estimatedCost), 0) FROM AIUsageLog u WHERE u.aiConversationId = :conversationId")
     BigDecimal sumEstimatedCostByConversationId(@Param("conversationId") Long conversationId);
 
-    // No cascade from AIConversation anymore (unidirectional, child-owned) - hard delete needs this explicitly.
     void deleteByAiConversationId(Long aiConversationId);
 }
 

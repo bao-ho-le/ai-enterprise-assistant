@@ -22,6 +22,10 @@ public class AIUsageLogRequest {
     private Long conversationId;
 
     private Long messageId;
+
+    // Optional: set by generation flows.
+    private Long generationId;
+
     private ConversationType conversationType;
     private String model;
     private Integer inputTokens;

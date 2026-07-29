@@ -1,15 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Quote, FileText } from "lucide-react";
+import { Send, Loader2, Quote, FileText, AlertTriangle } from "lucide-react";
 import LoadMore from "@/components/ui/LoadMore";
 import MessageSourcesDialog from "./MessageSourcesDialog";
-import { getDocumentQaConversationDetail } from "@/services/conversationService";
+import { getDocumentQaConversationDetail, getConversationDocuments } from "@/services/conversationService";
 import { sendMessage, getMessages } from "@/services/messageService";
 import { formatDateTime } from "@/utils/format";
 import { ApiError } from "@/lib/apiClient";
 
 const RECENT_MESSAGES_LIMIT = 20;
+
+// Renders "[1]", "[2]" citation markers (FakeLLMService.qaAnswer) as small numbered
+// badges inline instead of literal bracket text.
+function renderContentWithCitations(content) {
+  return content.split(/(\[\d+\])/g).map((part, i) => {
+    const match = /^\[(\d+)\]$/.exec(part);
+    if (!match) return part;
+    return (
+      <span
+        key={i}
+        className="mx-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-bg-elevated text-[10px] text-text-muted align-middle"
+      >
+        {match[1]}
+      </span>
+    );
+  });
+}
 
 export default function DocumentQaDetailView({ conversationId }) {
   const [conversation, setConversation] = useState(null);
@@ -59,6 +76,21 @@ export default function DocumentQaDetailView({ conversationId }) {
     return () => window.removeEventListener("conversation-renamed", onRenamed);
   }, [conversationId]);
 
+  // RightDocumentPanel attaches/removes documents independently (separate component,
+  // separate fetch) — resync attachedDocuments here so the chat lock reacts live.
+  useEffect(() => {
+    const onDocsChanged = (e) => {
+      if (String(e.detail?.conversationId) !== String(conversationId)) return;
+      getConversationDocuments(conversationId)
+        .then((docs) => setConversation((prev) => (prev ? { ...prev, attachedDocuments: docs } : prev)))
+        .catch(() => {
+          // Best-effort resync — a stale count just means the lock updates on next full reload.
+        });
+    };
+    window.addEventListener("conversation-documents-changed", onDocsChanged);
+    return () => window.removeEventListener("conversation-documents-changed", onDocsChanged);
+  }, [conversationId]);
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length]);
@@ -77,10 +109,12 @@ export default function DocumentQaDetailView({ conversationId }) {
     }
   };
 
+  const locked = !conversation?.attachedDocuments?.length;
+
   const submit = async (e) => {
     e.preventDefault();
     const trimmed = content.trim();
-    if (!trimmed || sending) return;
+    if (!trimmed || sending || locked) return;
     setSending(true);
     setSendError("");
     try {
@@ -125,7 +159,8 @@ export default function DocumentQaDetailView({ conversationId }) {
             <div className="flex flex-col items-center gap-2 text-center py-10">
               <FileText className="h-6 w-6 text-text-muted" />
               <p className="text-sm text-text-muted">No document selected yet.</p>
-              <p className="text-xs text-text-muted">
+              <p className="flex items-center justify-center gap-1.5 text-xs text-warning">
+                <AlertTriangle className="h-3 w-3 shrink-0" />
                 Attach a document from the panel on the right to start asking questions.
               </p>
             </div>
@@ -147,7 +182,7 @@ export default function DocumentQaDetailView({ conversationId }) {
                       }
                     >
                       <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap text-left">
-                        {m.content}
+                        {isUser ? m.content : renderContentWithCitations(m.content)}
                       </p>
                     </div>
                     <div className={`flex items-center gap-2 mt-1.5 px-1 ${isUser ? "flex-row-reverse" : ""}`}>
@@ -178,21 +213,21 @@ export default function DocumentQaDetailView({ conversationId }) {
             <div className="flex items-center gap-2 rounded-xl border border-border-subtle bg-bg-card px-3 py-2 min-h-[48px]">
               <textarea
                 rows={1}
-                placeholder="Ask a question about your documents..."
-                className="flex-1 resize-none bg-transparent text-sm text-text-primary outline-none leading-normal"
+                placeholder={locked ? "Attach a document to start chatting" : "Ask a question about your documents..."}
+                className="flex-1 resize-none bg-transparent text-sm text-text-primary outline-none leading-normal disabled:opacity-50"
                 aria-label="Chat message input"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) submit(e);
                 }}
-                disabled={sending}
+                disabled={sending || locked}
               />
               <button
                 type="submit"
                 className="flex h-8 w-8 items-center justify-center rounded-md bg-bg-elevated text-text-muted hover:bg-bg-card disabled:opacity-50"
                 aria-label="Send message"
-                disabled={!content.trim() || sending}
+                disabled={!content.trim() || sending || locked}
               >
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>
@@ -201,6 +236,10 @@ export default function DocumentQaDetailView({ conversationId }) {
         </form>
         {sendError ? (
           <p className="text-center text-xs text-error mt-2">{sendError}</p>
+        ) : locked ? (
+          <p className="text-center text-xs text-text-muted mt-2">
+            Ask questions only about the attached document(s). The AI will answer based on their content.
+          </p>
         ) : (
           <p className="text-center text-xs text-text-muted mt-2">
             AI responses are grounded in your selected source documents

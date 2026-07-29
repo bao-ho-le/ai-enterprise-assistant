@@ -12,7 +12,6 @@ const NAV_LINKS = [
   { href: "/write-report", label: "Write Report" },
   { href: "/summary", label: "Summary" },
   { href: "/document-qa", label: "Document QA" },
-  { href: "/generated-contents", label: "Generated Content" },
   { href: "/ai-usage", label: "AI Usage" },
 ];
 

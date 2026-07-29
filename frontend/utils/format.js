@@ -1,3 +1,15 @@
+// Cycled background/icon tint for attached-document rows — mirrors the old UI's
+// per-file coloring without depending on a file-extension field the API doesn't return.
+const ATTACHMENT_ICON_STYLES = [
+  { bg: "bg-red-500/10", color: "text-red-400" },
+  { bg: "bg-blue-500/10", color: "text-blue-400" },
+  { bg: "bg-emerald-500/10", color: "text-emerald-400" },
+];
+
+export function attachmentIconStyle(index) {
+  return ATTACHMENT_ICON_STYLES[index % ATTACHMENT_ICON_STYLES.length];
+}
+
 export function formatBytes(bytes) {
   if (bytes === null || bytes === undefined) return "—";
   if (bytes === 0) return "0 B";

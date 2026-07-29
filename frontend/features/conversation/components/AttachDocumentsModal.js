@@ -13,7 +13,12 @@ const PAGE_SIZE = 50;
 // Document list rows carry no versionId (backend DocumentListResponse omits it) —
 // resolve each selected document's current version at submit time, same pattern
 // as documentService.downloadCurrentVersion.
-export default function AttachDocumentsModal({ open, onClose, conversationId, alreadyAttachedDocumentIds, onAttached }) {
+//
+// Two modes: pass `conversationId` + `onAttached` to attach immediately via the API
+// (existing conversation). Pass `onSelect` instead when there's no conversation yet
+// (generation create-form) — resolves versions the same way but just hands the
+// picked documents back to the caller instead of calling the attach endpoint.
+export default function AttachDocumentsModal({ open, onClose, conversationId, alreadyAttachedDocumentIds, onAttached, onSelect }) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -56,10 +61,28 @@ export default function AttachDocumentsModal({ open, onClose, conversationId, al
     setSubmitting(true);
     setError("");
     try {
-      const details = await Promise.all([...selectedIds].map((id) => getDocument(id)));
-      const documentVersionIds = details
-        .map((d) => d?.currentVersion?.versionId)
-        .filter((id) => id != null);
+      const ids = [...selectedIds];
+      const details = await Promise.all(ids.map((id) => getDocument(id)));
+
+      if (onSelect) {
+        const selected = ids
+          .map((id, i) => {
+            const versionId = details[i]?.currentVersion?.versionId;
+            if (versionId == null) return null;
+            const listItem = documents.find((doc) => doc.id === id);
+            return {
+              documentId: id,
+              documentVersionId: versionId,
+              documentTitle: listItem?.title,
+              versionNumber: details[i].currentVersion.versionNumber,
+            };
+          })
+          .filter(Boolean);
+        onSelect(selected);
+        return;
+      }
+
+      const documentVersionIds = details.map((d) => d?.currentVersion?.versionId).filter((id) => id != null);
       await attachDocuments(conversationId, documentVersionIds);
       onAttached();
     } catch (err) {
@@ -113,7 +136,7 @@ export default function AttachDocumentsModal({ open, onClose, conversationId, al
           onClick={submit}
           disabled={selectedIds.size === 0 || submitting}
         >
-          {submitting ? "Attaching…" : `Attach (${selectedIds.size})`}
+          {submitting ? "Working…" : `${onSelect ? "Add" : "Attach"} (${selectedIds.size})`}
         </button>
       </div>
     </Modal>

@@ -4,8 +4,9 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConv
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.*;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
+import com.enterprise.aiassistant.backend.ai.generation.entity.Generation;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
-import com.enterprise.aiassistant.backend.generated.entity.GenerationRun;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -53,21 +54,24 @@ public class AIConversationMapper {
 
     public GenerationConversationDetailResponse toGenerationDetailResponse(
             AIConversation conversation,
-            GenerationRun generationRun,
+            Generation generation,
             List<ConversationDocumentResponse> attachedDocuments
     ) {
         return GenerationConversationDetailResponse.builder()
+                .generationId(generation.getId())
                 .conversationId(conversation.getId())
                 .title(conversation.getTitle())
                 .conversationType(conversation.getConversationType())
                 .createdAt(conversation.getCreatedAt())
                 .updatedAt(conversation.getUpdatedAt())
-                .status(generationRun.getStatus())
-                .inputData(generationRun.getInputData() != null ? generationRun.getInputData().toString() : null)
+                .runCreatedAt(generation.getCreatedAt())
+                .runUpdatedAt(generation.getUpdatedAt())
+                .status(generation.getStatus())
+                .inputData(generation.getInputData() != null ? generation.getInputData().toString() : null)
                 .attachedDocuments(attachedDocuments)
                 .generatedContentId(
-                        generationRun.getGeneratedContent() != null
-                                ? generationRun.getGeneratedContent().getId()
+                        generation.getGeneratedContent() != null
+                                ? generation.getGeneratedContent().getId()
                                 : null
                 )
                 .build();
@@ -90,6 +94,7 @@ public class AIConversationMapper {
                 .status(conversation.getStatus())
                 .createdAt(conversation.getCreatedAt())
                 .updatedAt(conversation.getUpdatedAt())
+                .deletedAt(conversation.getDeletedAt())
                 .build();
     }
 

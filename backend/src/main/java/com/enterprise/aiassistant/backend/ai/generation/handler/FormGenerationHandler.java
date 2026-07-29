@@ -8,7 +8,7 @@ import com.enterprise.aiassistant.backend.ai.prompt.service.PromptBuilderService
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
-import com.enterprise.aiassistant.backend.generated.enums.GeneratedType;
+import com.enterprise.aiassistant.backend.ai.generation.enums.GeneratedType;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

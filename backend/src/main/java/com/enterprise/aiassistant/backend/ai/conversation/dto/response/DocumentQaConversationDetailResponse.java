@@ -1,6 +1,7 @@
 package com.enterprise.aiassistant.backend.ai.conversation.dto.response;
 
 import com.enterprise.aiassistant.backend.ai.conversation.enums.ConversationStatus;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

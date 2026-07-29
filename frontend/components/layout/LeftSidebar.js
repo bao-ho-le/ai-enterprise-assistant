@@ -3,10 +3,48 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { SquarePen, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+
+// ── Refined icon: square pen (thinner stroke, softer corners) ──
+function SquarePenIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+// ── Refined icon: trash (thinner stroke, softer corners) ──
+function TrashIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  );
+}
 import ConfirmDialog from "@/features/document/components/ConfirmDialog";
 import Toast from "@/components/ui/Toast";
-import CreateConversationModal from "@/features/conversation/components/CreateConversationModal";
 import RenameConversationModal from "@/features/conversation/components/RenameConversationModal";
 import ConversationRowMenu from "@/features/conversation/components/ConversationRowMenu";
 import {
@@ -14,7 +52,7 @@ import {
   softDeleteConversation,
   hardDeleteConversation,
 } from "@/services/conversationService";
-import { isGenerationConversationType, ROUTED_CONVERSATION_TYPES } from "@/constants/conversation";
+import { ROUTED_CONVERSATION_TYPES } from "@/constants/conversation";
 
 // conversationType: which ConversationType this sidebar lists (e.g. "DOCUMENT_QA").
 // basePath: route prefix conversations of this type live under (e.g. "/document-qa"),
@@ -39,8 +77,6 @@ export default function LeftSidebar({ conversationType, basePath }) {
   const selectedBasePath =
     ROUTED_CONVERSATION_TYPES.find((t) => t.value === selectedType)?.basePath || basePath;
 
-  const isGeneration = isGenerationConversationType(conversationType);
-  const [createOpen, setCreateOpen] = useState(false);
   const [renameTarget, setRenameTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
@@ -66,13 +102,6 @@ export default function LeftSidebar({ conversationType, basePath }) {
       });
     return () => controller.abort();
   }, [selectedType, reloadKey]);
-
-  const onCreated = (conversation) => {
-    setCreateOpen(false);
-    notify("success", "Conversation created");
-    reload();
-    router.push(`${basePath}/${conversation.id}`);
-  };
 
   const onRenamed = (updated) => {
     setRenameTarget(null);
@@ -114,32 +143,27 @@ export default function LeftSidebar({ conversationType, basePath }) {
   };
 
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border-subtle bg-bg-secondary">
-      <button
-        type="button"
-        onClick={() => (isGeneration ? router.push(basePath) : setCreateOpen(true))}
-        className="flex h-14 items-center gap-2 px-4 transition-colors hover:bg-bg-elevated mb-2"
-      >
-        <SquarePen className="h-5 w-5 text-text-secondary" />
-        <span className="text-sm font-medium text-text-secondary">New conversation</span>
-      </button>
-
-      <div className="px-3 pb-2">
-        <select
-          className="select-field w-full text-sm py-2"
-          value={selectedType}
-          onChange={(e) => setSelectedType(e.target.value)}
-          aria-label="Filter conversation history by type"
+    <aside className="hidden md:flex w-68 shrink-0 flex-col border-r border-border-subtle bg-bg-primary">
+      <div className="flex flex-col gap-0.5 p-2">
+        <button
+          type="button"
+          onClick={() => router.push(basePath)}
+          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-bg-elevated"
         >
-          {ROUTED_CONVERSATION_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>
-              {t.label}
-            </option>
-          ))}
-        </select>
+          <SquarePenIcon className="h-[18px] w-[18px] shrink-0 text-text-secondary" />
+          <span className="text-sm font-medium text-text-primary">New conversation</span>
+        </button>
+
+        <Link
+          href="/conversations/deleted"
+          className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-bg-elevated"
+        >
+          <TrashIcon className="h-[18px] w-[18px] shrink-0 text-text-secondary" />
+          <span className="text-sm font-medium text-text-primary">Deleted conversations</span>
+        </Link>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3">
+      <div className="flex-1 overflow-y-auto pt-1 pb-3 px-3">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-8 text-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -167,7 +191,7 @@ export default function LeftSidebar({ conversationType, basePath }) {
                       className={
                         active
                           ? "flex-1 min-w-0 truncate text-sm font-medium text-text-primary"
-                          : "flex-1 min-w-0 truncate text-sm text-text-secondary"
+                          : "flex-1 min-w-0 truncate text-sm text-text-primary"
                       }
                       title={c.title}
                     >
@@ -191,13 +215,6 @@ export default function LeftSidebar({ conversationType, basePath }) {
           </ul>
         )}
       </div>
-
-      <CreateConversationModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        conversationType={conversationType}
-        onCreated={onCreated}
-      />
 
       <RenameConversationModal
         open={Boolean(renameTarget)}

@@ -1,16 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { Loader2, FileText, FileOutput } from "lucide-react";
-import LoadMore from "@/components/ui/LoadMore";
-import GenerationForm from "./GenerationForm";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Loader2, FileText, FileOutput, History } from "lucide-react";
+import GenerationForm, { splitEmailContent } from "./GenerationForm";
+import EmailPreview from "./EmailPreview";
+import GeneratedContentPreview from "./GeneratedContentPreview";
+import GenerationHistoryModal from "./GenerationHistoryModal";
 import {
   getGenerationConversationDetail,
-  getConversationGeneratedContents,
+  getConversationGenerations,
 } from "@/services/conversationService";
-import { generationStatusBadge, generatedDocumentTypeLabel } from "@/constants/generatedContent";
-import { formatDateTime } from "@/utils/format";
+import { getGeneratedContentById } from "@/services/generatedContentService";
+import { conversationTypeLabel } from "@/constants/conversation";
+import { generationStatusBadge } from "@/constants/generatedContent";
+import { formatDateTime, formatDateTimeSlash } from "@/utils/format";
 
 const HISTORY_PAGE_SIZE = 10;
 
@@ -25,6 +29,15 @@ export default function GenerationDetailView({ conversationId }) {
   const [historyHasMore, setHistoryHasMore] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyLoadingMore, setHistoryLoadingMore] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const autoPreviewHandled = useRef(false);
+
+  // Opening a generated content replaces the form with its preview, same as the
+  // create-flow does after generating an email.
+  const [preview, setPreview] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const loadDetail = useCallback(
     (signal) => {
@@ -34,6 +47,7 @@ export default function GenerationDetailView({ conversationId }) {
       return getGenerationConversationDetail(conversationId, signal)
         .then((d) => {
           if (!signal?.aborted) setDetail(d);
+          return d;
         })
         .catch((err) => {
           if (signal?.aborted || err.name === "AbortError") return;
@@ -49,13 +63,50 @@ export default function GenerationDetailView({ conversationId }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    loadDetail(controller.signal);
+    const p = loadDetail(controller.signal);
+    // Auto-open preview when redirected from the create-flow after a successful
+    // generation — matches writing a report/summary for the first time.
+    if (searchParams?.get('preview') === 'true') {
+      p.then((d) => {
+        if (!controller.signal.aborted && d?.generatedContentId != null && !autoPreviewHandled.current) {
+          autoPreviewHandled.current = true;
+          openGeneratedContent(d.generatedContentId);
+        }
+      });
+    }
     return () => controller.abort();
-  }, [loadDetail]);
+  }, [loadDetail, searchParams]);
 
-  const onRegenerated = () => {
+  const loadHistoryPage = useCallback(
+    (page, append) => {
+      const loadingSetter = append ? setHistoryLoadingMore : setHistoryLoading;
+      loadingSetter(true);
+      return getConversationGenerations(conversationId, { page, size: HISTORY_PAGE_SIZE })
+        .then((slice) => {
+          setHistory((prev) => (append ? [...prev, ...(slice?.content || [])] : slice?.content || []));
+          setHistoryHasMore(Boolean(slice?.hasNext));
+          setHistoryPage(page);
+        })
+        .catch(() => {
+          // History is a secondary view — a failure here shouldn't block the main detail.
+        })
+        .finally(() => loadingSetter(false));
+    },
+    [conversationId]
+  );
+
+  useEffect(() => {
+    loadHistoryPage(0, false);
+  }, [loadHistoryPage]);
+
+  // Regenerating jumps straight to the new content's preview, same as the create flow —
+  // still refreshes the detail/history underneath so "Back to Form" shows the new run.
+  const onRegenerated = (result) => {
     loadDetail();
     loadHistoryPage(0, false);
+    if (result?.generatedContentId != null) {
+      openGeneratedContent(result.generatedContentId);
+    }
   };
 
   useEffect(() => {
@@ -68,27 +119,18 @@ export default function GenerationDetailView({ conversationId }) {
     return () => window.removeEventListener("conversation-renamed", onRenamed);
   }, [conversationId]);
 
-  const loadHistoryPage = useCallback(
-    (page, append) => {
-      const loadingSetter = append ? setHistoryLoadingMore : setHistoryLoading;
-      loadingSetter(true);
-      return getConversationGeneratedContents(conversationId, { page, size: HISTORY_PAGE_SIZE })
-        .then((slice) => {
-          setHistory((prev) => (append ? [...prev, ...(slice?.content || [])] : slice?.content || []));
-          setHistoryHasMore(Boolean(slice?.hasNext));
-          setHistoryPage(page);
-        })
-        .catch(() => {
-          // History is a secondary section — a failure here shouldn't block the main detail view.
-        })
-        .finally(() => loadingSetter(false));
-    },
-    [conversationId]
-  );
-
-  useEffect(() => {
-    loadHistoryPage(0, false);
-  }, [loadHistoryPage]);
+  const openGeneratedContent = async (generatedContentId) => {
+    if (generatedContentId == null || previewLoading) return;
+    setHistoryOpen(false);
+    setPreviewLoading(true);
+    try {
+      setPreview(await getGeneratedContentById(generatedContentId));
+    } catch (err) {
+      setError(err.message || "Failed to load generated content");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -102,6 +144,31 @@ export default function GenerationDetailView({ conversationId }) {
     return (
       <main className="flex-1 flex items-center justify-center overflow-hidden">
         <p className="text-sm text-error">{error}</p>
+      </main>
+    );
+  }
+
+  if (preview) {
+    const back = () => setPreview(null);
+    return (
+      <main className="flex-1 overflow-y-auto">
+        {detail?.conversationType === "EMAIL_GENERATION" ? (
+          (() => {
+            const { subject, body } = splitEmailContent(preview.content);
+            return (
+              <EmailPreview
+                from={detail?.inputData?.sender}
+                to={detail?.inputData?.recipient}
+                subject={subject}
+                onSubjectChange={() => {}}
+                body={body}
+                onBack={back}
+              />
+            );
+          })()
+        ) : (
+          <GeneratedContentPreview item={preview} onBack={back} />
+        )}
       </main>
     );
   }
@@ -120,11 +187,15 @@ export default function GenerationDetailView({ conversationId }) {
         ) : (
           <>
             <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-lg font-semibold text-text-primary">{detail.title}</h1>
+              <div className="flex flex-wrap items-center gap-3 mb-1">
+                <h1 className="text-lg font-semibold text-text-primary">
+                  {conversationTypeLabel(detail.conversationType)} - {formatDateTimeSlash(detail.runCreatedAt)}
+                </h1>
                 <span className={`badge ${status.badge}`}>{status.label}</span>
               </div>
-              <p className="text-xs text-text-muted">Last updated {formatDateTime(detail.updatedAt)}</p>
+              <p className="text-xs text-text-muted">
+                Last updated {formatDateTime(detail.runUpdatedAt)}
+              </p>
             </div>
 
             <GenerationForm
@@ -132,24 +203,33 @@ export default function GenerationDetailView({ conversationId }) {
               conversationId={conversationId}
               initialValues={detail.inputData}
               onGenerated={onRegenerated}
+              attachedDocumentCount={detail.attachedDocuments?.length ?? 0}
+              actions={
+                <>
+                  <button
+                    type="button"
+                    className="btn-secondary text-sm"
+                    disabled={detail.generatedContentId == null || previewLoading}
+                    onClick={() => openGeneratedContent(detail.generatedContentId)}
+                  >
+                    {previewLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileOutput className="h-4 w-4" />
+                    )}
+                    View Generated Content
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary text-sm"
+                    onClick={() => setHistoryOpen(true)}
+                  >
+                    <History className="h-4 w-4" />
+                    History
+                  </button>
+                </>
+              }
             />
-
-            {detail.generatedContentId != null && (
-              <Link
-                href={`/generated-contents/${detail.generatedContentId}`}
-                className="btn-primary text-sm w-fit"
-              >
-                <FileOutput className="h-4 w-4" />
-                View generated content
-              </Link>
-            )}
-
-            <section>
-              <h2 className="text-sm font-medium text-text-primary mb-2">Submitted input</h2>
-              <pre className="card p-4 text-xs text-text-secondary overflow-x-auto whitespace-pre-wrap">
-                {detail.inputData ? JSON.stringify(detail.inputData, null, 2) : "—"}
-              </pre>
-            </section>
 
             {detail.attachedDocuments !== null && detail.attachedDocuments !== undefined && (
               <section>
@@ -173,42 +253,18 @@ export default function GenerationDetailView({ conversationId }) {
             )}
           </>
         )}
-
-        <section>
-          <h2 className="text-sm font-medium text-text-primary mb-2">Generated content in this conversation</h2>
-          {historyLoading ? (
-            <div className="flex items-center justify-center gap-2 py-6 text-text-muted">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <span className="text-sm">Loading…</span>
-            </div>
-          ) : history.length === 0 ? (
-            <p className="text-sm text-text-muted">No generated content yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {history.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={`/generated-contents/${item.id}`}
-                    className="card flex items-center gap-3 p-3 hover:border-border-default transition-colors"
-                  >
-                    <FileOutput className="h-4 w-4 text-text-secondary shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-text-primary">{item.title}</p>
-                      <p className="text-xs text-text-muted">{generatedDocumentTypeLabel(item.generatedType)}</p>
-                    </div>
-                    <span className="text-xs text-text-muted shrink-0">{formatDateTime(item.createdAt)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-          <LoadMore
-            hasMore={historyHasMore}
-            loading={historyLoadingMore}
-            onClick={() => loadHistoryPage(historyPage + 1, true)}
-          />
-        </section>
       </div>
+
+      <GenerationHistoryModal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        items={history}
+        loading={historyLoading}
+        hasMore={historyHasMore}
+        loadingMore={historyLoadingMore}
+        onLoadMore={() => loadHistoryPage(historyPage + 1, true)}
+        onSelect={openGeneratedContent}
+      />
     </main>
   );
 }

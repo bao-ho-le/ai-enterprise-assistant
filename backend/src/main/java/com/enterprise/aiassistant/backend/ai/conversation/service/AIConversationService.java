@@ -9,14 +9,17 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.response.AttachDoc
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.DocumentQaConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.GenerationConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartDocumentQaConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartGenerationConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.UpdateConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.response.StartDocumentQaConversationResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.response.StartGenerationConversationResponse;
 
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationDocumentResponse;
 
-import com.enterprise.aiassistant.backend.generated.dto.response.GeneratedContentResponse;
+import com.enterprise.aiassistant.backend.ai.generation.dto.response.GenerationResponse;
 
 import org.springframework.data.domain.Slice;
 
@@ -37,8 +40,23 @@ public interface AIConversationService {
 
     AttachDocumentsResponse attachDocuments(Long conversationId, AttachDocumentsRequest request);
 
+    // Atomic: create + attach + first message in one transaction, so a failure at any
+    // step rolls back the whole thing — no orphaned empty conversation can result.
+    StartDocumentQaConversationResponse startDocumentQaConversation(StartDocumentQaConversationRequest request);
 
-    Page<ConversationResponse> getConversations(
+    // Atomic: create + attach (if any) + generate in one transaction, so a failure at any
+    // step rolls back the whole thing — no orphaned empty conversation can result.
+    StartGenerationConversationResponse startGenerationConversation(StartGenerationConversationRequest request);
+
+
+    Slice<ConversationResponse> getConversations(
+            ConversationFilterRequest filter,
+            Pageable pageable
+    );
+
+    // Soft-deleted conversations only — status is forced server-side, the filter's own
+    // status field is ignored here.
+    Slice<ConversationResponse> getDeletedConversations(
             ConversationFilterRequest filter,
             Pageable pageable
     );
@@ -51,6 +69,6 @@ public interface AIConversationService {
 
     void removeDocument(Long conversationId, Long documentVersionId);
 
-    Slice<GeneratedContentResponse> getConversationGeneratedContents(Long conversationId, Pageable pageable);
+    Slice<GenerationResponse> getConversationGenerations(Long conversationId, Pageable pageable);
 
 }

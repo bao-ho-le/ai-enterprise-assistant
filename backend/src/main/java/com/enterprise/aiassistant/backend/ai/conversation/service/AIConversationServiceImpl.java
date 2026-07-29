@@ -4,11 +4,17 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.request.AttachDocu
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.ConversationFilterRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConversationRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.response.AIMessageResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartGenerationConversationRequest;
+import com.enterprise.aiassistant.backend.ai.message.dto.request.SendMessageRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartDocumentQaConversationRequest;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.AttachDocumentsResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.DocumentQaConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.GenerationConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.ConversationResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.response.StartDocumentQaConversationResponse;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.response.StartGenerationConversationResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
 import com.enterprise.aiassistant.backend.ai.conversation.enums.ConversationStatus;
@@ -19,8 +25,9 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.response.Conversat
 
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationRepository;
-import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageRepository;
-import com.enterprise.aiassistant.backend.ai.conversation.repository.AIMessageSourceRepository;
+import com.enterprise.aiassistant.backend.ai.message.repository.AIMessageRepository;
+import com.enterprise.aiassistant.backend.ai.message.repository.AIMessageSourceRepository;
+import com.enterprise.aiassistant.backend.ai.message.service.AIMessageService;
 
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.ai.usage.repository.AIUsageLogRepository;
@@ -29,27 +36,35 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.AI
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
-import com.enterprise.aiassistant.backend.generated.entity.GenerationRun;
-import com.enterprise.aiassistant.backend.generated.repository.GenerationRunRepository;
+import com.enterprise.aiassistant.backend.ai.generation.dto.request.TriggerGenerationRequest;
+import com.enterprise.aiassistant.backend.ai.generation.dto.response.TriggerGenerationResponse;
+import com.enterprise.aiassistant.backend.ai.generation.entity.Generation;
+import com.enterprise.aiassistant.backend.ai.generation.entity.GeneratedContent;
+import com.enterprise.aiassistant.backend.ai.generation.repository.GenerationRepository;
+import com.enterprise.aiassistant.backend.ai.generation.service.GenerationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
 
-import com.enterprise.aiassistant.backend.generated.dto.response.GeneratedContentResponse;
-import com.enterprise.aiassistant.backend.generated.mapper.GeneratedMapper;
-import com.enterprise.aiassistant.backend.generated.repository.GeneratedContentRepository;
+import com.enterprise.aiassistant.backend.ai.generation.dto.response.GenerationResponse;
+import com.enterprise.aiassistant.backend.ai.generation.mapper.GeneratedMapper;
+import com.enterprise.aiassistant.backend.ai.generation.repository.GeneratedContentRepository;
 import org.springframework.data.domain.Slice;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDateTime;
 
 import java.util.List;
+import java.util.Objects;
 
 
 @Service
@@ -68,7 +83,7 @@ public class AIConversationServiceImpl implements AIConversationService {
 
     private final GeneratedContentRepository generatedContentRepository;
 
-    private final GenerationRunRepository generationRunRepository;
+    private final GenerationRepository generationRepository;
 
     private final AIUsageLogRepository usageLogRepository;
 
@@ -79,6 +94,8 @@ public class AIConversationServiceImpl implements AIConversationService {
     private final GeneratedMapper generatedMapper;
 
     private final AIMessageService aiMessageService;
+
+    private final GenerationService generationService;
 
 
     @Override
@@ -92,6 +109,60 @@ public class AIConversationServiceImpl implements AIConversationService {
 
         return aiConversationMapper.toResponse(conversation);
     }
+
+
+    @Override
+    @Transactional
+    public StartDocumentQaConversationResponse startDocumentQaConversation(StartDocumentQaConversationRequest request) {
+
+        aiConversationHelper.validateStartDocumentQaRequest(request);
+
+        CreateConversationRequest createRequest = new CreateConversationRequest();
+        createRequest.setConversationType(ConversationType.DOCUMENT_QA);
+        ConversationResponse conversation = createConversation(createRequest);
+
+        AttachDocumentsRequest attachRequest = new AttachDocumentsRequest();
+        attachRequest.setDocumentVersionIds(request.getDocumentVersionIds());
+        attachDocuments(conversation.getId(), attachRequest);
+
+        SendMessageRequest sendMessageRequest = new SendMessageRequest();
+        sendMessageRequest.setContent(request.getContent());
+        MessageResponse message = aiMessageService.sendMessage(conversation.getId(), sendMessageRequest);
+
+        return StartDocumentQaConversationResponse.builder()
+                .conversation(conversation)
+                .message(message)
+                .build();
+    }
+
+
+    @Override
+    @Transactional
+    public StartGenerationConversationResponse startGenerationConversation(StartGenerationConversationRequest request) {
+
+        aiConversationHelper.validateStartGenerationRequest(request);
+        aiConversationHelper.validateGenerationConversationType(request.getConversationType());
+
+        CreateConversationRequest createRequest = new CreateConversationRequest();
+        createRequest.setConversationType(request.getConversationType());
+        ConversationResponse conversation = createConversation(createRequest);
+
+        if (request.getDocumentVersionIds() != null && !request.getDocumentVersionIds().isEmpty()) {
+            AttachDocumentsRequest attachRequest = new AttachDocumentsRequest();
+            attachRequest.setDocumentVersionIds(request.getDocumentVersionIds());
+            attachDocuments(conversation.getId(), attachRequest);
+        }
+
+        TriggerGenerationRequest triggerRequest = new TriggerGenerationRequest();
+        triggerRequest.setInputData(request.getInputData());
+        TriggerGenerationResponse generation = generationService.generate(conversation.getId(), triggerRequest);
+
+        return StartGenerationConversationResponse.builder()
+                .conversation(conversation)
+                .generation(generation)
+                .build();
+    }
+
 
     @Override
     @Transactional
@@ -107,6 +178,7 @@ public class AIConversationServiceImpl implements AIConversationService {
 
         return aiConversationMapper.toResponse(conversation);
     }
+
 
     @Override
     @Transactional
@@ -132,11 +204,21 @@ public class AIConversationServiceImpl implements AIConversationService {
         AIConversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new AIConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
 
+        // GeneratedContent no longer has its own ai_conversation_id (item 4) - collect its
+        // ids through the conversation's Generations before those rows are deleted.
+        List<Long> generatedContentIds = generationRepository.findByAiConversationId(conversationId).stream()
+                .map(Generation::getGeneratedContent)
+                .filter(Objects::nonNull)
+                .map(GeneratedContent::getId)
+                .toList();
+
         messageSourceRepository.deleteByAiMessage_ConversationId(conversationId);
         messageRepository.deleteByConversationId(conversationId);
         conversationDocumentRepository.deleteByConversationId(conversationId);
-        generationRunRepository.deleteByAiConversationId(conversationId);
-        generatedContentRepository.deleteByAiConversationId(conversationId);
+        generationRepository.deleteByAiConversationId(conversationId);
+        if (!generatedContentIds.isEmpty()) {
+            generatedContentRepository.deleteAllById(generatedContentIds);
+        }
         usageLogRepository.deleteByAiConversationId(conversationId);
         conversationRepository.delete(conversation);
     }
@@ -188,14 +270,16 @@ public class AIConversationServiceImpl implements AIConversationService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public Page<ConversationResponse> getConversations(
-            ConversationFilterRequest filter,
-            Pageable pageable
-    ) {
-        ConversationStatus status = filter.getStatus() != null ? filter.getStatus() : ConversationStatus.ACTIVE;
+    @Transactional
+    public void removeDocument(Long conversationId, Long documentVersionId) {
 
-        return conversationRepository.filterConversations(filter.getConversationType(), status, pageable);
+        getActiveConversationOrThrow(conversationId);
+
+        AIConversationDocument conversationDocument = conversationDocumentRepository
+                .findByConversationIdAndDocumentVersionId(conversationId, documentVersionId)
+                .orElseThrow(() -> new ConversationException(ErrorCode.DOCUMENT_NOT_ATTACHED_TO_CONVERSATION));
+
+        conversationDocumentRepository.delete(conversationDocument);
     }
 
     @Override
@@ -228,6 +312,26 @@ public class AIConversationServiceImpl implements AIConversationService {
 
     @Override
     @Transactional(readOnly = true)
+    public Slice<ConversationResponse> getConversations(
+            ConversationFilterRequest filter,
+            Pageable pageable
+    ) {
+        ConversationStatus status = filter.getStatus() != null ? filter.getStatus() : ConversationStatus.ACTIVE;
+
+        return conversationRepository.filterConversations(filter.getConversationType(), status, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Slice<ConversationResponse> getDeletedConversations(
+            ConversationFilterRequest filter,
+            Pageable pageable
+    ) {
+        return conversationRepository.filterDeletedConversations(filter.getConversationType(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public GenerationConversationDetailResponse getGenerationConversationDetail(Long conversationId) {
 
         aiConversationHelper.validateConversationId(conversationId);
@@ -237,16 +341,17 @@ public class AIConversationServiceImpl implements AIConversationService {
 
         aiConversationHelper.validateGenerationConversationType(conversation.getConversationType());
 
-        GenerationRun generationRun = generationRunRepository
+        Generation generation = generationRepository
                 .findFirstByAiConversationIdOrderByCreatedAtDesc(conversationId)
-                .orElseThrow(() -> new AIConversationException(ErrorCode.GENERATION_RUN_NOT_FOUND));
+                .orElseThrow(() -> new AIConversationException(ErrorCode.GENERATION_NOT_FOUND));
 
+        // Nếu conversation type là email thì không có attach document
         List<ConversationDocumentResponse> attachedDocuments =
                 conversation.getConversationType() == ConversationType.EMAIL_GENERATION
                         ? null
                         : getConversationDocuments(conversationId);
 
-        return aiConversationMapper.toGenerationDetailResponse(conversation, generationRun, attachedDocuments);
+        return aiConversationMapper.toGenerationDetailResponse(conversation, generation, attachedDocuments);
     }
 
     @Override
@@ -261,32 +366,24 @@ public class AIConversationServiceImpl implements AIConversationService {
                 .toList();
     }
 
-    @Override
-    @Transactional
-    public void removeDocument(Long conversationId, Long documentVersionId) {
-
-        getActiveConversationOrThrow(conversationId);
-
-        AIConversationDocument conversationDocument = conversationDocumentRepository
-                .findByConversationIdAndDocumentVersionId(conversationId, documentVersionId)
-                .orElseThrow(() -> new ConversationException(ErrorCode.DOCUMENT_NOT_ATTACHED_TO_CONVERSATION));
-
-        conversationDocumentRepository.delete(conversationDocument);
-    }
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<GeneratedContentResponse> getConversationGeneratedContents(
+    public Slice<GenerationResponse> getConversationGenerations(
             Long conversationId,
             Pageable pageable
     ) {
 
         getActiveConversationOrThrow(conversationId);
 
-        return generatedContentRepository
+        return generationRepository
                 .findByAiConversationIdOrderByCreatedAtDesc(conversationId, pageable)
-                .map(generatedMapper::toGeneratedContentResponse);
+                .map(generatedMapper::toGenerationResponse);
     }
+
+
+
+    // Helper
 
     private void getActiveConversationOrThrow(Long conversationId) {
         conversationRepository.findByIdAndStatus(conversationId, ConversationStatus.ACTIVE)

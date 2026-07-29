@@ -1,9 +1,9 @@
-import GenerationForm from "@/features/conversation/components/GenerationForm";
+import GenerationCreateScreen from "@/features/conversation/components/GenerationCreateScreen";
 
 export const metadata = {
   title: "Write Report — Enterprise AI Assistant",
 };
 
 export default function WriteReportPage() {
-  return <GenerationForm conversationType="REPORT_GENERATION" basePath="/write-report" />;
+  return <GenerationCreateScreen conversationType="REPORT_GENERATION" basePath="/write-report" />;
 }
