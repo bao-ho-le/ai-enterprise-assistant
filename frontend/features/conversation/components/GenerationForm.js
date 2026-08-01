@@ -42,10 +42,10 @@ const FIELD_CONFIGS = {
     },
     {
       name: "length",
-      label: "Writing Style",
+      label: "Length",
       type: "select",
-      options: ["Brief — Quick overview", "Standard — Balanced detail", "Formal — Board-ready language", "Detailed — Comprehensive"],
-      default: "Standard — Balanced detail",
+      options: ["Short", "Medium", "Long"],
+      default: "Medium",
       row: "details",
     },
     {
@@ -53,6 +53,14 @@ const FIELD_CONFIGS = {
       label: "Audience",
       type: "select",
       options: ["Executive Leadership", "Team", "Clients", "Board of Directors", "General"],
+      row: "details",
+    },
+    {
+      name: "tone",
+      label: "Tone",
+      type: "select",
+      options: ["Formal", "Friendly", "Persuasive", "Apologetic", "Professional"],
+      default: "Formal",
       row: "details",
     },
   ],
@@ -73,8 +81,8 @@ const FIELD_CONFIGS = {
       ],
     },
     { name: "instructions", label: "Instructions", type: "textarea", placeholder: "Anything specific to focus the summary on" },
-    { name: "length", label: "Length", type: "select", options: ["Short", "Medium", "Long"], default: "Medium", row: "details" },
     { name: "language", label: "Language", type: "select", options: LANGUAGE_OPTIONS, default: "English", row: "details" },
+    { name: "length", label: "Length", type: "select", options: ["Short", "Medium", "Long"], default: "Medium", row: "details" },
   ],
 };
 
@@ -94,7 +102,14 @@ function getGridClass(group) {
 function initialState(fields, initialValues) {
   const state = {};
   for (const f of fields) {
-    state[f.name] = initialValues?.[f.name] ?? f.default ?? "";
+    let value = initialValues?.[f.name] ?? f.default ?? "";
+    // Legacy safety: old report conversations stored "Writing Style" values that
+    // are no longer valid options — fall back to the default so the select never
+    // renders a blank/stale choice when regenerating.
+    if (f.type === "select" && f.options && !f.options.includes(value)) {
+      value = f.default ?? "";
+    }
+    state[f.name] = value;
   }
   return state;
 }

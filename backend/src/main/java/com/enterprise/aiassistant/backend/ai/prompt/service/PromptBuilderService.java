@@ -41,6 +41,7 @@ public class PromptBuilderService {
                 Write a business report titled "%s".
                 Instructions: %s
                 Audience: %s
+                Tone: %s
                 Length: %s
                 Reporting period: %s
                 Language: %s
@@ -51,7 +52,8 @@ public class PromptBuilderService {
                 input.getTitle(),
                 valueOrDefault(input.getInstructions(), "None"),
                 valueOrDefault(input.getAudience(), "General audience"),
-                valueOrDefault(input.getLength(), "Standard"),
+                valueOrDefault(input.getTone(), "Formal"),
+                valueOrDefault(input.getLength(), "Medium"),
                 dateRange(input.getFromDate(), input.getToDate()),
                 valueOrDefault(input.getLanguage(), "English"),
                 valueOrDefault(documentContext, "No source documents attached.")
