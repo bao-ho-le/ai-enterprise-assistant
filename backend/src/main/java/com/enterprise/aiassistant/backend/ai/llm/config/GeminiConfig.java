@@ -10,11 +10,11 @@ import org.springframework.context.annotation.Configuration;
 public class GeminiConfig {
 
 
-    @Value("${gemini.chat-model.api-key}")
+    @Value("${gemini.llm-model.api-key}")
     private String apiKey;
 
 
-    @Value("${gemini.chat-model.model-name}")
+    @Value("${gemini.llm-model.model-name}")
     private String modelName;
 
     @Bean

@@ -12,6 +12,12 @@ import EmailPreview from "./EmailPreview";
 
 const LANGUAGE_OPTIONS = ["English", "Vietnamese", "Spanish", "French"];
 
+// Shared with backend PromptBuilderService's toneInstruction()/audienceInstruction() —
+// each value maps to a detailed prompt instruction there, not just passed through as-is.
+const TONE_OPTIONS = ["Professional", "Formal", "Friendly", "Persuasive", "Apologetic"];
+const AUDIENCE_OPTIONS = ["General Audience", "Internal Team", "Business Partner", "Customer", "Executive"];
+const REPORT_AUDIENCE_OPTIONS = ["General Audience", "Internal Team", "Business Partner", "Customer", "Executive Leadership", "Board of Directors"];
+
 // Field schema per generation conversationType — keeps the 3 wired generation
 // screens on one component instead of near-duplicate forms. Must match the
 // backend's XxxGenerationInput DTOs (ai/generation/dto).
@@ -24,8 +30,8 @@ const FIELD_CONFIGS = {
     { name: "optionalContext", label: "Optional Context", type: "textarea", placeholder: "Prior thread context, requests already made, etc." },
     { name: "language", label: "Language", type: "select", options: LANGUAGE_OPTIONS, default: "English", row: "details" },
     { name: "length", label: "Email Length", type: "select", options: ["Short", "Medium", "Long"], default: "Medium", row: "details" },
-    { name: "audience", label: "Audience", type: "select", options: ["Customer", "Internal Team", "Partner", "Executive"], row: "details" },
-    { name: "tone", label: "Tone", type: "select", options: ["Formal", "Friendly", "Persuasive", "Apologetic", "Professional"], default: "Formal", row: "details" },
+    { name: "audience", label: "Audience", type: "select", options: AUDIENCE_OPTIONS, default: "General Audience", row: "details" },
+    { name: "tone", label: "Tone", type: "select", options: TONE_OPTIONS, default: "Professional", row: "details" },
   ],
   REPORT_GENERATION: [
     { name: "title", label: "Report title", type: "text", required: true, placeholder: "e.g. Q3 Sales Performance" },
@@ -52,15 +58,8 @@ const FIELD_CONFIGS = {
       name: "audience",
       label: "Audience",
       type: "select",
-      options: ["Executive Leadership", "Team", "Clients", "Board of Directors", "General"],
-      row: "details",
-    },
-    {
-      name: "tone",
-      label: "Tone",
-      type: "select",
-      options: ["Formal", "Friendly", "Persuasive", "Apologetic", "Professional"],
-      default: "Formal",
+      options: REPORT_AUDIENCE_OPTIONS,
+      default: "General Audience",
       row: "details",
     },
   ],
@@ -70,14 +69,11 @@ const FIELD_CONFIGS = {
       label: "Summary Type",
       type: "cards",
       required: true,
-      default: "EXECUTIVE",
+      default: "PARAGRAPH",
       options: [
-        { value: "EXECUTIVE", title: "Executive Summary", description: "High-level overview for leadership" },
-        { value: "BULLET_POINTS", title: "Bullet Summary", description: "Key points in scannable format" },
-        { value: "DETAILED", title: "Detailed Summary", description: "Comprehensive section-by-section" },
-        { value: "TIMELINE", title: "Timeline", description: "Chronological event sequence" },
-        { value: "ACTION_ITEMS", title: "Action Items", description: "Tasks, owners, and deadlines" },
-        { value: "MEETING_NOTES", title: "Meeting Notes", description: "Structured meeting recap" },
+        { value: "PARAGRAPH", title: "Paragraph", description: "Natural, connected paragraphs" },
+        { value: "BULLET_POINTS", title: "Bullet Points", description: "One main idea per bullet" },
+        { value: "STRUCTURED", title: "Structured", description: "Organized under headings (Overview, Key Findings, ...)" },
       ],
     },
     { name: "instructions", label: "Instructions", type: "textarea", placeholder: "Anything specific to focus the summary on" },
@@ -103,10 +99,13 @@ function initialState(fields, initialValues) {
   const state = {};
   for (const f of fields) {
     let value = initialValues?.[f.name] ?? f.default ?? "";
-    // Legacy safety: old report conversations stored "Writing Style" values that
-    // are no longer valid options — fall back to the default so the select never
-    // renders a blank/stale choice when regenerating.
+    // Legacy safety: old conversations may have stored option values (e.g. report
+    // "Writing Style", summary "Summary Type") that are no longer valid — fall back
+    // to the default so the field never renders/submits a stale choice when regenerating.
     if (f.type === "select" && f.options && !f.options.includes(value)) {
+      value = f.default ?? "";
+    }
+    if (f.type === "cards" && f.options && !f.options.some((o) => o.value === value)) {
       value = f.default ?? "";
     }
     state[f.name] = value;

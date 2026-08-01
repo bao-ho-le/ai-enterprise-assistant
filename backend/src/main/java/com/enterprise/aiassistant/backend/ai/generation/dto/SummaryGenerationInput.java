@@ -7,8 +7,8 @@ import lombok.Data;
 @Data
 public class SummaryGenerationInput {
 
-    // EXECUTIVE | BULLET_POINTS | TIMELINE | ACTION_ITEMS — free text, no enum
-    // constraint so the fake model can be pointed at anything without a migration.
+    // PARAGRAPH | BULLET_POINTS | STRUCTURED — free text, no enum constraint so
+    // the prompt (PromptBuilderService) can be extended without a migration.
     @NotBlank
     private String style;
 

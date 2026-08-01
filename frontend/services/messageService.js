@@ -8,8 +8,11 @@ export function sendMessage(conversationId, content) {
   return apiClient.postJson(`/ai-conversations/${conversationId}/messages`, { content });
 }
 
-// GET /ai-conversations/{conversationId}/messages  (Pageable, ascending by createdAt)
-// -> Spring Slice<AIMessageResponse> — no totalElements/totalPages, only hasNext()
+// GET /ai-conversations/{conversationId}/messages  { beforeId?, size? }
+// Keyset pagination: omit beforeId for the latest `size` messages, or pass the id of
+// the oldest message currently loaded to get the `size` messages right before it.
+// -> MessagePageResponse { content: AIMessageResponse[] (oldest-first), hasMore: boolean
+// (are there even older messages beyond this page) }.
 export function getMessages(conversationId, params, signal) {
   return apiClient.get(`/ai-conversations/${conversationId}/messages`, { params, signal });
 }

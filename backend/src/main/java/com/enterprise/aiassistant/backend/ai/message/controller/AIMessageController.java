@@ -1,15 +1,12 @@
 package com.enterprise.aiassistant.backend.ai.message.controller;
 
 import com.enterprise.aiassistant.backend.ai.message.dto.request.SendMessageRequest;
-import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageDetailResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.MessagePageResponse;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageResponse;
 import com.enterprise.aiassistant.backend.ai.message.service.AIMessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,14 +27,16 @@ public class AIMessageController {
 
 
     @GetMapping
-    public Slice<AIMessageResponse> getMessages(
+    public MessagePageResponse getMessages(
             @PathVariable Long conversationId,
-            @PageableDefault(size = 20) Pageable pageable
+            @RequestParam(required = false) Long beforeId,
+            @RequestParam(defaultValue = "20") int size
     ) {
 
         return messageService.getMessages(
                 conversationId,
-                pageable
+                beforeId,
+                size
         );
     }
 

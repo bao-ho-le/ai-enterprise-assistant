@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import { Loader2, FileText } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import EvidenceDialog from "@/features/document/components/EvidenceDialog";
 import { getMessageDetail } from "@/services/messageService";
 
-// MessageSourceResponse carries no chunk text (only documentTitle/pageNumber/score) —
-// unlike EvidenceDialog's semantic-search matches, there's no excerpt to render here.
+// Clicking a source reuses EvidenceDialog (Semantic Search / File Storage's "View
+// Evidence" view) so the content-viewing experience stays identical across the app.
 export default function MessageSourcesDialog({ open, onClose, conversationId, messageId }) {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [evidenceSource, setEvidenceSource] = useState(null);
 
   useEffect(() => {
     if (!open || !messageId) return;
@@ -44,19 +46,43 @@ export default function MessageSourcesDialog({ open, onClose, conversationId, me
       ) : (
         <ul className="space-y-2 max-h-[60vh] overflow-y-auto">
           {detail.sources.map((s) => (
-            <li key={s.chunkId} className="flex items-center gap-3 rounded-lg border border-border-subtle p-3">
-              <FileText className="h-4 w-4 text-text-muted shrink-0" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm text-text-primary">{s.documentTitle}</p>
-                <p className="text-xs text-text-muted">{s.pageNumber ? `Page ${s.pageNumber}` : "Page —"}</p>
-              </div>
-              {s.score != null && (
-                <span className="badge badge-success shrink-0">{Math.round(s.score * 100)}% match</span>
-              )}
+            <li key={s.chunkId}>
+              <button
+                type="button"
+                onClick={() => setEvidenceSource(s)}
+                className="flex w-full items-center gap-3 rounded-lg border border-border-subtle p-3 text-left hover:border-border-default transition-colors"
+              >
+                <FileText className="h-4 w-4 text-text-muted shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm text-text-primary">{s.documentTitle}</p>
+                  <p className="text-xs text-text-muted">{s.pageNumber ? `Page ${s.pageNumber}` : "Page —"}</p>
+                </div>
+                {s.score != null && (
+                  <span className="badge badge-success shrink-0">{Math.round(s.score * 100)}% match</span>
+                )}
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      <EvidenceDialog
+        open={Boolean(evidenceSource)}
+        onClose={() => setEvidenceSource(null)}
+        doc={evidenceSource ? { title: evidenceSource.documentTitle } : null}
+        matches={
+          evidenceSource
+            ? [
+                {
+                  chunkId: evidenceSource.chunkId,
+                  page: evidenceSource.pageNumber,
+                  score: evidenceSource.score,
+                  content: evidenceSource.content,
+                },
+              ]
+            : null
+        }
+      />
     </Modal>
   );
 }

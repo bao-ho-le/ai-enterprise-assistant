@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, Quote, FileText, AlertTriangle } from "lucide-react";
-import LoadMore from "@/components/ui/LoadMore";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Send, Loader2, Quote, FileText, AlertTriangle, Copy } from "lucide-react";
 import MessageSourcesDialog from "./MessageSourcesDialog";
 import { getDocumentQaConversationDetail, getConversationDocuments } from "@/services/conversationService";
 import { sendMessage, getMessages } from "@/services/messageService";
@@ -32,7 +31,6 @@ export default function DocumentQaDetailView({ conversationId }) {
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [hasMore, setHasMore] = useState(false);
-  const [nextPage, setNextPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +40,31 @@ export default function DocumentQaDetailView({ conversationId }) {
   const [sendError, setSendError] = useState("");
 
   const [sourcesTarget, setSourcesTarget] = useState(null);
+  const [copiedMessageId, setCopiedMessageId] = useState(null);
   const bottomRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const messageRefs = useRef(new Map());
+  // Message id + its offset from the viewport top, captured right before an older
+  // page loads — lets us restore that exact spot afterwards instead of relying on
+  // where in the array the new messages land.
+  const scrollAnchorRef = useRef(null);
+  const skipBottomScrollRef = useRef(false);
+  // Synchronous re-entrancy guard — `loadingMore` state updates asynchronously, which
+  // isn't enough to stop a second scroll event firing before the first fetch's state
+  // update has committed.
+  const loadingMoreRef = useRef(false);
+
+  // Same copy-to-clipboard pattern as EmailPreview/GeneratedContentPreview's Copy
+  // button — keyed by message id since multiple answers can sit in the list at once.
+  const copyMessage = async (messageId, content) => {
+    try {
+      await navigator.clipboard.writeText(content || "");
+      setCopiedMessageId(messageId);
+      setTimeout(() => setCopiedMessageId((prev) => (prev === messageId ? null : prev)), 1500);
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — nothing more we can do here.
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -54,7 +76,6 @@ export default function DocumentQaDetailView({ conversationId }) {
         setConversation(detail);
         setMessages(detail?.recentMessages || []);
         setHasMore(Boolean(detail?.hasMoreMessages));
-        setNextPage(1);
       })
       .catch((err) => {
         if (controller.signal.aborted || err.name === "AbortError") return;
@@ -92,22 +113,108 @@ export default function DocumentQaDetailView({ conversationId }) {
   }, [conversationId]);
 
   useEffect(() => {
+    // Loading older messages already restores the user's position itself (see the
+    // layout effect below) — jumping to the bottom afterwards would undo that.
+    if (skipBottomScrollRef.current) {
+      skipBottomScrollRef.current = false;
+      return;
+    }
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length]);
 
+  // Runs before paint whenever `messages` changes. Only acts when loadMore set an
+  // anchor: finds that same message's new position and adjusts scrollTop by the
+  // difference, so whatever the user was looking at stays exactly in view.
+  useLayoutEffect(() => {
+    const anchor = scrollAnchorRef.current;
+    if (!anchor) return;
+    scrollAnchorRef.current = null;
+    const container = scrollContainerRef.current;
+    const el = messageRefs.current.get(anchor.id);
+    if (!container || !el) return;
+    const newOffset = el.getBoundingClientRect().top - container.getBoundingClientRect().top;
+    container.scrollTop += newOffset - anchor.offset;
+  }, [messages]);
+
+  // Fires when the user scrolls near the top of the list (see the scroll-listener
+  // effect below). Guarded by loadingMoreRef (synchronous — state alone can lag behind
+  // rapid scroll events) and hasMore, so it never overlaps itself and stops completely
+  // once the oldest message in the conversation has been loaded.
   const loadMore = async () => {
+    if (loadingMoreRef.current || !hasMore || messages.length === 0) return;
+    loadingMoreRef.current = true;
+
+    // Anchor on whichever message currently sits at the top of the visible viewport —
+    // works regardless of where the newly-loaded messages end up in the list.
+    const container = scrollContainerRef.current;
+    if (container) {
+      const containerTop = container.getBoundingClientRect().top;
+      const anchorMessage =
+        messages.find((m) => {
+          const el = messageRefs.current.get(m.id);
+          return el && el.getBoundingClientRect().top - containerTop >= 0;
+        }) || messages[0];
+      const anchorEl = anchorMessage && messageRefs.current.get(anchorMessage.id);
+      if (anchorEl) {
+        scrollAnchorRef.current = {
+          id: anchorMessage.id,
+          offset: anchorEl.getBoundingClientRect().top - containerTop,
+        };
+        skipBottomScrollRef.current = true;
+      }
+    }
+
     setLoadingMore(true);
     try {
-      const slice = await getMessages(conversationId, { page: nextPage, size: RECENT_MESSAGES_LIMIT });
-      setMessages((prev) => [...prev, ...(slice?.content || [])]);
-      setHasMore(Boolean(slice?.hasNext));
-      setNextPage((p) => p + 1);
+      // Cursor = the oldest message currently loaded — the API returns the `size`
+      // messages strictly before it, oldest-first, so they always prepend cleanly
+      // with no gap or overlap regardless of how many messages exist in total.
+      const oldestId = messages[0]?.id;
+      const slice = await getMessages(conversationId, { beforeId: oldestId, size: RECENT_MESSAGES_LIMIT });
+      const older = slice?.content || [];
+      setMessages((prev) => {
+        // Defensive merge: de-dup guards against the same page being merged twice
+        // (e.g. a duplicate trigger that slipped past the guards above), and re-sorting
+        // guards against the API ever returning a page out of createdAt order — the
+        // merged list is always oldest-to-newest no matter what order either side came in.
+        const seen = new Set(prev.map((m) => m.id));
+        return [...older.filter((m) => !seen.has(m.id)), ...prev].sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt) || a.id - b.id
+        );
+      });
+      setHasMore(Boolean(slice?.hasMore));
     } catch (err) {
       setError(err.message || "Failed to load more messages");
+      scrollAnchorRef.current = null;
+      skipBottomScrollRef.current = false;
     } finally {
       setLoadingMore(false);
+      loadingMoreRef.current = false;
     }
   };
+
+  // Keeps the scroll listener (attached once per conversation) calling whatever the
+  // latest render's loadMore closure is, instead of a stale one.
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+
+  const NEAR_TOP_PX = 100;
+
+  // Infinite scroll: once scrollTop gets within NEAR_TOP_PX of the top, load the next
+  // older page. loadMore's own guards (loadingMoreRef, hasMore) make this listener a
+  // no-op once loading is in flight or the conversation's start has been reached.
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      if (container.scrollTop <= NEAR_TOP_PX) loadMoreRef.current();
+    };
+    container.addEventListener("scroll", onScroll);
+    // Also check once up front — a short conversation's initial page may not fill the
+    // viewport at all, leaving nothing for the user to scroll.
+    onScroll();
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [conversationId, loading]);
 
   const locked = !conversation?.attachedDocuments?.length;
 
@@ -149,11 +256,15 @@ export default function DocumentQaDetailView({ conversationId }) {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="max-w-3xl mx-auto space-y-6">
           <h1 className="text-sm font-medium text-text-primary">{conversation?.title}</h1>
 
-          <LoadMore hasMore={hasMore} loading={loadingMore} onClick={loadMore} label="Load earlier messages" />
+          {hasMore && (
+            <div className="flex justify-center py-2">
+              {loadingMore && <Loader2 className="h-4 w-4 animate-spin text-text-muted" />}
+            </div>
+          )}
 
           {messages.length === 0 && !conversation?.attachedDocuments?.length ? (
             <div className="flex flex-col items-center gap-2 text-center py-10">
@@ -172,7 +283,14 @@ export default function DocumentQaDetailView({ conversationId }) {
             messages.map((m) => {
               const isUser = m.role === "USER";
               return (
-                <div key={m.id} className={`flex gap-4 ${isUser ? "flex-row-reverse" : ""}`}>
+                <div
+                  key={m.id}
+                  ref={(el) => {
+                    if (el) messageRefs.current.set(m.id, el);
+                    else messageRefs.current.delete(m.id);
+                  }}
+                  className={`flex gap-4 ${isUser ? "flex-row-reverse" : ""}`}
+                >
                   <div className={`flex-1 min-w-0 ${isUser ? "flex flex-col items-end" : "w-full"}`}>
                     <div
                       className={
@@ -186,17 +304,27 @@ export default function DocumentQaDetailView({ conversationId }) {
                       </p>
                     </div>
                     <div className={`flex items-center gap-2 mt-1.5 px-1 ${isUser ? "flex-row-reverse" : ""}`}>
-                      <p className="text-xs text-text-muted">{formatDateTime(m.createdAt)}</p>
                       {!isUser && (
-                        <button
-                          type="button"
-                          className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors"
-                          onClick={() => setSourcesTarget(m.id)}
-                        >
-                          <Quote className="h-3 w-3" />
-                          Sources
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors"
+                            onClick={() => copyMessage(m.id, m.content)}
+                          >
+                            <Copy className="h-3 w-3" />
+                            {copiedMessageId === m.id ? "Copied!" : "Copy"}
+                          </button>
+                          <button
+                            type="button"
+                            className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors"
+                            onClick={() => setSourcesTarget(m.id)}
+                          >
+                            <Quote className="h-3 w-3" />
+                            Sources
+                          </button>
+                        </>
                       )}
+                      <p className="text-xs text-text-muted">{formatDateTime(m.createdAt)}</p>
                     </div>
                   </div>
                 </div>

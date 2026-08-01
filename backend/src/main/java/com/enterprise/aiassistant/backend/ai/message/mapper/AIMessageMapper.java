@@ -1,21 +1,36 @@
 package com.enterprise.aiassistant.backend.ai.message.mapper;
 
-import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
-import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageDetailResponse;
-import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageResponse;
-import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageSourceResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.*;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.message.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.message.entity.AIMessageSource;
 import com.enterprise.aiassistant.backend.ai.message.enums.AIMessageRole;
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Component
 public class AIMessageMapper {
+
+    public MessagePageResponse toMessagePageResponse(Slice<AIMessage> page) {
+
+        List<AIMessageResponse> content = page.getContent().stream()
+                .map(this::toResponse)
+                .toList();
+
+        List<AIMessageResponse> ascending = new ArrayList<>(content);
+        Collections.reverse(ascending);
+
+        return MessagePageResponse.builder()
+                .content(ascending)
+                .hasMore(page.hasNext())
+                .build();
+    }
 
     public AIMessageResponse toResponse(AIMessage message) {
 
@@ -39,6 +54,7 @@ public class AIMessageMapper {
                 .documentTitle(chunk == null ? null : chunk.getDocumentVersion().getDocument().getTitle())
                 .pageNumber(chunk == null ? null : chunk.getPageNumber())
                 .score(source.getScore())
+                .content(chunk == null ? null : chunk.getContent())
                 .build();
     }
 

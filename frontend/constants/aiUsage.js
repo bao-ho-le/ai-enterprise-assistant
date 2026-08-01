@@ -1,7 +1,7 @@
 // Mirrors backend ai/usage enums: ConversationType, AIUsageStatus.
 
 // Every model the system can use — mirrors backend config (application.properties):
-// gemini.chat-model.model-name (chat/QA/generation) and gemini.embedding-model
+// gemini.llm-model.model-name (chat/QA/generation) and gemini.embedding-model
 // (embedding/indexing). The /ai-usage/models endpoint only returns models that have
 // actually been logged, so the Model filter unions this list in to always offer all
 // supported models, even ones with no usage records yet.

@@ -7,7 +7,7 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConv
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartGenerationConversationRequest;
 import com.enterprise.aiassistant.backend.ai.message.dto.request.SendMessageRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartDocumentQaConversationRequest;
-import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.MessagePageResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.AttachDocumentsResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.DocumentQaConversationDetailResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.GenerationConversationDetailResponse;
@@ -44,7 +44,6 @@ import com.enterprise.aiassistant.backend.ai.generation.repository.GenerationRep
 import com.enterprise.aiassistant.backend.ai.generation.service.GenerationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
@@ -297,16 +296,19 @@ public class AIConversationServiceImpl implements AIConversationService {
 
         List<ConversationDocumentResponse> attachedDocuments = getConversationDocuments(conversationId);
 
-        Slice<AIMessageResponse> recentMessages = aiMessageService.getMessages(
+        // beforeId=null -> the latest `recentMessagesLimit` messages (see AIMessageServiceImpl),
+        // not the oldest — a conversation longer than the limit must open showing its tail end.
+        MessagePageResponse recentMessages = aiMessageService.getMessages(
                 conversationId,
-                PageRequest.of(0, recentMessagesLimit)
+                null,
+                recentMessagesLimit
         );
 
         return aiConversationMapper.toDocumentQaDetailResponse(
                 conversation,
                 attachedDocuments,
                 recentMessages.getContent(),
-                recentMessages.hasNext()
+                recentMessages.isHasMore()
         );
     }
 

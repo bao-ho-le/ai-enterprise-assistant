@@ -3,6 +3,7 @@ package com.enterprise.aiassistant.backend.ai.message.service;
 import com.enterprise.aiassistant.backend.ai.message.dto.request.SendMessageRequest;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageDetailResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.MessagePageResponse;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageResponse;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.message.entity.AIMessage;
@@ -20,11 +21,12 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.Co
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
 import com.enterprise.aiassistant.backend.document.repository.DocumentChunkRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -68,19 +70,21 @@ public class AIMessageServiceImpl implements AIMessageService {
 
     @Override
     @Transactional(readOnly = true)
-    public Slice<AIMessageResponse> getMessages(
+    public MessagePageResponse getMessages(
             Long conversationId,
-            Pageable pageable
+            Long beforeId,
+            int size
     ) {
 
         getConversationOrThrow(conversationId);
 
-        Slice<AIMessage> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(
+        Slice<AIMessage> page = messageRepository.findByConversationIdAndIdLessThanOrderByIdDesc(
                 conversationId,
-                pageable
+                beforeId != null ? beforeId : Long.MAX_VALUE,
+                PageRequest.of(0, size)
         );
 
-        return messages.map(messageMapper::toResponse);
+        return messageMapper.toMessagePageResponse(page);
     }
 
     @Override
@@ -133,4 +137,6 @@ public class AIMessageServiceImpl implements AIMessageService {
         return messageRepository.findByIdAndConversationId(messageId, conversationId)
                 .orElseThrow(() -> new ConversationException(ErrorCode.MESSAGE_NOT_FOUND));
     }
+
+
 }

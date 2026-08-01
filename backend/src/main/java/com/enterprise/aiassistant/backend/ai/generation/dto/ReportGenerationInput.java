@@ -20,9 +20,6 @@ public class ReportGenerationInput {
     // Short | Medium | Long
     private String length;
 
-    // Formal | Friendly | Persuasive | Apologetic | Professional
-    private String tone;
-
     // ISO date strings (yyyy-MM-dd), free text — no reporting-period math done on these,
     // they only ever flow into the prompt as context for the fake/real model.
     private String fromDate;

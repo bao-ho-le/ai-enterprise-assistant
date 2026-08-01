@@ -18,4 +18,8 @@ public class MessageSourceResponse {
 
     private Double score;
 
+    // Chunk text — lets the frontend show the same "View Evidence" content view
+    // used by Semantic Search (EvidenceDialog) when a user clicks a source.
+    private String content;
+
 }

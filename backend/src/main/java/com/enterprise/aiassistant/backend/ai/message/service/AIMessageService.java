@@ -1,11 +1,9 @@
 package com.enterprise.aiassistant.backend.ai.message.service;
 
 import com.enterprise.aiassistant.backend.ai.message.dto.request.SendMessageRequest;
-import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageDetailResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.MessagePageResponse;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageResponse;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 
 
 public interface AIMessageService {
@@ -15,9 +13,12 @@ public interface AIMessageService {
             SendMessageRequest request
     );
 
-    Slice<AIMessageResponse> getMessages(
+    // beforeId null -> the latest `size` messages; otherwise the `size` messages
+    // immediately preceding that message id. Always returned oldest-first.
+    MessagePageResponse getMessages(
             Long conversationId,
-            Pageable pageable
+            Long beforeId,
+            int size
     );
 
     MessageDetailResponse getMessageEvidence(
