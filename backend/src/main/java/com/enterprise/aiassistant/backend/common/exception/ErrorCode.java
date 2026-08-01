@@ -348,6 +348,11 @@ public enum ErrorCode {
             "Conversation type is not a generation type"
     ),
 
+    CONVERSATION_NOT_DELETED(
+            BAD_REQUEST,
+            "Conversation is not deleted"
+    ),
+
     // ===================== Generation =====================
 
     GENERATION_NOT_FOUND(

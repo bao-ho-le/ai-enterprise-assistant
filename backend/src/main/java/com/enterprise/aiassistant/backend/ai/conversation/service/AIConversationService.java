@@ -38,6 +38,10 @@ public interface AIConversationService {
 
     void hardDeleteConversation(Long conversationId);
 
+    // Reverts a soft delete in place (status DELETED -> ACTIVE, clears deletedAt) —
+    // never creates a new conversation. Only soft-deleted conversations can be restored.
+    ConversationResponse restoreConversation(Long conversationId);
+
     AttachDocumentsResponse attachDocuments(Long conversationId, AttachDocumentsRequest request);
 
     // Atomic: create + attach + first message in one transaction, so a failure at any

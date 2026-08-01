@@ -62,6 +62,13 @@ public class AIConversationController {
         return ResponseEntity.noContent().build();
     }
 
+    // Restore a soft-deleted conversation (status DELETED -> ACTIVE)
+    // Returns the restored conversation so the client can refresh its lists
+    @PostMapping("/{conversationId}/restore")
+    public ResponseEntity<ConversationResponse> restoreConversation(@PathVariable Long conversationId) {
+        return ResponseEntity.ok(conversationService.restoreConversation(conversationId));
+    }
+
     @DeleteMapping("/{conversationId}/hard")
     public ResponseEntity<Void> hardDeleteConversation(@PathVariable Long conversationId) {
         conversationService.hardDeleteConversation(conversationId);

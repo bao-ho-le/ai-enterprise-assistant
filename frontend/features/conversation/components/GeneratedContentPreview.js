@@ -6,7 +6,7 @@ import { generatedDocumentTypeLabel } from "@/constants/generatedContent";
 import { formatDateTime } from "@/utils/format";
 
 // Report/Summary counterpart of EmailPreview — same card/footer layout, without the
-// email-only header (From/To/Subject) and .eml export.
+// email-only header (From/To/Subject).
 export default function GeneratedContentPreview({ item, onBack }) {
   const [copyLabel, setCopyLabel] = useState("Copy to Clipboard");
   const [saveLabel, setSaveLabel] = useState("Save");
@@ -64,19 +64,19 @@ export default function GeneratedContentPreview({ item, onBack }) {
         </div>
 
         <div className="p-4 relative group">
-          <button
-            type="button"
-            onClick={copyBody}
-            title="Copy"
-            className="absolute top-3 right-3 p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </button>
-          {bodyCopyLabel && (
-            <span className="absolute top-3 right-11 text-xs text-accent font-medium">
-              {bodyCopyLabel}
-            </span>
-          )}
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            {bodyCopyLabel && (
+              <span className="text-xs text-accent font-medium">{bodyCopyLabel}</span>
+            )}
+            <button
+              type="button"
+              onClick={copyBody}
+              title="Copy"
+              className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </button>
+          </div>
           <p className="text-sm text-text-primary leading-relaxed whitespace-pre-wrap">
             {item?.content}
           </p>

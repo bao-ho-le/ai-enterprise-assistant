@@ -6,14 +6,16 @@ import { ROUTED_CONVERSATION_TYPES } from "@/constants/conversation";
 // exact same control. `allowAll` adds an empty-value option for screens that can list
 // every type at once (the sidebar itself always sits on one concrete type).
 export default function ConversationTypeFilter({
+  id,
   value,
   onChange,
   allowAll = false,
   className = "select-field-ghost-xs",
-  ariaLabel = "Filter conversation history by type",
+  ariaLabel,
 }) {
   return (
     <select
+      id={id}
       className={className}
       value={value}
       onChange={(e) => onChange(e.target.value)}

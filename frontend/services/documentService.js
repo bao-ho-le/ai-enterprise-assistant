@@ -18,15 +18,28 @@ export function checkTitle(title, signal) {
   return apiClient.get("/documents/check-title", { params: { title }, signal });
 }
 
-// POST /documents/upload  (multipart: file + request JSON)
-export function uploadDocument({ file, title, description, documentType }) {
+// POST /documents/upload  (multipart: repeated "files" parts + "request" JSON part
+// { documents: [{ title, description, documentType }, ...] })
+// Backend maps files[i] <-> request.documents[i] strictly by index (DocumentServiceImpl.upload),
+// so `items` must already be in the exact order to send — build it from one paired
+// array, never from two separately-maintained lists.
+export function uploadDocument(items) {
   const form = new FormData();
-  form.append("file", file);
+  items.forEach(({ file }) => form.append("files", file));
   form.append(
     "request",
-    new Blob([JSON.stringify({ title, description, documentType })], {
-      type: "application/json",
-    })
+    new Blob(
+      [
+        JSON.stringify({
+          documents: items.map(({ title, description, documentType }) => ({
+            title,
+            description,
+            documentType,
+          })),
+        }),
+      ],
+      { type: "application/json" }
+    )
   );
   return apiClient.postForm("/documents/upload", form);
 }

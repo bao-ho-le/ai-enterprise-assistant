@@ -112,6 +112,16 @@ export default function LeftSidebar({ conversationType, basePath }) {
     window.dispatchEvent(new CustomEvent("conversation-renamed", { detail: updated }));
   };
 
+  // A conversation restored from the Deleted Conversations screen must reappear in
+  // this active list — refresh without a full page reload (mirror of onRenamed).
+  useEffect(() => {
+    const onRestored = (e) => {
+      if (e.detail?.id != null) reload();
+    };
+    window.addEventListener("conversation-restored", onRestored);
+    return () => window.removeEventListener("conversation-restored", onRestored);
+  }, [reload]);
+
   const confirmDelete = async () => {
     setDeleting(true);
     try {

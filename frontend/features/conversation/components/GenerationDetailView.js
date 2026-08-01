@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, FileText, FileOutput, History } from "lucide-react";
 import GenerationForm, { splitEmailContent } from "./GenerationForm";
 import EmailPreview from "./EmailPreview";
@@ -32,6 +32,8 @@ export default function GenerationDetailView({ conversationId }) {
   const [historyOpen, setHistoryOpen] = useState(false);
 
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const autoPreviewHandled = useRef(false);
 
   // Opening a generated content replaces the form with its preview, same as the
@@ -63,19 +65,25 @@ export default function GenerationDetailView({ conversationId }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    const p = loadDetail(controller.signal);
-    // Auto-open preview when redirected from the create-flow after a successful
-    // generation — matches writing a report/summary for the first time.
-    if (searchParams?.get('preview') === 'true') {
-      p.then((d) => {
-        if (!controller.signal.aborted && d?.generatedContentId != null && !autoPreviewHandled.current) {
-          autoPreviewHandled.current = true;
-          openGeneratedContent(d.generatedContentId);
-        }
-      });
-    }
+    loadDetail(controller.signal);
     return () => controller.abort();
-  }, [loadDetail, searchParams]);
+  }, [loadDetail]);
+
+  // Auto-open preview when redirected from the create-flow after a successful
+  // generation — matches writing a report/summary for the first time. Runs once
+  // (guarded by autoPreviewHandled) and immediately strips the one-time `?preview=true`
+  // param from the URL: left in place, it would re-trigger this same auto-preview on
+  // every later remount (a refresh, or browser back/forward) even after the user
+  // explicitly clicked "Back to Form" — the URL is state too, and it must not linger
+  // stale once consumed.
+  useEffect(() => {
+    if (autoPreviewHandled.current) return;
+    if (searchParams?.get('preview') !== 'true') return;
+    if (detail?.generatedContentId == null) return;
+    autoPreviewHandled.current = true;
+    openGeneratedContent(detail.generatedContentId);
+    router.replace(pathname, { scroll: false });
+  }, [detail, searchParams, router, pathname]);
 
   const loadHistoryPage = useCallback(
     (page, append) => {
@@ -120,8 +128,11 @@ export default function GenerationDetailView({ conversationId }) {
   }, [conversationId]);
 
   const openGeneratedContent = async (generatedContentId) => {
-    if (generatedContentId == null || previewLoading) return;
+    // Close the History modal even when a preview load is already in flight, so
+    // it never lingers behind/after the preview (the early return below must not
+    // skip this).
     setHistoryOpen(false);
+    if (generatedContentId == null || previewLoading) return;
     setPreviewLoading(true);
     try {
       setPreview(await getGeneratedContentById(generatedContentId));
@@ -149,7 +160,13 @@ export default function GenerationDetailView({ conversationId }) {
   }
 
   if (preview) {
-    const back = () => setPreview(null);
+    // "Back to Form" must also close the Generation History modal — if it was
+    // re-opened while the preview was loading, historyOpen would otherwise stay
+    // true and the modal would reappear once back on the form.
+    const back = () => {
+      setHistoryOpen(false);
+      setPreview(null);
+    };
     return (
       <main className="flex-1 overflow-y-auto">
         {detail?.conversationType === "EMAIL_GENERATION" ? (

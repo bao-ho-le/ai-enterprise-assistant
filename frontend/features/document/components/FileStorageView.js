@@ -148,6 +148,9 @@ export default function FileStorageView() {
   const tableNumber = isSearching ? page : data.number;
 
   const onFilterChange = (patch) => {
+    // EMAIL_TEMPLATE is hidden from the Document Type filter (display-only);
+    // ignore any stale value so the select never holds a hidden option.
+    if (patch.documentType === "EMAIL_TEMPLATE") patch.documentType = "";
     setFilters((f) => ({ ...f, ...patch }));
     setPage(0);
   };
@@ -283,8 +286,8 @@ export default function FileStorageView() {
       <UploadDocumentModal
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
-        onUploaded={() => {
-          notify("success", "Document uploaded");
+        onUploaded={(count) => {
+          notify("success", count > 1 ? `Uploaded ${count} document(s)` : "Document uploaded");
           reload();
         }}
       />

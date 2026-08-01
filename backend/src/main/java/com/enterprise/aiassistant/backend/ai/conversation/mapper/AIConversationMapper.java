@@ -4,8 +4,10 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConv
 import com.enterprise.aiassistant.backend.ai.conversation.dto.response.*;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
+import com.enterprise.aiassistant.backend.ai.generation.dto.response.TriggerGenerationResponse;
 import com.enterprise.aiassistant.backend.ai.generation.entity.Generation;
 import com.enterprise.aiassistant.backend.ai.message.dto.response.AIMessageResponse;
+import com.enterprise.aiassistant.backend.ai.message.dto.response.MessageResponse;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +15,26 @@ import java.util.List;
 
 @Component
 public class AIConversationMapper {
+
+    public StartDocumentQaConversationResponse toStartDocumentQaConversationResponse(
+            ConversationResponse conversation,
+            MessageResponse message
+    ) {
+        return StartDocumentQaConversationResponse.builder()
+                .conversation(conversation)
+                .message(message)
+                .build();
+    }
+
+    public StartGenerationConversationResponse toStartGenerationConversationResponse(
+            ConversationResponse conversation,
+            TriggerGenerationResponse generation
+    ) {
+        return StartGenerationConversationResponse.builder()
+                .conversation(conversation)
+                .generation(generation)
+                .build();
+    }
 
     public DocumentQaConversationDetailResponse.AttachedDocumentItem toAttachedDocumentItem(
             AIConversationDocument conversationDocument

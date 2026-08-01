@@ -128,10 +128,10 @@ public class AIConversationServiceImpl implements AIConversationService {
         sendMessageRequest.setContent(request.getContent());
         MessageResponse message = aiMessageService.sendMessage(conversation.getId(), sendMessageRequest);
 
-        return StartDocumentQaConversationResponse.builder()
-                .conversation(conversation)
-                .message(message)
-                .build();
+        return aiConversationMapper.toStartDocumentQaConversationResponse(
+                conversation,
+                message
+        );
     }
 
 
@@ -156,10 +156,10 @@ public class AIConversationServiceImpl implements AIConversationService {
         triggerRequest.setInputData(request.getInputData());
         TriggerGenerationResponse generation = generationService.generate(conversation.getId(), triggerRequest);
 
-        return StartGenerationConversationResponse.builder()
-                .conversation(conversation)
-                .generation(generation)
-                .build();
+        return aiConversationMapper.toStartGenerationConversationResponse(
+                conversation,
+                generation
+        );
     }
 
 
@@ -191,6 +191,30 @@ public class AIConversationServiceImpl implements AIConversationService {
         conversation.setStatus(ConversationStatus.DELETED);
         conversation.setDeletedAt(LocalDateTime.now());
         conversationRepository.save(conversation);
+    }
+
+    @Override
+    @Transactional
+    public ConversationResponse restoreConversation(Long conversationId) {
+
+        aiConversationHelper.validateConversationId(conversationId);
+
+        // Distinguish the two failure cases the requirement calls out: a missing
+        // conversation (404) vs one that exists but isn't soft-deleted (400).
+        AIConversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new AIConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
+
+        if (conversation.getStatus() != ConversationStatus.DELETED) {
+            throw new AIConversationException(ErrorCode.CONVERSATION_NOT_DELETED);
+        }
+
+        // Un-soft-delete in place: the same row flips back to ACTIVE with its
+        // history (messages/documents/generations) untouched, not a new conversation.
+        conversation.setStatus(ConversationStatus.ACTIVE);
+        conversation.setDeletedAt(null);
+        conversationRepository.save(conversation);
+
+        return aiConversationMapper.toResponse(conversation);
     }
 
     @Override

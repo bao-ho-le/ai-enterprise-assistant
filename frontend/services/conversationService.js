@@ -36,6 +36,13 @@ export function softDeleteConversation(conversationId) {
   return apiClient.del(`/ai-conversations/${conversationId}`);
 }
 
+// POST /ai-conversations/{conversationId}/restore -> ConversationResponse
+// Un-soft-deletes the same row (status back to ACTIVE, deletedAt cleared) — never
+// creates a new conversation. Only soft-deleted conversations can be restored.
+export function restoreConversation(conversationId) {
+  return apiClient.postJson(`/ai-conversations/${conversationId}/restore`);
+}
+
 // DELETE /ai-conversations/{conversationId}/hard -> permanent, cascades messages/documents/generated content
 export function hardDeleteConversation(conversationId) {
   return apiClient.del(`/ai-conversations/${conversationId}/hard`);
