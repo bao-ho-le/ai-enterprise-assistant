@@ -39,6 +39,11 @@ public enum ErrorCode {
             "File size exceeds limit"
     ),
 
+    TOO_MANY_FILES(
+            INTERNAL_SERVER_ERROR,
+            "Maximum upload limit of 10 files exceeded"
+    ),
+
     TEXT_EXTRACTOR_NOT_FOUND(
             INTERNAL_SERVER_ERROR,
             "No text extractor found for the file type"
@@ -58,12 +63,26 @@ public enum ErrorCode {
             BAD_REQUEST,
             "File storage metadata is invalid"
     ),
+    FILE_METADATA_MISMATCH(
+            BAD_REQUEST,
+            "Files and metadata size must match"
+    ),
 
 
     // Document
     DOCUMENT_CREATION_FAILED(
             INTERNAL_SERVER_ERROR,
             "Document creation failed"
+    ),
+
+    DOCUMENTS_METADATA_REQUIRED(
+            BAD_REQUEST,
+            "Documents metadata is required"
+    ),
+
+    DOCUMENT_TYPE_REQUIRED(
+            BAD_REQUEST,
+            "Document type is required"
     ),
 
     DOCUMENT_VERSION_CREATION_FAILED(

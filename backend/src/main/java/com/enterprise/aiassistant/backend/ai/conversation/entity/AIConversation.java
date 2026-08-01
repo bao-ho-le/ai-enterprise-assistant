@@ -46,7 +46,6 @@ public class AIConversation {
     @Builder.Default
     private ConversationStatus status = ConversationStatus.ACTIVE;
 
-
     @CreationTimestamp
     @Column(nullable = false, name = "created_at")
     private LocalDateTime createdAt;
