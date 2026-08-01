@@ -17,9 +17,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" className={inter.variable}>
-      <body className="min-h-screen flex flex-col">
+      <body className="h-screen flex flex-col overflow-hidden">
         <NavigationBar />
-        {children}
+        {/* App-shell pages (sidebar + main + right panel) manage their own inner
+            overflow so only the middle column scrolls; this wrapper's overflow-y-auto
+            is what lets plain pages (home, file-storage, ai-usage) scroll normally —
+            it never engages for the app-shell pages since their row already fills it exactly. */}
+        <div className="flex flex-1 flex-col overflow-y-auto">{children}</div>
       </body>
     </html>
   );

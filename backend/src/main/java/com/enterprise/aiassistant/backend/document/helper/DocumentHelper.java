@@ -16,16 +16,19 @@ import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRep
 import com.enterprise.aiassistant.backend.storage.config.FileUploadProperties;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DocumentHelper {
 
     private final FileUploadProperties fileUploadProperties;
@@ -33,6 +36,10 @@ public class DocumentHelper {
     private final DocumentVersionRepository versionRepository;
 
     private final DocumentMapper documentMapper;
+
+    private static final int MAX_FILES = 10;
+
+    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 
     private static final Set<String> ALLOWED_TYPES =
@@ -55,27 +62,56 @@ public class DocumentHelper {
     private static final Set<String> ALLOWED_SORTS = Set.of("newest", "oldest");
 
 
+    public void validateFiles(List<MultipartFile> files) {
+
+        if (files == null) {
+            throw new DocumentException(
+                    ErrorCode.FILE_REQUIRED
+            );
+        }
+
+        if (files.isEmpty()) {
+            throw new DocumentException(
+                    ErrorCode.EMPTY_FILE
+            );
+        }
+
+
+        if (files.size() > MAX_FILES) {
+            throw new DocumentException(
+                    ErrorCode.TOO_MANY_FILES
+            );
+        }
+
+
+        files.forEach(this::validateFile);
+    }
+
     public void validateFile(MultipartFile file) {
+
         if (file == null) {
-            throw new BusinessException(
+            throw new DocumentException(
                     ErrorCode.FILE_REQUIRED
             );
         }
 
         if (file.isEmpty()) {
-            throw new BusinessException(
+            throw new DocumentException(
                     ErrorCode.EMPTY_FILE
             );
         }
 
-        if (file.getSize() > fileUploadProperties.getMaxSize().toBytes()) {
-            throw new BusinessException(
+
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new DocumentException(
                     ErrorCode.FILE_TOO_LARGE
             );
         }
 
+
         validateContentType(file);
     }
+
 
     private void validateContentType(MultipartFile file) {
         String contentType = file.getContentType();
@@ -83,6 +119,47 @@ public class DocumentHelper {
         if (!ALLOWED_TYPES.contains(contentType)) {
             throw new BusinessException(
                     ErrorCode.UNSUPPORTED_FILE_TYPE
+            );
+        }
+    }
+
+    public void validateBatchRequest(
+            List<MultipartFile> files,
+            List<DocumentUploadRequest> documents
+    ) {
+
+        if (documents == null || documents.isEmpty()) {
+            throw new DocumentException(
+                    ErrorCode.DOCUMENTS_METADATA_REQUIRED
+            );
+        }
+
+        if (files.size() != documents.size()) {
+            throw new DocumentException(
+                    ErrorCode.FILE_METADATA_MISMATCH
+            );
+        }
+
+
+        if (documents.stream()
+                .anyMatch(item ->
+                        item.getTitle() == null
+                                || item.getTitle().isBlank()
+                )) {
+
+            throw new DocumentException(
+                    ErrorCode.DOCUMENT_TITLE_REQUIRED
+            );
+        }
+
+
+        if (documents.stream()
+                .anyMatch(item ->
+                        item.getDocumentType() == null
+                )) {
+
+            throw new DocumentException(
+                    ErrorCode.DOCUMENT_TYPE_REQUIRED
             );
         }
     }

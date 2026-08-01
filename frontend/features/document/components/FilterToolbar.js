@@ -43,7 +43,10 @@ export default function FilterToolbar({ filters, onChange }) {
         </label>
         <select id="doc-type" className="select-field" value={filters.documentType} onChange={set("documentType")}>
           <option value="">All Types</option>
-          {DOCUMENT_TYPES.map((o) => (
+          {/* Display-only: hide the EMAIL_TEMPLATE option from the File Storage
+              filter. Backend enum and filtering logic are untouched; other
+              document types keep working as before. */}
+          {DOCUMENT_TYPES.filter((o) => o.value !== "EMAIL_TEMPLATE").map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

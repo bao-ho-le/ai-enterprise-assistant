@@ -17,7 +17,8 @@ public class ProcessingException extends BusinessException {
   ){
     super(
             errorCode,
-            errorCode.getMessage()
+            errorCode.getMessage(),
+            cause
     );
   }
 

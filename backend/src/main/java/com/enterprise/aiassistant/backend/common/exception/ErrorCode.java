@@ -39,6 +39,11 @@ public enum ErrorCode {
             "File size exceeds limit"
     ),
 
+    TOO_MANY_FILES(
+            INTERNAL_SERVER_ERROR,
+            "Maximum upload limit of 10 files exceeded"
+    ),
+
     TEXT_EXTRACTOR_NOT_FOUND(
             INTERNAL_SERVER_ERROR,
             "No text extractor found for the file type"
@@ -58,12 +63,26 @@ public enum ErrorCode {
             BAD_REQUEST,
             "File storage metadata is invalid"
     ),
+    FILE_METADATA_MISMATCH(
+            BAD_REQUEST,
+            "Files and metadata size must match"
+    ),
 
 
     // Document
     DOCUMENT_CREATION_FAILED(
             INTERNAL_SERVER_ERROR,
             "Document creation failed"
+    ),
+
+    DOCUMENTS_METADATA_REQUIRED(
+            BAD_REQUEST,
+            "Documents metadata is required"
+    ),
+
+    DOCUMENT_TYPE_REQUIRED(
+            BAD_REQUEST,
+            "Document type is required"
     ),
 
     DOCUMENT_VERSION_CREATION_FAILED(
@@ -135,78 +154,78 @@ public enum ErrorCode {
 
     TEXT_EXTRACTION_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to extract text from the document"
+            "Failed to extract text from the document"
     ),
 
     DOCUMENT_CHUNKING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to split the document into chunks"
+            "Failed to split the document into chunks"
     ),
 
     DOCUMENT_TEXT_EMPTY(
             INTERNAL_SERVER_ERROR,
-        "No extractable text found in the document"
+            "No extractable text found in the document"
     ),
 
     DOCUMENT_PROCESSING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to process the document"
+            "Failed to process the document"
     ),
 
     // ===================== Document Filter =====================
 
     INVALID_DATE_RANGE(
             BAD_REQUEST,
-        "From date must be before or equal to to date"
+            "From date must be before or equal to to date"
     ),
 
     INVALID_FILE_SIZE(
             BAD_REQUEST,
-        "File size must be greater than or equal to 0"
+            "File size must be greater than or equal to 0"
     ),
 
     INVALID_FILE_SIZE_RANGE(
             BAD_REQUEST,
-        "Minimum file size must be less than or equal to maximum file size"
+            "Minimum file size must be less than or equal to maximum file size"
     ),
 
     INVALID_SORT_OPTION(
             BAD_REQUEST,
-        "Sort option must be either 'newest' or 'oldest'"
+            "Sort option must be either 'newest' or 'oldest'"
     ),
 
     KEYWORD_TOO_LONG(
             BAD_REQUEST,
-        "Keyword exceeds maximum length"
+            "Keyword exceeds maximum length"
     ),
 
     // ===================== Embedding =====================
 
     EMBEDDING_TEXT_REQUIRED(
             BAD_REQUEST,
-        "Text to embed is required"
+            "Text to embed is required"
     ),
 
     EMBEDDING_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to generate embedding"
+            "Failed to generate embedding"
     ),
 
     // ===================== Vector Store =====================
 
     VECTOR_UPSERT_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to save vectors to the vector store"
+            "Failed to save vectors to the vector store"
     ),
 
     VECTOR_DELETE_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to delete vectors from the vector store"
+            "Failed to delete vectors from the vector store"
     ),
 
     VECTOR_SEARCH_FAILED(
             INTERNAL_SERVER_ERROR,
-        "Failed to search the vector store"
+            "Failed to search the vector store"
     ),
 
     VECTOR_POINTS_REQUIRED(
@@ -243,12 +262,12 @@ public enum ErrorCode {
 
     SEARCH_KEYWORD_REQUIRED(
             BAD_REQUEST,
-        "Search keyword is required"
+            "Search keyword is required"
     ),
 
     INVALID_TOP_K(
             BAD_REQUEST,
-        "topK must be between 1 and 50"
+            "topK must be between 1 and 50"
     ),
 
     VECTOR_SEARCH_LIMIT_INVALID(
@@ -259,9 +278,231 @@ public enum ErrorCode {
     INVALID_DOCUMENT_ID(
             BAD_REQUEST,
         "documentId must be a positive number"
+    ),
+    // ===================== AI Usage =====================
+
+    AI_USAGE_REQUEST_REQUIRED(
+            BAD_REQUEST,
+        "AI usage log request is required"
+    ),
+
+    AI_USAGE_CONVERSATION_TYPE_REQUIRED(
+            BAD_REQUEST,
+        "Conversation type is required"
+    ),
+
+    AI_USAGE_MODEL_REQUIRED(
+            BAD_REQUEST,
+        "Model is required"
+    ),
+
+    AI_USAGE_STATUS_REQUIRED(
+            BAD_REQUEST,
+        "Status is required"
+    ),
+
+    AI_USAGE_INVALID_TOKEN_COUNT(
+            BAD_REQUEST,
+        "Input/output tokens must not be negative"
+    ),
+
+    AI_USAGE_INVALID_ESTIMATED_COST(
+            BAD_REQUEST,
+        "Estimated cost must not be negative"
+    ),
+
+    AI_USAGE_MODEL_TOO_LONG(
+            BAD_REQUEST,
+        "Model name exceeds maximum length"
+    ),
+
+    AI_USAGE_INVALID_DAYS(
+            BAD_REQUEST,
+        "days must be between 1 and 90"
+    ),
+
+    // ===================== Conversation =====================
+
+    CONVERSATION_NOT_FOUND(
+            NOT_FOUND,
+            "Conversation not found"
+    ),
+
+    CONVERSATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "Conversation id is required"
+    ),
+
+    CONVERSATION_ID_INVALID(
+            BAD_REQUEST,
+            "Conversation id is invalid"
+    ),
+
+    RECENT_MESSAGES_LIMIT_INVALID(
+            BAD_REQUEST,
+            "recentMessagesLimit must be between 1 and 100"
+    ),
+
+    CONVERSATION_TYPE_NOT_GENERATION(
+            BAD_REQUEST,
+            "Conversation type is not a generation type"
+    ),
+
+    CONVERSATION_NOT_DELETED(
+            BAD_REQUEST,
+            "Conversation is not deleted"
+    ),
+
+    // ===================== Generation =====================
+
+    GENERATION_NOT_FOUND(
+            NOT_FOUND,
+            "Generation not found"
+    ),
+
+    GENERATION_ID_REQUIRED(
+            BAD_REQUEST,
+            "Generation ID is required"
+    ),
+
+    GENERATION_ID_INVALID(
+            BAD_REQUEST,
+            "Generation ID must be greater than 0"
+    ),
+
+    // ===================== Generated Content =====================
+
+    GENERATED_CONTENT_ID_REQUIRED(
+            BAD_REQUEST,
+            "Generated content id is required"
+    ),
+
+    GENERATED_CONTENT_ID_INVALID(
+            BAD_REQUEST,
+            "Generated content id is invalid"
+    ),
+
+
+
+    // ===================== Generated Document =====================
+
+
+    GENERATED_CONTENT_NOT_FOUND(
+            NOT_FOUND,
+            "Generated content not found"
+    ),
+
+
+
+    GENERATED_CONTENT_TITLE_REQUIRED(
+            BAD_REQUEST,
+            "Generated content title is required"
+    ),
+
+    GENERATED_CONTENT_TITLE_TOO_LONG(
+            BAD_REQUEST,
+            "Generated content title exceeds maximum length"
+    ),
+
+    GENERATED_CONTENT_BODY_REQUIRED(
+            BAD_REQUEST,
+            "Generated content body is required"
+    ),
+
+    GENERATED_CONTENT_UPDATE_REQUEST_REQUIRED(
+            BAD_REQUEST,
+            "Update generated content request is required"
+    ),
+
+    // ===================== AI Conversation =====================
+
+
+    DOCUMENT_NOT_ATTACHED_TO_CONVERSATION(
+            BAD_REQUEST,
+            "Document is not attached to the conversation"
+    ),
+
+    // ===================== AI Conversation Message =====================
+
+
+    MESSAGE_CONTENT_REQUIRED(
+            BAD_REQUEST,
+            "Message content is required"
+    ),
+
+    MESSAGE_CONTENT_TOO_LONG(
+            BAD_REQUEST,
+            "Message content exceeds maximum length"
+    ),
+
+    MESSAGE_ID_REQUIRED(
+            BAD_REQUEST,
+            "Message ID is required"
+    ),
+
+    MESSAGE_NOT_FOUND(
+            NOT_FOUND,
+            "Message not found"
+    ),
+
+    CONVERSATION_TYPE_NOT_CHAT(
+            BAD_REQUEST,
+            "Conversation type does not support chat messages"
+    ),
+
+    // ===================== Generation =====================
+
+    GENERATION_INPUT_DATA_REQUIRED(
+            BAD_REQUEST,
+            "Generation input data is required"
+    ),
+
+    GENERATION_INPUT_DATA_INVALID(
+            BAD_REQUEST,
+            "Generation input data is invalid"
+    ),
+
+    GENERATION_HANDLER_NOT_FOUND(
+            BAD_REQUEST,
+            "No generation handler available for this conversation type"
+    ),
+
+    EMAIL_GENERATION_PURPOSE_REQUIRED(
+            BAD_REQUEST,
+            "Email purpose is required"
+    ),
+
+    REPORT_GENERATION_TITLE_REQUIRED(
+            BAD_REQUEST,
+            "Report title is required"
+    ),
+
+    SUMMARY_GENERATION_STYLE_REQUIRED(
+            BAD_REQUEST,
+            "Summary style is required"
+    ),
+
+    FORM_GENERATION_PURPOSE_REQUIRED(
+            BAD_REQUEST,
+            "Form purpose is required"
+    ),
+
+    GENERATION_SOURCE_DOCUMENTS_REQUIRED(
+            BAD_REQUEST,
+            "At least one source document must be attached"
+    ),
+
+    // ===================== AI/LLM =====================
+
+    LLM_GENERATION_FAILED(
+            INTERNAL_SERVER_ERROR,
+            "Không thể tạo nội dung từ LLM"
+    ),
+
+    LLM_INVALID_PROMPT(
+            BAD_REQUEST,
+            "Prompt is required"
     );
-
-
 
     private final HttpStatus status;
     private final String message;

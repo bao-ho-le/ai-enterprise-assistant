@@ -15,8 +15,10 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSemanticSearch } from "@/hooks/useSemanticSearch";
 import { dateInputToIso } from "@/utils/format";
 import { matchesSimilarityBucket } from "@/constants/document";
+import { useRouter } from "next/navigation";
 import {
   listDocuments,
+  getDocument,
   deleteDocument,
   downloadCurrentVersion,
 } from "@/services/documentService";
@@ -62,6 +64,9 @@ export default function FileStorageView() {
   const [deleteTarget, setDeleteTarget] = useState(null); // doc | { bulk: true }
   const [deleting, setDeleting] = useState(false);
   const [evidenceTarget, setEvidenceTarget] = useState(null);
+  const [navigating, setNavigating] = useState(false);
+
+  const router = useRouter();
 
   const notify = useCallback((type, text) => setToast({ type, text }), []);
   const reload = useCallback(() => setReloadKey((k) => k + 1), []);
@@ -143,6 +148,9 @@ export default function FileStorageView() {
   const tableNumber = isSearching ? page : data.number;
 
   const onFilterChange = (patch) => {
+    // EMAIL_TEMPLATE is hidden from the Document Type filter (display-only);
+    // ignore any stale value so the select never holds a hidden option.
+    if (patch.documentType === "EMAIL_TEMPLATE") patch.documentType = "";
     setFilters((f) => ({ ...f, ...patch }));
     setPage(0);
   };
@@ -191,6 +199,44 @@ export default function FileStorageView() {
     }
   };
 
+  const navigateToFeature = useCallback(
+    async (href) => {
+      const ids = [...selectedIds];
+      if (ids.length === 0) return;
+      setNavigating(true);
+      try {
+        // Resolve current version for each selected document (same pattern as AttachDocumentsModal).
+        const details = await Promise.all(ids.map((id) => getDocument(id)));
+        const attachDocs = ids
+          .map((id, i) => {
+            const versionId = details[i]?.currentVersion?.versionId;
+            if (versionId == null) return null;
+            const listItem = data.content.find((doc) => doc.id === id);
+            return {
+              documentId: id,
+              documentVersionId: versionId,
+              documentTitle: listItem?.title,
+              versionNumber: details[i].currentVersion.versionNumber,
+            };
+          })
+          .filter(Boolean);
+
+        if (attachDocs.length === 0) {
+          notify("error", "Could not resolve document versions. Please try again.");
+          return;
+        }
+
+        sessionStorage.setItem("file-storage-attach", JSON.stringify(attachDocs));
+        router.push(href);
+      } catch (err) {
+        notify("error", err.message || "Failed to prepare documents. Please try again.");
+      } finally {
+        setNavigating(false);
+      }
+    },
+    [selectedIds, data.content, notify, router]
+  );
+
   return (
     <main className="flex-1 mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-10">
@@ -231,13 +277,17 @@ export default function FileStorageView() {
         onDelete={(doc) => setDeleteTarget(doc)}
         onBulkDelete={() => setDeleteTarget({ bulk: true })}
         onViewEvidence={(doc) => setEvidenceTarget(doc)}
+        disabled={navigating}
+        onNavigateToWriteReport={() => navigateToFeature("/write-report")}
+        onNavigateToSummary={() => navigateToFeature("/summary")}
+        onNavigateToDocumentQA={() => navigateToFeature("/document-qa")}
       />
 
       <UploadDocumentModal
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
-        onUploaded={() => {
-          notify("success", "Document uploaded");
+        onUploaded={(count) => {
+          notify("success", count > 1 ? `Uploaded ${count} document(s)` : "Document uploaded");
           reload();
         }}
       />

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FileText, ListTree, MessagesSquare, Trash2, Loader2, Inbox, AlertCircle } from "lucide-react";
 import DocumentRow from "./DocumentRow";
 import Pagination from "./Pagination";
@@ -46,6 +45,10 @@ export default function DocumentTable({
   onDelete,
   onBulkDelete,
   onViewEvidence,
+  disabled,
+  onNavigateToWriteReport,
+  onNavigateToSummary,
+  onNavigateToDocumentQA,
 }) {
   const selectedCount = selectedIds.size;
   const allSelected = documents.length > 0 && documents.every((d) => selectedIds.has(d.id));
@@ -60,30 +63,33 @@ export default function DocumentTable({
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/write-report"
-            aria-disabled={selectedCount === 0}
-            className={`btn-secondary py-2 px-3 text-sm ${selectedCount === 0 ? "pointer-events-none opacity-50" : ""}`}
+          <button
+            type="button"
+            onClick={onNavigateToWriteReport}
+            disabled={disabled || selectedCount === 0}
+            className={`btn-secondary py-2 px-3 text-sm ${disabled || selectedCount === 0 ? "opacity-50" : ""}`}
           >
             <FileText className="h-4 w-4" />
             Write Report
-          </Link>
-          <Link
-            href="/summary"
-            aria-disabled={selectedCount === 0}
-            className={`btn-secondary py-2 px-3 text-sm ${selectedCount === 0 ? "pointer-events-none opacity-50" : ""}`}
+          </button>
+          <button
+            type="button"
+            onClick={onNavigateToSummary}
+            disabled={disabled || selectedCount === 0}
+            className={`btn-secondary py-2 px-3 text-sm ${disabled || selectedCount === 0 ? "opacity-50" : ""}`}
           >
             <ListTree className="h-4 w-4" />
             Summary
-          </Link>
-          <Link
-            href="/document-qa"
-            aria-disabled={selectedCount === 0}
-            className={`btn-secondary py-2 px-3 text-sm ${selectedCount === 0 ? "pointer-events-none opacity-50" : ""}`}
+          </button>
+          <button
+            type="button"
+            onClick={onNavigateToDocumentQA}
+            disabled={disabled || selectedCount === 0}
+            className={`btn-secondary py-2 px-3 text-sm ${disabled || selectedCount === 0 ? "opacity-50" : ""}`}
           >
             <MessagesSquare className="h-4 w-4" />
             Document QA
-          </Link>
+          </button>
           <button
             type="button"
             onClick={onBulkDelete}

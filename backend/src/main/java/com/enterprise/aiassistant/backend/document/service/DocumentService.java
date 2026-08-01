@@ -1,20 +1,19 @@
 package com.enterprise.aiassistant.backend.document.service;
 
-import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
-import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
-import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
-import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.*;
 import com.enterprise.aiassistant.backend.document.dto.response.*;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 public interface DocumentService {
 
-    DocumentUploadResponse upload(
-            MultipartFile file,
-            DocumentUploadRequest request
+    List<DocumentUploadResponse> upload(
+            List<MultipartFile> files,
+            DocumentBatchUploadRequest request
     );
 
     UploadNewVersionResponse uploadNewVersion(

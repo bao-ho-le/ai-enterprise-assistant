@@ -2,10 +2,7 @@ package com.enterprise.aiassistant.backend.document.service;
 
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
-import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
-import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
-import com.enterprise.aiassistant.backend.document.dto.request.DocumentUploadRequest;
-import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.*;
 import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
@@ -14,6 +11,7 @@ import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
+import com.enterprise.aiassistant.backend.processing.event.DocumentVersionCreatedBatchEvent;
 import com.enterprise.aiassistant.backend.processing.event.DocumentVersionCreatedEvent;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
@@ -29,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.enterprise.aiassistant.backend.common.exception.ErrorCode.DOCUMENT_NOT_FOUND;
@@ -56,51 +55,84 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     @Transactional
-    public DocumentUploadResponse upload(
-            MultipartFile file,
-            DocumentUploadRequest request
+    public List<DocumentUploadResponse> upload(
+            List<MultipartFile> files,
+            DocumentBatchUploadRequest request
     ) {
 
-        documentHelper.validateFile(file);
-        documentHelper.validateRequest(request);
+        documentHelper.validateFiles(files);
+        documentHelper.validateBatchRequest(files, request.getDocuments());
 
-        // 1. Upload file lên MinIO
-        StoredFileDto storedFile = fileStorageService.store(file);
+        List<DocumentUploadResponse> responses =
+                new ArrayList<>();
 
-
-        // 2. Tạo FileEntity
-        FileEntity newFile = fileMapper.toFileEntity(storedFile);
-        fileRepository.save(newFile);
+        List<Long> versionIds =
+                new ArrayList<>();
 
 
-        // 3. Tạo Document
-        Document document = documentMapper.toDocument(request);
-        documentRepository.save(document);
+        for (int i = 0; i < files.size(); i++) {
+
+            MultipartFile file = files.get(i);
+
+            DocumentUploadRequest item =
+                    request.getDocuments().get(i);
 
 
-        // 4. Tạo DocumentVersion
-        DocumentVersion version = documentMapper.toDocumentVersion(
-                document,
-                newFile,
-                1,
-                ""
+            // 1. Upload MinIO
+            StoredFileDto storedFile =
+                    fileStorageService.store(file);
+
+
+            // 2. FileEntity
+            FileEntity newFile =
+                    fileMapper.toFileEntity(storedFile);
+
+            fileRepository.save(newFile);
+
+
+            // 3. Document
+            Document document =
+                    documentMapper.toDocument(item);
+
+            documentRepository.save(document);
+
+
+            // 4. Version
+            DocumentVersion version =
+                    documentMapper.toDocumentVersion(
+                            document,
+                            newFile,
+                            1,
+                            ""
+                    );
+
+            versionRepository.save(version);
+
+
+            // 5. Current version
+            document.setCurrentVersion(version);
+
+            documentRepository.save(document);
+
+
+            versionIds.add(version.getId());
+
+
+            responses.add(
+                    documentMapper.toUploadResponse(
+                            document,
+                            newFile
+                    )
+            );
+        }
+
+
+        applicationEventPublisher.publishEvent(
+                new DocumentVersionCreatedBatchEvent(versionIds)
         );
-        versionRepository.save(version);
 
 
-        // 5. Update current version
-        document.setCurrentVersion(version);
-        documentRepository.save(document);
-
-
-        // Kích hoạt xử lý bất đồng bộ sau khi transaction này commit (tránh việc
-        // worker chạy trước khi Document/DocumentVersion thực sự tồn tại trong DB)
-        applicationEventPublisher.publishEvent(new DocumentVersionCreatedEvent(version.getId()));
-
-        return documentMapper.toUploadResponse(
-                document,
-                newFile
-        );
+        return responses;
     }
 
     @Override
