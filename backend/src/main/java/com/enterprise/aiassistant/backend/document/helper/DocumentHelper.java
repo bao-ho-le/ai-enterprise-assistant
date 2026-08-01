@@ -16,6 +16,7 @@ import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRep
 import com.enterprise.aiassistant.backend.storage.config.FileUploadProperties;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.InvalidMediaTypeException;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class DocumentHelper {
 
     private final FileUploadProperties fileUploadProperties;
@@ -109,6 +111,7 @@ public class DocumentHelper {
 
         validateContentType(file);
     }
+
 
     private void validateContentType(MultipartFile file) {
         String contentType = file.getContentType();

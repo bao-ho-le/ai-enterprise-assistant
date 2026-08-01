@@ -36,7 +36,7 @@ public class DocumentController {
     )
     public ResponseEntity<List<DocumentUploadResponse>> upload(
             @RequestParam("files") List<MultipartFile> files,
-            @RequestPart("documents") DocumentBatchUploadRequest request
+            @RequestPart("request") DocumentBatchUploadRequest request
     ) {
 
         return ResponseEntity.ok(
