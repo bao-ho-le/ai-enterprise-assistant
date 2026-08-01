@@ -6,10 +6,18 @@ import AIUsageCharts from "./AIUsageCharts";
 import AIUsageFilters from "./AIUsageFilters";
 import AIUsageTable from "./AIUsageTable";
 import { dateInputToIso } from "@/utils/format";
+import { SUPPORTED_MODELS } from "@/constants/aiUsage";
 import { getUsageLogs, getUsageSummary, getUsageDaily, getUsageModels } from "@/services/aiUsageService";
 
 const PAGE_SIZE = 10;
 const CHART_DAYS = 7;
+
+// The backend's /ai-usage/models only returns models that have actually been logged.
+// Union with the system's supported models so the Model filter always offers every
+// model the system can use, even ones with no usage records yet (e.g. embedding).
+function mergeModelOptions(loggedModels) {
+  return [...new Set([...SUPPORTED_MODELS, ...(loggedModels || [])])].sort();
+}
 
 const INITIAL_FILTERS = {
   fromDate: "",
@@ -59,10 +67,12 @@ export default function AIUsageView() {
     const controller = new AbortController();
     getUsageModels(controller.signal)
       .then((m) => {
-        if (!controller.signal.aborted) setModels(m || []);
+        if (!controller.signal.aborted) setModels(mergeModelOptions(m));
       })
       .catch(() => {
-        // Model filter just stays "All Models" on failure.
+        // If the models fetch fails, still offer the known supported models so the
+        // filter stays usable — distinct logged models are just missing from the list.
+        if (!controller.signal.aborted) setModels([...SUPPORTED_MODELS]);
       });
     return () => controller.abort();
   }, []);

@@ -1,5 +1,12 @@
 // Mirrors backend ai/usage enums: ConversationType, AIUsageStatus.
 
+// Every model the system can use — mirrors backend config (application.properties):
+// gemini.chat-model.model-name (chat/QA/generation) and gemini.embedding-model
+// (embedding/indexing). The /ai-usage/models endpoint only returns models that have
+// actually been logged, so the Model filter unions this list in to always offer all
+// supported models, even ones with no usage records yet.
+export const SUPPORTED_MODELS = ["gemini-3.1-flash-lite", "gemini-embedding-001"];
+
 export const CONVERSATION_TYPES = [
   { value: "EMAIL_GENERATION", label: "Write Email" },
   { value: "REPORT_GENERATION", label: "Write Report" },

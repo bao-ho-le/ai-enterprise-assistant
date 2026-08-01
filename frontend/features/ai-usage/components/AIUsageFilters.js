@@ -1,9 +1,10 @@
 import DatePicker from "@/components/ui/DatePicker";
 import { CONVERSATION_TYPES, STATUS_OPTIONS } from "@/constants/aiUsage";
 
-// Controlled: `filters` object + onChange(patch). `models` is the distinct
-// model list fetched from the backend (GET /ai-usage/models) — only models
-// that have actually been logged show up, no free-text entry.
+// Controlled: `filters` object + onChange(patch). `models` is the model option
+// list — AIUsageView unions the backend's distinct logged models (GET
+// /ai-usage/models) with SUPPORTED_MODELS so the dropdown always shows every
+// model the system supports. No free-text entry.
 export default function AIUsageFilters({ filters, onChange, models }) {
   const set = (key) => (e) => onChange({ [key]: e.target.value });
   const setValue = (key) => (value) => onChange({ [key]: value });
