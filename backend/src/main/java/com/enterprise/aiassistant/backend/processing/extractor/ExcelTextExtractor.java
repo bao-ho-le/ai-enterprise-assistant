@@ -3,7 +3,9 @@ package com.enterprise.aiassistant.backend.processing.extractor;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ProcessingException;
 import com.enterprise.aiassistant.backend.document.enums.ExtractionMethod;
+import com.enterprise.aiassistant.backend.processing.dto.DocumentElement;
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
+import com.enterprise.aiassistant.backend.processing.enums.ElementType;
 import com.enterprise.aiassistant.backend.processing.mapper.ProcessingMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -42,12 +44,24 @@ public class ExcelTextExtractor implements TextExtractor {
         ) {
 
             // Mỗi sheet coi như 1 "trang" cho page-aware chunking.
-            List<String> pages = extractWorkbookPages(workbook);
+            List<String> pages = new ArrayList<>();
+            List<DocumentElement> elements = new ArrayList<>();
+
+            int sheetNumber = 0;
+
+            for (Sheet sheet : workbook) {
+
+                sheetNumber++;
+
+                pages.add(extractSheet(sheet, sheetNumber, elements));
+            }
+
             String content = String.join("\n\n", pages);
 
             return processingMapper.toExtractedText(
                     content,
                     pages,
+                    elements,
                     ExtractionMethod.DIRECT_TEXT
             );
 
@@ -61,20 +75,8 @@ public class ExcelTextExtractor implements TextExtractor {
         }
     }
 
-    // Extract text from every sheet in the workbook, one entry per sheet.
-    private List<String> extractWorkbookPages(Workbook workbook) {
-
-        List<String> pages = new ArrayList<>();
-
-        for (Sheet sheet : workbook) {
-            pages.add(extractSheet(sheet));
-        }
-
-        return pages;
-    }
-
-    // Extract text from a single worksheet.
-    private String extractSheet(Sheet sheet) {
+    // Extract text from a single worksheet, đồng thời phát sinh 1 element TABLE_ROW cho mỗi row có dữ liệu.
+    private String extractSheet(Sheet sheet, int sheetNumber, List<DocumentElement> elements) {
 
         StringBuilder sheetContent = new StringBuilder();
 
@@ -89,8 +91,19 @@ public class ExcelTextExtractor implements TextExtractor {
             String rowContent = extractRow(row, formatter);
 
             if (!rowContent.isBlank()) {
+
                 sheetContent.append(rowContent)
                         .append(System.lineSeparator());
+
+                elements.add(
+                        DocumentElement.builder()
+                                .type(ElementType.TABLE_ROW)
+                                .content(rowContent)
+                                // Excel không có trang, tái dùng pageNumber làm sheet index để
+                                // chunking group theo sheet bằng đúng cơ chế group theo page.
+                                .pageNumber(sheetNumber)
+                                .build()
+                );
             }
         }
 

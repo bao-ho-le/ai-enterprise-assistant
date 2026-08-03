@@ -13,6 +13,16 @@ public class ProcessingException extends BusinessException {
 
   public ProcessingException(
           ErrorCode errorCode,
+          String message
+  ){
+    super(
+            errorCode,
+            message
+    );
+  }
+
+  public ProcessingException(
+          ErrorCode errorCode,
           Throwable cause
   ){
     super(

@@ -2,22 +2,20 @@ package com.enterprise.aiassistant.backend.processing.extractor;
 
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ProcessingException;
-import com.enterprise.aiassistant.backend.document.enums.ExtractionMethod;
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
-import com.enterprise.aiassistant.backend.processing.mapper.ProcessingMapper;
+import com.enterprise.aiassistant.backend.processing.extractor.tika.TikaContentExtractor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.io.InputStream;
 
 @Component
 @RequiredArgsConstructor
 public class TxtTextExtractor implements TextExtractor {
 
-    private final ProcessingMapper processingMapper;
+    private final TikaContentExtractor tikaContentExtractor;
 
     @Override
     public boolean supports(String mimeType) {
@@ -27,18 +25,9 @@ public class TxtTextExtractor implements TextExtractor {
     @Override
     public ExtractedText extract(Resource resource) {
 
-        try {
+        try (InputStream inputStream = resource.getInputStream()) {
 
-            String content = new String(
-                    resource.getInputStream().readAllBytes(),
-                    StandardCharsets.UTF_8
-            );
-
-            return processingMapper.toExtractedText(
-                    content,
-                    List.of(content),
-                    ExtractionMethod.DIRECT_TEXT
-            );
+            return tikaContentExtractor.extract(inputStream, resource.getFilename());
 
         } catch (IOException e) {
 

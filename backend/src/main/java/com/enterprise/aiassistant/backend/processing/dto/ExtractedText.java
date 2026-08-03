@@ -20,6 +20,10 @@ public class ExtractedText {
     // Định dạng không có khái niệm trang thật (DOCX, TXT) thì trả về 1 phần tử duy nhất.
     private List<String> pages;
 
+    // Các phần tử cấu trúc (heading/paragraph/table row) theo đúng thứ tự xuất hiện,
+    // dùng cho structure-aware chunking.
+    private List<DocumentElement> elements;
+
     private ExtractionMethod extractionMethod;
 
     private String language;

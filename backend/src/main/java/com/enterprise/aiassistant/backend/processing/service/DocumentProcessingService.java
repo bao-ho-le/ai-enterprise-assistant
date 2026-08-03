@@ -15,6 +15,7 @@ import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import com.enterprise.aiassistant.backend.document.repository.DocumentChunkRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentTextRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
+import com.enterprise.aiassistant.backend.processing.chunking.ChunkingService;
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
 import com.enterprise.aiassistant.backend.processing.dto.TextChunk;
 import com.enterprise.aiassistant.backend.processing.helper.ProcessingHelper;
@@ -112,7 +113,10 @@ public class DocumentProcessingService {
 
             version.setProcessingStep(ProcessingStep.CHUNKING);
 
-            List<TextChunk> listTextChunk = chunkingService.chunk(extractedText.getPages());
+            List<TextChunk> listTextChunk = chunkingService.chunk(
+                    extractedText,
+                    version.getFile().getExtension()
+            );
 
 
             /*

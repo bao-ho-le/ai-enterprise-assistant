@@ -7,6 +7,7 @@ import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
 import com.enterprise.aiassistant.backend.document.entity.DocumentText;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.enums.ExtractionMethod;
+import com.enterprise.aiassistant.backend.processing.dto.DocumentElement;
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
 import com.enterprise.aiassistant.backend.processing.dto.TextChunk;
 import org.springframework.stereotype.Component;
@@ -20,11 +21,16 @@ public class ProcessingMapper {
     // Ước lượng token: ~4 ký tự/token (quy ước phổ biến cho MVP, xem comment ở DocumentChunk.tokenCount).
     private static final int CHARS_PER_TOKEN = 4;
 
-    public ExtractedText toExtractedText(String content, List<String> pages, ExtractionMethod extractionMethod
+    public ExtractedText toExtractedText(
+            String content,
+            List<String> pages,
+            List<DocumentElement> elements,
+            ExtractionMethod extractionMethod
     ) {
         return ExtractedText.builder()
                 .content(content)
                 .pages(pages)
+                .elements(elements)
                 .extractionMethod(extractionMethod)
                 .build();
     }
