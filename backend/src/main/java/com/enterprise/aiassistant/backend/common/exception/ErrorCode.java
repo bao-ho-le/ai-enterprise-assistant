@@ -467,6 +467,11 @@ public enum ErrorCode {
             "No generation handler available for this conversation type"
     ),
 
+    GENERATION_RUN_FAILED(
+            INTERNAL_SERVER_ERROR,
+            "Failed to run generation"
+    ),
+
     EMAIL_GENERATION_PURPOSE_REQUIRED(
             BAD_REQUEST,
             "Email purpose is required"

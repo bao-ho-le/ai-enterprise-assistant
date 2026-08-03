@@ -77,6 +77,8 @@ public class GeneratedContentServiceImpl implements GeneratedContentService {
         return generatedMapper.toGeneratedContentDetailResponse(generatedContent);
     }
 
+    // Helper
+
     private GeneratedContent getGeneratedContentOrThrow(Long generatedContentId) {
         return generatedContentRepository.findById(generatedContentId)
                 .orElseThrow(() -> new GeneratedException(ErrorCode.GENERATED_CONTENT_NOT_FOUND));

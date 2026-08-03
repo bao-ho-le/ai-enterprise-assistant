@@ -20,6 +20,7 @@ public class GenerationController {
 
     private final GenerationService generationService;
 
+    // Api này hiện đang dùng cho generate lần đầu và cả regenerate
     @PostMapping("/ai-conversations/{conversationId}/generate")
     public TriggerGenerationResponse generate(
             @PathVariable Long conversationId,
@@ -28,6 +29,8 @@ public class GenerationController {
         return generationService.generate(conversationId, request);
     }
 
+
+    // Api này hiện đang không được dùng, lấy chi tiết lịch sử generation hiện đang được viết ở Ai Conversation
     @GetMapping("/ai-conversations/generations/{generationId}")
     public GenerationConversationDetailResponse getGenerationDetail(
             @PathVariable Long generationId

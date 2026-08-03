@@ -23,6 +23,7 @@ public class DocumentContextService {
     @Transactional(readOnly = true)
     public String buildContext(Long conversationId) {
 
+        // 1. Lấy tất cả tài liệu đã được đính kèm vào conversation
         List<AIConversationDocument> attached =
                 conversationDocumentRepository.findByAiConversationIdWithDocument(conversationId);
 
@@ -30,21 +31,27 @@ public class DocumentContextService {
             return "";
         }
 
+        // Dùng StringBuilder để ghép nội dung của nhiều tài liệu thành một context duy nhất
         StringBuilder context = new StringBuilder();
 
+        // Duyệt qua từng tài liệu được đính kèm
         for (AIConversationDocument link : attached) {
             DocumentVersion version = link.getDocumentVersion();
 
+            // Thêm metadata của tài liệu để AI biết nội dung thuộc tài liệu và phiên bản nào
             context.append("Document: ")
                     .append(version.getDocument().getTitle())
                     .append(" (v").append(version.getVersionNumber()).append(")\n");
 
+            // Thêm toàn bộ nội dung đã được trích xuất từ tài liệu,
+            // hoặc ghi chú nếu chưa có extracted text
             documentTextRepository.findByDocumentVersionId(version.getId())
                     .ifPresentOrElse(
                             text -> context.append(text.getContent()),
                             () -> context.append("[no extracted text available]")
                     );
 
+            // Ngăn cách giữa các tài liệu để prompt rõ ràng hơn
             context.append("\n\n");
         }
 
