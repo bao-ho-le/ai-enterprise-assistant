@@ -492,6 +492,73 @@ public enum ErrorCode {
             "At least one source document must be attached"
     ),
 
+    // ===================== Folder =====================
+
+    FOLDER_ID_REQUIRED(
+            BAD_REQUEST,
+            "Folder id is required"
+    ),
+
+    FOLDER_ID_INVALID(
+            BAD_REQUEST,
+            "Folder id is invalid"
+    ),
+
+    FOLDER_NOT_FOUND(
+            NOT_FOUND,
+            "Folder not found"
+    ),
+
+    FOLDER_PARENT_NOT_FOUND(
+            NOT_FOUND,
+            "Parent folder not found"
+    ),
+
+    FOLDER_REQUEST_REQUIRED(
+            BAD_REQUEST,
+            "Folder request is required"
+    ),
+
+    FOLDER_NAME_REQUIRED(
+            BAD_REQUEST,
+            "Folder name is required"
+    ),
+
+    FOLDER_NAME_TOO_LONG(
+            BAD_REQUEST,
+            "Folder name exceeds maximum length"
+    ),
+
+    FOLDER_NAME_INVALID(
+            BAD_REQUEST,
+            "Folder name contains invalid characters"
+    ),
+
+    FOLDER_ALREADY_EXISTS(
+            CONFLICT,
+            "A folder with this name already exists in the destination"
+    ),
+
+    FOLDER_DELETED(
+            BAD_REQUEST,
+            "Folder has been deleted"
+    ),
+
+    FOLDER_CANNOT_MOVE_INTO_ITSELF(
+            BAD_REQUEST,
+            "A folder cannot be moved into itself"
+    ),
+
+    FOLDER_CANNOT_MOVE_INTO_DESCENDANT(
+            BAD_REQUEST,
+            "A folder cannot be moved into one of its own subfolders"
+    ),
+
+    FOLDER_NOT_EMPTY(
+            CONFLICT,
+            "Folder is not empty"
+    ),
+
     // ===================== AI/LLM =====================
 
     LLM_GENERATION_FAILED(
