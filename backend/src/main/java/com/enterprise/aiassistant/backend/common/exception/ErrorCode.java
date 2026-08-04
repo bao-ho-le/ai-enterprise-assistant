@@ -544,6 +544,16 @@ public enum ErrorCode {
             "Folder has been deleted"
     ),
 
+    FOLDER_NOT_DELETED(
+            BAD_REQUEST,
+            "Folder has not been deleted, cannot restore or permanently delete"
+    ),
+
+    FOLDER_SEARCH_KEYWORD_REQUIRED(
+            BAD_REQUEST,
+            "Search keyword is required"
+    ),
+
     FOLDER_CANNOT_MOVE_INTO_ITSELF(
             BAD_REQUEST,
             "A folder cannot be moved into itself"

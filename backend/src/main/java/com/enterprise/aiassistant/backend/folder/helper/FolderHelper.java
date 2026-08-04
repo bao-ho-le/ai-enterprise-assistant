@@ -52,6 +52,12 @@ public class FolderHelper {
         }
     }
 
+    public void validateSearchKeyword(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new FolderException(ErrorCode.FOLDER_SEARCH_KEYWORD_REQUIRED);
+        }
+    }
+
     public void validateFolderStatus(Folder folder) {
         if (folder.getStatus() == FolderStatus.DELETED) {
             throw new FolderException(ErrorCode.FOLDER_DELETED);

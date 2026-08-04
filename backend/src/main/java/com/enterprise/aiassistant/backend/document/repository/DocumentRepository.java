@@ -11,4 +11,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long>,
     boolean existsByTitle(String title);
 
     List<Document> findByFolderIdAndStatus(Long folderId, DocumentStatus status);
+
+    // Dùng cho hard delete folder: lấy tất cả document trong folder bất kể status.
+    List<Document> findByFolderId(Long folderId);
 }
