@@ -127,6 +127,7 @@ public class DocumentQAServiceImpl implements DocumentQAService {
 
     // Helper
 
+    // Chỉ lấy tối đa 5 chunks có độ liên quan cao nhất (CHAT_TOP_K)
     private List<SearchResult> retrieveRelevantChunks(String question, List<Long> attachedVersionIds) {
 
         EmbeddingResult queryEmbedding = embeddingService.embed(question);
