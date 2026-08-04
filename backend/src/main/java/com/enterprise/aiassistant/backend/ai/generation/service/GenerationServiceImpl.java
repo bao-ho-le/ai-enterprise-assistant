@@ -30,6 +30,7 @@ import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.ai.usage.service.AIUsageLogService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -155,15 +156,24 @@ public class GenerationServiceImpl implements GenerationService {
         AIConversation conversation = generation.getAiConversation();
 
         // Nếu conversation type là email thì không có attach document
+        boolean isEmailGeneration = conversation.getConversationType() == ConversationType.EMAIL_GENERATION;
         List<ConversationDocumentResponse> attachedDocuments =
-                conversation.getConversationType() == ConversationType.EMAIL_GENERATION
+                isEmailGeneration
                         ? null
                         : conversationDocumentRepository.findByAiConversationIdWithDocument(conversation.getId())
                                 .stream()
                                 .map(aiConversationMapper::toConversationDocumentResponse)
                                 .toList();
+        boolean hasDeletedAttachedDocuments = !isEmailGeneration
+                && conversationDocumentRepository.existsByConversationIdAndDocumentVersionDocumentStatus(
+                        conversation.getId(), DocumentStatus.DELETED);
 
-        return aiConversationMapper.toGenerationDetailResponse(conversation, generation, attachedDocuments);
+        return aiConversationMapper.toGenerationDetailResponse(
+                conversation,
+                generation,
+                attachedDocuments,
+                hasDeletedAttachedDocuments
+        );
     }
 
     // Strategy Pattern: chọn handler theo conversationType, không rẽ nhánh theo type ở đâu khác.

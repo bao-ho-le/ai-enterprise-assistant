@@ -15,11 +15,12 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useSemanticSearch } from "@/hooks/useSemanticSearch";
 import { dateInputToIso } from "@/utils/format";
 import { matchesSimilarityBucket } from "@/constants/document";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   listDocuments,
   getDocument,
   deleteDocument,
+  restoreDocument,
   downloadCurrentVersion,
 } from "@/services/documentService";
 
@@ -42,12 +43,17 @@ const INITIAL_FILTERS = {
 };
 
 export default function FileStorageView() {
+  // Deep link from the conversation "deleted attachment" warning: /file-storage?status=DELETED
+  // pre-applies the Status filter so the table opens already showing deleted documents.
+  const searchParams = useSearchParams();
+  const initialDocumentStatus = searchParams.get("status") === "DELETED" ? "DELETED" : "ACTIVE";
+
   const [keyword, setKeyword] = useState("");
   const debouncedKeyword = useDebounce(keyword, 400);
   const trimmedKeyword = debouncedKeyword.trim();
   const isSearching = trimmedKeyword.length > 0;
 
-  const [filters, setFilters] = useState(INITIAL_FILTERS);
+  const [filters, setFilters] = useState({ ...INITIAL_FILTERS, documentStatus: initialDocumentStatus });
   const [page, setPage] = useState(0);
 
   const [data, setData] = useState({ content: [], totalElements: 0, totalPages: 0, number: 0 });
@@ -63,6 +69,8 @@ export default function FileStorageView() {
   const [editTarget, setEditTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null); // doc | { bulk: true }
   const [deleting, setDeleting] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState(null);
+  const [restoring, setRestoring] = useState(false);
   const [evidenceTarget, setEvidenceTarget] = useState(null);
   const [navigating, setNavigating] = useState(false);
 
@@ -199,6 +207,20 @@ export default function FileStorageView() {
     }
   };
 
+  const confirmRestore = async () => {
+    setRestoring(true);
+    try {
+      await restoreDocument(restoreTarget.id);
+      notify("success", "Document restored");
+      setRestoreTarget(null);
+      reload();
+    } catch (err) {
+      notify("error", err.message || "Restore failed");
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   const navigateToFeature = useCallback(
     async (href) => {
       const ids = [...selectedIds];
@@ -275,6 +297,7 @@ export default function FileStorageView() {
         onUploadVersion={(doc) => setVersionTarget(doc)}
         onEdit={(doc) => setEditTarget(doc)}
         onDelete={(doc) => setDeleteTarget(doc)}
+        onRestore={(doc) => setRestoreTarget(doc)}
         onBulkDelete={() => setDeleteTarget({ bulk: true })}
         onViewEvidence={(doc) => setEvidenceTarget(doc)}
         disabled={navigating}
@@ -325,6 +348,18 @@ export default function FileStorageView() {
             ? `Delete ${selectedIds.size} selected document(s)? This cannot be undone.`
             : `Delete "${deleteTarget?.title}"? This cannot be undone.`
         }
+      />
+
+      <ConfirmDialog
+        open={Boolean(restoreTarget)}
+        onClose={() => setRestoreTarget(null)}
+        onConfirm={confirmRestore}
+        loading={restoring}
+        tone="default"
+        title="Restore document"
+        confirmLabel="Restore"
+        loadingLabel="Restoring…"
+        message={`Restore "${restoreTarget?.title}"? It will become active again.`}
       />
 
       <EvidenceDialog

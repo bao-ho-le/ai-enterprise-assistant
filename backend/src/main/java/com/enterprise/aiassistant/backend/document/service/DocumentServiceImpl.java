@@ -312,6 +312,24 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     @Transactional
+    public DocumentRestoreResponse restoreDocument(Long documentId) {
+
+        documentHelper.validateDocumentId(documentId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+        documentHelper.validateDocumentIsDeleted(document);
+
+        document.setStatus(DocumentStatus.ACTIVE);
+        document.setDeletedAt(null);
+        documentRepository.save(document);
+
+        return documentMapper.toRestoreResponse(document);
+    }
+
+    @Override
+    @Transactional
     public Page<DocumentListResponse> getDocuments(DocumentFilterRequest filter, Pageable pageable){
 
         documentHelper.validateFilter(filter);

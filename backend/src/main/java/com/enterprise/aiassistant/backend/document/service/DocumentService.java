@@ -33,6 +33,8 @@ public interface DocumentService {
     );
     void deleteDocument(Long documentId);
 
+    DocumentRestoreResponse restoreDocument(Long documentId);
+
 
     DocumentUpdateMetadataResponse updateDocumentMetadata(Long documentId, DocumentUpdateMetadataRequest request);
 

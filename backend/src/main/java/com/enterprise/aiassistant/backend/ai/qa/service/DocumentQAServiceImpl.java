@@ -1,6 +1,8 @@
 package com.enterprise.aiassistant.backend.ai.qa.service;
 
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
+import com.enterprise.aiassistant.backend.ai.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.ai.embedding.dto.EmbeddingResult;
 import com.enterprise.aiassistant.backend.ai.embedding.service.EmbeddingService;
@@ -47,12 +49,20 @@ public class DocumentQAServiceImpl implements DocumentQAService {
 
     private final AIMessageMapper messageMapper;
     private final QAMapper qaMapper;
+    private final AIConversationHelper aiConversationHelper;
 
     @Override
     public AIMessage answer(AIConversation conversation, String question) {
 
-        List<Long> attachedVersionIds =
-                conversationDocumentRepository.findDocumentVersionIdsByConversationId(conversation.getId());
+        List<AIConversationDocument> attachedDocuments =
+                conversationDocumentRepository.findByAiConversationIdWithDocument(conversation.getId());
+
+        // Không build context / không gọi LLM nếu có tài liệu đính kèm đã bị soft-delete
+        aiConversationHelper.validateAttachedDocumentsNotDeleted(attachedDocuments);
+
+        List<Long> attachedVersionIds = attachedDocuments.stream()
+                .map(link -> link.getDocumentVersion().getId())
+                .toList();
 
         String model = llmService.getModelName();
         Integer inputTokens = null;

@@ -43,6 +43,7 @@ export default function DocumentTable({
   onUploadVersion,
   onEdit,
   onDelete,
+  onRestore,
   onBulkDelete,
   onViewEvidence,
   disabled,
@@ -159,6 +160,7 @@ export default function DocumentTable({
                   onUploadVersion={onUploadVersion}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onRestore={onRestore}
                   onViewEvidence={onViewEvidence}
                 />
               ))}

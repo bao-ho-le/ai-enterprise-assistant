@@ -69,6 +69,12 @@ export function deleteDocument(id) {
   return apiClient.del(`/documents/${id}`);
 }
 
+// POST /documents/{id}/restore -> un-soft-deletes the same document (status back to
+// ACTIVE, deletedAt cleared). Only soft-deleted documents can be restored.
+export function restoreDocument(id) {
+  return apiClient.postJson(`/documents/${id}/restore`);
+}
+
 // GET /documents/{documentId}/{versionId}/download -> save file to disk
 export async function downloadVersion(documentId, versionId, fallbackName) {
   const res = await apiClient.getRaw(

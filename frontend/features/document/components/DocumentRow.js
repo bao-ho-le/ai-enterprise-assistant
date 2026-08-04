@@ -13,6 +13,7 @@ import {
   Upload,
   Pencil,
   Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { documentTypeLabel, versionStatusBadge, documentStatusBadge } from "@/constants/document";
 import { formatBytes, formatDateTime } from "@/utils/format";
@@ -53,7 +54,8 @@ function computeMenuPosition(buttonRect) {
   };
 }
 
-function RowActionsMenu({ doc, onUploadVersion, onEdit, onDelete }) {
+function RowActionsMenu({ doc, onUploadVersion, onEdit, onDelete, onRestore }) {
+  const isDeleted = doc.documentStatus === "DELETED";
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
@@ -127,30 +129,43 @@ function RowActionsMenu({ doc, onUploadVersion, onEdit, onDelete }) {
                 <FileText className="h-4 w-4 text-text-muted" />
                 Document Details
               </Link>
-              <button
-                type="button"
-                onClick={run(onUploadVersion)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                <Upload className="h-4 w-4 text-text-muted" />
-                Upload New Version
-              </button>
-              <button
-                type="button"
-                onClick={run(onEdit)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                <Pencil className="h-4 w-4 text-text-muted" />
-                Edit Metadata
-              </button>
-              <button
-                type="button"
-                onClick={run(onDelete)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-error/10 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Document
-              </button>
+              {isDeleted ? (
+                <button
+                  type="button"
+                  onClick={run(onRestore)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
+                >
+                  <RotateCcw className="h-4 w-4 text-text-muted" />
+                  Restore Document
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={run(onUploadVersion)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
+                  >
+                    <Upload className="h-4 w-4 text-text-muted" />
+                    Upload New Version
+                  </button>
+                  <button
+                    type="button"
+                    onClick={run(onEdit)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
+                  >
+                    <Pencil className="h-4 w-4 text-text-muted" />
+                    Edit Metadata
+                  </button>
+                  <button
+                    type="button"
+                    onClick={run(onDelete)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-error/10 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Document
+                  </button>
+                </>
+              )}
             </div>
           </div>,
           document.body
@@ -167,6 +182,7 @@ export default function DocumentRow({
   onUploadVersion,
   onEdit,
   onDelete,
+  onRestore,
   onViewEvidence,
 }) {
   const processing = versionStatusBadge(doc.versionStatus);
@@ -268,6 +284,7 @@ export default function DocumentRow({
             onUploadVersion={onUploadVersion}
             onEdit={onEdit}
             onDelete={onDelete}
+            onRestore={onRestore}
           />
         </div>
       </td>

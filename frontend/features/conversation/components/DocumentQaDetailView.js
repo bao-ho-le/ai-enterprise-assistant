@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Send, Loader2, Quote, FileText, AlertTriangle, Copy } from "lucide-react";
 import MessageSourcesDialog from "./MessageSourcesDialog";
+import DeletedDocumentsWarning from "./DeletedDocumentsWarning";
 import { getDocumentQaConversationDetail, getConversationDocuments } from "@/services/conversationService";
 import { sendMessage, getMessages } from "@/services/messageService";
 import { formatDateTime } from "@/utils/format";
@@ -331,6 +332,9 @@ export default function DocumentQaDetailView({ conversationId }) {
               );
             })
           )}
+
+          {conversation?.hasDeletedAttachedDocuments && <DeletedDocumentsWarning />}
+
           <div ref={bottomRef} />
         </div>
       </div>

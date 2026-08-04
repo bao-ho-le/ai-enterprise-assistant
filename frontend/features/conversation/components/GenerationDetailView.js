@@ -7,6 +7,7 @@ import GenerationForm, { splitEmailContent } from "./GenerationForm";
 import EmailPreview from "./EmailPreview";
 import GeneratedContentPreview from "./GeneratedContentPreview";
 import GenerationHistoryModal from "./GenerationHistoryModal";
+import DeletedDocumentsWarning from "./DeletedDocumentsWarning";
 import {
   getGenerationConversationDetail,
   getConversationGenerations,
@@ -268,6 +269,8 @@ export default function GenerationDetailView({ conversationId }) {
                 )}
               </section>
             )}
+
+            {detail.hasDeletedAttachedDocuments && <DeletedDocumentsWarning />}
           </>
         )}
       </div>

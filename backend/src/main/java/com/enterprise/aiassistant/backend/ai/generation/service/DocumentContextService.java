@@ -1,6 +1,7 @@
 package com.enterprise.aiassistant.backend.ai.generation.service;
 
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
+import com.enterprise.aiassistant.backend.ai.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.repository.DocumentTextRepository;
@@ -19,6 +20,7 @@ public class DocumentContextService {
 
     private final AIConversationDocumentRepository conversationDocumentRepository;
     private final DocumentTextRepository documentTextRepository;
+    private final AIConversationHelper aiConversationHelper;
 
     @Transactional(readOnly = true)
     public String buildContext(Long conversationId) {
@@ -30,6 +32,9 @@ public class DocumentContextService {
         if (attached.isEmpty()) {
             return "";
         }
+
+        // Không build context / không tốn token LLM nếu có tài liệu đã bị soft-delete
+        aiConversationHelper.validateAttachedDocumentsNotDeleted(attached);
 
         // Dùng StringBuilder để ghép nội dung của nhiều tài liệu thành một context duy nhất
         StringBuilder context = new StringBuilder();

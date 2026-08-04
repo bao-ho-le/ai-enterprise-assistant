@@ -61,6 +61,17 @@ public class DocumentMapper {
                 .build();
     }
 
+    public DocumentRestoreResponse toRestoreResponse(Document document) {
+
+        return DocumentRestoreResponse.builder()
+                .documentId(document.getId())
+                .title(document.getTitle())
+                .documentType(document.getDocumentType())
+                .status(document.getStatus())
+                .deletedAt(document.getDeletedAt())
+                .build();
+    }
+
     public DocumentUpdateMetadataResponse toUpdateMetadataReponse(Document document) {
 
         return DocumentUpdateMetadataResponse.builder()

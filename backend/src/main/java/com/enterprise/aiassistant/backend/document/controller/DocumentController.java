@@ -76,6 +76,11 @@ public class DocumentController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/{documentId}/restore")
+    public ResponseEntity<DocumentRestoreResponse> restoreDocument(@PathVariable Long documentId) {
+        return ResponseEntity.ok(documentService.restoreDocument(documentId));
+    }
+
     @GetMapping("/{documentId}/{versionId}/download")
     public ResponseEntity<Resource> downloadSelectedVersion(
             @PathVariable Long documentId,

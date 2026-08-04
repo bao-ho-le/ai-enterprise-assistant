@@ -105,6 +105,11 @@ public enum ErrorCode {
             "Document has been deleted"
     ),
 
+    DOCUMENT_NOT_DELETED(
+            HttpStatus.BAD_REQUEST,
+            "Document is not deleted"
+    ),
+
     DOCUMENT_TITLE_REQUIRED(
             BAD_REQUEST,
             "Document title is required"
@@ -420,6 +425,11 @@ public enum ErrorCode {
     DOCUMENT_NOT_ATTACHED_TO_CONVERSATION(
             BAD_REQUEST,
             "Document is not attached to the conversation"
+    ),
+
+    ATTACHED_DOCUMENT_DELETED(
+            BAD_REQUEST,
+            "Tài liệu đính kèm đã bị xoá, vui lòng khôi phục trước khi tiếp tục"
     ),
 
     // ===================== AI Conversation Message =====================
