@@ -81,6 +81,14 @@ public class DocumentController {
         return ResponseEntity.ok(documentService.restoreDocument(documentId));
     }
 
+    @PutMapping("/{documentId}/move")
+    public ResponseEntity<com.enterprise.aiassistant.backend.document.dto.response.DocumentMoveResponse> moveDocument(
+            @PathVariable Long documentId,
+            @RequestBody MoveDocumentRequest request
+    ) {
+        return ResponseEntity.ok(documentService.moveDocument(documentId, request));
+    }
+
     @GetMapping("/{documentId}/{versionId}/download")
     public ResponseEntity<Resource> downloadSelectedVersion(
             @PathVariable Long documentId,

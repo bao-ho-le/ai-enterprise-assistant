@@ -5,6 +5,7 @@ import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
+import com.enterprise.aiassistant.backend.folder.entity.Folder;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
@@ -20,12 +21,13 @@ import java.util.List;
 @Component
 public class DocumentMapper {
 
-    public Document toDocument(DocumentUploadRequest request) {
+    public Document toDocument(DocumentUploadRequest request, Folder folder) {
 
         return Document.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .documentType(request.getDocumentType())
+                .folder(folder)
                 .build();
     }
 

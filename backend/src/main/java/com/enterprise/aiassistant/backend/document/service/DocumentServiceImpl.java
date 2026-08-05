@@ -11,6 +11,10 @@ import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.FolderException;
+import com.enterprise.aiassistant.backend.folder.entity.Folder;
+import com.enterprise.aiassistant.backend.folder.enums.FolderStatus;
+import com.enterprise.aiassistant.backend.folder.repository.FolderRepository;
 import com.enterprise.aiassistant.backend.processing.orchestration.event.DocumentVersionCreatedBatchEvent;
 import com.enterprise.aiassistant.backend.processing.orchestration.event.DocumentVersionCreatedEvent;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
@@ -52,6 +56,8 @@ public class DocumentServiceImpl implements DocumentService{
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final FolderRepository folderRepository;
+
 
     @Override
     @Transactional
@@ -91,8 +97,19 @@ public class DocumentServiceImpl implements DocumentService{
 
 
             // 3. Document
+            Folder folder = null;
+
+            if (item.getFolderId() != null) {
+                folder = folderRepository.findById(item.getFolderId())
+                        .orElseThrow(() -> new FolderException(ErrorCode.FOLDER_NOT_FOUND));
+
+                if (folder.getStatus() == FolderStatus.DELETED) {
+                    throw new FolderException(ErrorCode.FOLDER_DELETED);
+                }
+            }
+
             Document document =
-                    documentMapper.toDocument(item);
+                    documentMapper.toDocument(item, folder);
 
             documentRepository.save(document);
 
@@ -367,6 +384,41 @@ public class DocumentServiceImpl implements DocumentService{
     public boolean existsByTitle(String title) {
         return documentRepository.existsByTitle(title);
     }
+
+    @Override
+    @Transactional
+    public com.enterprise.aiassistant.backend.document.dto.response.DocumentMoveResponse moveDocument(
+            Long documentId,
+            MoveDocumentRequest request
+    ) {
+
+        documentHelper.validateDocumentId(documentId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+        documentHelper.validateDocumentStatus(document);
+
+        Folder folder = null;
+
+        if (request.getFolderId() != null) {
+
+            folder = folderRepository.findById(request.getFolderId())
+                    .orElseThrow(() -> new FolderException(ErrorCode.FOLDER_NOT_FOUND));
+
+            if (folder.getStatus() == FolderStatus.DELETED) {
+                throw new FolderException(ErrorCode.FOLDER_DELETED);
+            }
+        }
+
+        document.setFolder(folder);
+
+        documentRepository.save(document);
+
+        return com.enterprise.aiassistant.backend.document.dto.response.DocumentMoveResponse.builder()
+                .documentId(document.getId())
+                .folderId(folder != null ? folder.getId() : null)
+                .build();
+    }
+
 }
-
-
