@@ -50,9 +50,41 @@ import ConversationRowMenu from "@/features/conversation/components/Conversation
 import {
   getConversations,
   softDeleteConversation,
-  hardDeleteConversation,
 } from "@/services/conversationService";
 import { ROUTED_CONVERSATION_TYPES } from "@/constants/conversation";
+import { formatConversationTitle } from "@/utils/format";
+
+// Sidebar-only display formatting: backend conversation titles are generated as
+// "<Type Name> - 29/07/2026 12:29" (see AIConversationHelper.defaultTitle). The
+// sidebar shows just the type abbreviation (EG / RG / SG / QA) and a "-" between
+// the date and the time so more rows fit the narrow column. Pure display — the
+// stored title and API payload are untouched, and titles the user renamed (no
+// recognized prefix) are shown verbatim. Longer labels must be matched before
+// their short forms, so the map order below matters ("Summary Generation" before
+// "Summary").
+const SIDEBAR_TITLE_ABBREVIATIONS = {
+  "Email Generation": "EG",
+  "Report Generation": "RG",
+  "Write Report": "RG",
+  "Summary Generation": "SG",
+  "Summary": "SG",
+  "Document QA": "QA",
+};
+
+function formatSidebarTitle(title) {
+  if (!title) return title;
+  let t = title;
+  // Case-insensitive: the backend's default title for Document QA is generated
+  // as "Document Qa - ..." (not "Document QA"), which a case-sensitive prefix
+  // check would silently skip, leaving it unabbreviated unlike every other type.
+  for (const [label, abbr] of Object.entries(SIDEBAR_TITLE_ABBREVIATIONS)) {
+    if (t.toLowerCase().startsWith(label.toLowerCase())) {
+      t = abbr + t.slice(label.length);
+      break;
+    }
+  }
+  return formatConversationTitle(t);
+}
 
 // conversationType: which ConversationType this sidebar lists (e.g. "DOCUMENT_QA").
 // basePath: route prefix conversations of this type live under (e.g. "/document-qa"),
@@ -79,7 +111,6 @@ export default function LeftSidebar({ conversationType, basePath }) {
 
   const [renameTarget, setRenameTarget] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [toast, setToast] = useState(null);
   const notify = useCallback((type, text) => setToast({ type, text }), []);
@@ -137,21 +168,6 @@ export default function LeftSidebar({ conversationType, basePath }) {
     }
   };
 
-  const confirmHardDelete = async () => {
-    setDeleting(true);
-    try {
-      await hardDeleteConversation(hardDeleteTarget.id);
-      notify("success", "Conversation permanently deleted");
-      if (String(hardDeleteTarget.id) === activeConversationId) router.push(basePath);
-      setHardDeleteTarget(null);
-      reload();
-    } catch (err) {
-      notify("error", err.message || "Permanent delete failed");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   return (
     <aside className="hidden md:flex w-68 shrink-0 flex-col border-r border-border-subtle bg-bg-primary">
       <div className="flex flex-col gap-0.5 p-2">
@@ -173,7 +189,7 @@ export default function LeftSidebar({ conversationType, basePath }) {
         </Link>
       </div>
 
-      <div className="flex-1 overflow-y-auto pt-1 pb-3 px-3">
+      <div className="flex-1 overflow-y-auto pt-1 pb-3 px-2">
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-8 text-text-muted">
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -193,8 +209,8 @@ export default function LeftSidebar({ conversationType, basePath }) {
                     href={`${selectedBasePath}/${c.id}`}
                     className={
                       active
-                        ? "flex items-center gap-1 rounded-lg pl-2.5 pr-1 py-2.5 bg-bg-elevated border border-border-subtle transition-colors hover:border-border-default"
-                        : "flex items-center gap-1 rounded-lg pl-2.5 pr-1 py-2.5 transition-colors hover:bg-bg-elevated"
+                        ? "flex items-center gap-1 rounded-lg px-2.5 py-2.5 bg-bg-elevated border border-border-subtle transition-colors hover:border-border-default"
+                        : "flex items-center gap-1 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-bg-elevated"
                     }
                   >
                     <p
@@ -205,17 +221,16 @@ export default function LeftSidebar({ conversationType, basePath }) {
                       }
                       title={c.title}
                     >
-                      {c.title}
+                      {formatSidebarTitle(c.title)}
                     </p>
                     <span
-                      className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="flex shrink-0 items-center opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={(e) => e.preventDefault()}
                     >
                       <ConversationRowMenu
                         conversation={c}
                         onRename={setRenameTarget}
                         onDelete={setDeleteTarget}
-                        onHardDelete={setHardDeleteTarget}
                       />
                     </span>
                   </Link>
@@ -241,16 +256,6 @@ export default function LeftSidebar({ conversationType, basePath }) {
         title="Delete conversation"
         confirmLabel="Delete"
         message={`Delete "${deleteTarget?.title}"? You can't undo this from here, but the data isn't permanently erased.`}
-      />
-
-      <ConfirmDialog
-        open={Boolean(hardDeleteTarget)}
-        onClose={() => setHardDeleteTarget(null)}
-        onConfirm={confirmHardDelete}
-        loading={deleting}
-        title="Permanently delete conversation"
-        confirmLabel="Delete permanently"
-        message={`Permanently delete "${hardDeleteTarget?.title}"? This erases all messages, attached documents, and generated content for this conversation. This action cannot be undone.`}
       />
 
       <Toast toast={toast} onDone={() => setToast(null)} />

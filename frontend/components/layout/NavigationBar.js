@@ -12,12 +12,22 @@ const NAV_LINKS = [
   { href: "/write-report", label: "Write Report" },
   { href: "/summary", label: "Summary" },
   { href: "/document-qa", label: "Document QA" },
+  { href: "/file-storage/trash", label: "Trash" },
   { href: "/ai-usage", label: "AI Usage" },
 ];
 
-function isActive(pathname, href) {
+function matchesPath(pathname, href) {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+// Longest-prefix match: "/file-storage/trash" and "/file-storage" both match
+// /file-storage/trash, so without this both nav items would light up together.
+function isActive(pathname, href) {
+  if (!matchesPath(pathname, href)) return false;
+  return !NAV_LINKS.some(
+    (link) => link.href !== href && link.href.length > href.length && matchesPath(pathname, link.href)
+  );
 }
 
 export default function NavigationBar() {

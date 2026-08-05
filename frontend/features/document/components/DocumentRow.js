@@ -1,22 +1,36 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   FileText,
   FileSpreadsheet,
   File as FileIcon,
   ScanSearch,
   Download,
-  MoreHorizontal,
   Upload,
   Pencil,
   Trash2,
   RotateCcw,
+  FolderOpen,
 } from "lucide-react";
-import { documentTypeLabel, versionStatusBadge, documentStatusBadge } from "@/constants/document";
+import RowActionsMenu from "./RowActionsMenu";
+import { documentTypeLabel, versionStatusBadge } from "@/constants/document";
 import { formatBytes, formatDateTime } from "@/utils/format";
+import { hrefForFolderId } from "@/utils/folderPath";
+
+// Match dot colour per score band. The two middle bands are a linear RGB gradient
+// between the endpoints --success (#22c55e) and --warning (#eab308): t=1/3 ->
+// #65bf41, t=2/3 -> #a7b925. Below 65% is unreachable on screen —
+// qdrant.score-threshold=0.65 drops those hits server-side — so it falls back to
+// the muted neutral instead of getting a band of its own.
+function matchDotColor(percent) {
+  if (percent >= 80) return "var(--success)";
+  if (percent >= 75) return "#65bf41";
+  if (percent >= 70) return "#a7b925";
+  if (percent >= 65) return "var(--warning)";
+  return "var(--text-muted)";
+}
 
 // File Name icon + color, picked by extension (PDF red, Word blue, Excel green,
 // plain text neutral, anything else falls back to a generic file icon).
@@ -39,143 +53,72 @@ function extensionIcon(extension) {
   );
 }
 
-const MENU_WIDTH = 192; // w-48
-// ponytail: assumes the fixed 4-item menu height below; if items become
-// dynamic, measure menuRef after mount instead of hardcoding this.
-const MENU_HEIGHT = 160;
-
-// Anchors below the button, flipping above it when there isn't enough
-// room left at the bottom of the viewport (e.g. the table's last rows).
-function computeMenuPosition(buttonRect) {
-  const openUpward = window.innerHeight - buttonRect.bottom < MENU_HEIGHT + 8;
-  return {
-    top: openUpward ? buttonRect.top - MENU_HEIGHT - 4 : buttonRect.bottom + 4,
-    left: buttonRect.right - MENU_WIDTH,
-  };
-}
-
-function RowActionsMenu({ doc, onUploadVersion, onEdit, onDelete, onRestore }) {
+function DocumentActionsMenu({ doc, onUploadVersion, onEdit, onDelete, onRestore }) {
   const isDeleted = doc.documentStatus === "DELETED";
-  const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  const buttonRef = useRef(null);
-  const menuRef = useRef(null);
-
-  // Dropdown is portaled to <body> with fixed positioning so it can't get
-  // clipped by the table's overflow-x-auto scroll container. On scroll/resize
-  // it re-anchors to the button instead of closing (closing would also fire
-  // on the scroll-into-view a click itself can trigger).
-  useEffect(() => {
-    if (!open) return;
-
-    const reposition = () => {
-      if (!buttonRef.current) return;
-      setPosition(computeMenuPosition(buttonRef.current.getBoundingClientRect()));
-    };
-    const onOutsideClick = (e) => {
-      if (
-        !buttonRef.current?.contains(e.target) &&
-        !menuRef.current?.contains(e.target)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("click", onOutsideClick);
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
-    return () => {
-      document.removeEventListener("click", onOutsideClick);
-      window.removeEventListener("scroll", reposition, true);
-      window.removeEventListener("resize", reposition);
-    };
-  }, [open]);
-
-  const toggleOpen = () => {
-    if (!open && buttonRef.current) {
-      setPosition(computeMenuPosition(buttonRef.current.getBoundingClientRect()));
-    }
-    setOpen((v) => !v);
-  };
-
-  const run = (fn) => () => {
-    setOpen(false);
-    fn(doc);
-  };
 
   return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        className="btn-ghost p-1.5"
-        aria-label="More actions"
-        onClick={toggleOpen}
-      >
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
-            className="rounded-lg border border-border-subtle bg-bg-card shadow-lg z-[200]"
-          >
-            <div className="py-1">
-              <Link
-                href={`/file-storage/${doc.id}`}
+    <RowActionsMenu itemCount={isDeleted ? 2 : 4}>
+      {(close) => {
+        const run = (fn) => () => {
+          close();
+          fn(doc);
+        };
+        return (
+          <>
+            <Link
+              href={`/file-storage/${doc.id}`}
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
+            >
+              <FileText className="h-4 w-4 text-text-muted" />
+              Document Details
+            </Link>
+            {isDeleted ? (
+              <button
+                type="button"
+                onClick={run(onRestore)}
                 className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
               >
-                <FileText className="h-4 w-4 text-text-muted" />
-                Document Details
-              </Link>
-              {isDeleted ? (
+                <RotateCcw className="h-4 w-4 text-text-muted" />
+                Restore Document
+              </button>
+            ) : (
+              <>
                 <button
                   type="button"
-                  onClick={run(onRestore)}
+                  onClick={run(onUploadVersion)}
                   className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
                 >
-                  <RotateCcw className="h-4 w-4 text-text-muted" />
-                  Restore Document
+                  <Upload className="h-4 w-4 text-text-muted" />
+                  Upload New Version
                 </button>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={run(onUploadVersion)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-                  >
-                    <Upload className="h-4 w-4 text-text-muted" />
-                    Upload New Version
-                  </button>
-                  <button
-                    type="button"
-                    onClick={run(onEdit)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-                  >
-                    <Pencil className="h-4 w-4 text-text-muted" />
-                    Edit Metadata
-                  </button>
-                  <button
-                    type="button"
-                    onClick={run(onDelete)}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-error/10 transition-colors"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete Document
-                  </button>
-                </>
-              )}
-            </div>
-          </div>,
-          document.body
-        )}
-    </>
+                <button
+                  type="button"
+                  onClick={run(onEdit)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
+                >
+                  <Pencil className="h-4 w-4 text-text-muted" />
+                  Edit Metadata
+                </button>
+                <button
+                  type="button"
+                  onClick={run(onDelete)}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-error/10 transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete Document
+                </button>
+              </>
+            )}
+          </>
+        );
+      }}
+    </RowActionsMenu>
   );
 }
 
 export default function DocumentRow({
   doc,
+  showSemanticColumn,
   selected,
   onToggle,
   onDownload,
@@ -186,14 +129,42 @@ export default function DocumentRow({
   onViewEvidence,
 }) {
   const processing = versionStatusBadge(doc.versionStatus);
-  const status = documentStatusBadge(doc.documentStatus);
   const hasMatch = doc.semanticScore !== null && doc.semanticScore !== undefined;
   const similarityPercent = hasMatch ? Math.round(doc.semanticScore * 100) : 0;
   const { Icon: ExtIcon, bg: iconBg, color: iconColor } = extensionIcon(doc.extension);
+  const router = useRouter();
 
   return (
-    <tr className="border-b border-border-subtle transition-colors hover:bg-bg-elevated/50">
-      <td className="px-4 py-4">
+    // Clicking anywhere on the row opens the document detail page; the checkbox and
+    // Actions cells stop the click so selecting/acting doesn't navigate away.
+    //
+    // The row divider lives on every <td>, not this <tr>: the table uses
+    // border-separate (needed for the sticky header), and in the separated-borders
+    // model <tr> borders are ignored — only cell borders render.
+    <tr
+      className="bg-bg-primary cursor-pointer transition-colors hover:bg-bg-elevated/50"
+      onClick={() => router.push(`/file-storage/${doc.id}`)}
+    >
+      <td className="border-b border-border-default px-4 py-1">
+        <div className="flex items-center gap-3">
+          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
+            <ExtIcon className={`h-3.5 w-3.5 ${iconColor}`} />
+          </span>
+          {/* No max-width cap: the File Name column expands to fill the table,
+              so the filename only truncates when it genuinely exceeds the
+              available width. */}
+          <div className="min-w-0">
+            <Link
+              href={`/file-storage/${doc.id}`}
+              className="block truncate text-xs font-medium text-text-primary hover:text-accent transition-colors"
+              title={doc.title}
+            >
+              {doc.title}
+            </Link>
+          </div>
+        </div>
+      </td>
+      <td className="border-b border-border-default px-4 py-1" onClick={(e) => e.stopPropagation()}>
         <input
           type="checkbox"
           className="h-4 w-4 rounded border-border-default bg-bg-primary accent-accent"
@@ -202,90 +173,96 @@ export default function DocumentRow({
           aria-label={`Select ${doc.title}`}
         />
       </td>
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
-            <ExtIcon className={`h-4 w-4 ${iconColor}`} />
-          </span>
-          <div className="min-w-0 max-w-[220px]">
-            <Link
-              href={`/file-storage/${doc.id}`}
-              className="block truncate text-sm font-medium text-text-primary hover:text-accent transition-colors"
-              title={doc.title}
-            >
-              {doc.title}
-            </Link>
-            <p className="text-xs text-text-muted truncate">
-              {documentTypeLabel(doc.documentType)}
-            </p>
-          </div>
-        </div>
-      </td>
 
-      <td className="px-4 py-4 text-sm text-text-secondary whitespace-nowrap">
+      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap">
         {formatDateTime(doc.uploadTime)}
       </td>
 
-      <td className="px-4 py-4 text-sm text-text-secondary uppercase">
+      {/* uppercase is display-only, the same utility the Extension cell already
+          uses — the stored DocumentType enum value is untouched. */}
+      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap uppercase">
+        {documentTypeLabel(doc.documentType)}
+      </td>
+
+      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary uppercase">
         {doc.extension || "—"}
       </td>
 
-      <td className="px-4 py-4 text-sm text-text-secondary whitespace-nowrap">
+      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap">
         {formatBytes(doc.size)}
       </td>
 
-      <td className="px-4 py-4 text-sm">
-        {hasMatch ? (
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 rounded-full bg-bg-elevated overflow-hidden">
-              <div
-                className="h-full rounded-full bg-accent"
-                style={{ width: `${similarityPercent}%` }}
+      {showSemanticColumn && (
+        <td className="border-b border-border-default px-4 py-1 text-xs">
+          {hasMatch ? (
+            <div className="flex items-center gap-1.5">
+              {/* Fixed width + right-aligned + tabular-nums: "71%" and "99%" render at
+                  slightly different widths otherwise (proportional digit spacing), which
+                  shifts the dot that follows. Locking the text column's width keeps the
+                  dot's position constant regardless of the digits. */}
+              <span className="w-7 shrink-0 text-right text-xs tabular-nums text-text-secondary whitespace-nowrap">
+                {similarityPercent}%
+              </span>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: matchDotColor(similarityPercent) }}
+                aria-hidden="true"
               />
             </div>
-            <span className="text-xs text-text-secondary whitespace-nowrap">{similarityPercent}%</span>
-          </div>
-        ) : (
-          <span className="text-text-muted">—</span>
-        )}
-      </td>
+          ) : (
+            <span className="text-text-muted">—</span>
+          )}
+        </td>
+      )}
 
-      <td className="px-4 py-4">
+      <td className="border-b border-border-default px-4 py-1">
         <span className={`badge ${processing.badge}`}>{processing.label}</span>
       </td>
 
-      <td className="px-4 py-4">
-        <span className={`badge ${status.badge}`}>{status.label}</span>
-      </td>
-
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-1">
-          {hasMatch && (
-            <button
-              type="button"
-              className="btn-ghost p-1.5"
-              aria-label="View matching chunks"
-              title="View matching chunks"
-              onClick={() => onViewEvidence(doc)}
-            >
-              <ScanSearch className="h-4 w-4" />
-            </button>
+      {/* Search results only carry the two actions that make sense on a match:
+          inspect the evidence, or jump to where the document lives. */}
+      <td className="border-b border-border-default px-4 py-1" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-end gap-1">
+          {showSemanticColumn ? (
+            <>
+              <button
+                type="button"
+                className="btn-ghost p-1.5"
+                aria-label="View matching chunks"
+                title="View matching chunks"
+                disabled={!hasMatch}
+                onClick={() => onViewEvidence(doc)}
+              >
+                <ScanSearch className="h-4 w-4" />
+              </button>
+              <Link
+                href={hrefForFolderId(doc.folderId)}
+                className="btn-ghost p-1.5"
+                aria-label="Go to containing folder"
+                title="Go to containing folder"
+              >
+                <FolderOpen className="h-4 w-4" />
+              </Link>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn-ghost p-1.5"
+                aria-label="Download"
+                onClick={() => onDownload(doc)}
+              >
+                <Download className="h-4 w-4" />
+              </button>
+              <DocumentActionsMenu
+                doc={doc}
+                onUploadVersion={onUploadVersion}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onRestore={onRestore}
+              />
+            </>
           )}
-          <button
-            type="button"
-            className="btn-ghost p-1.5"
-            aria-label="Download"
-            onClick={() => onDownload(doc)}
-          >
-            <Download className="h-4 w-4" />
-          </button>
-          <RowActionsMenu
-            doc={doc}
-            onUploadVersion={onUploadVersion}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onRestore={onRestore}
-          />
         </div>
       </td>
     </tr>

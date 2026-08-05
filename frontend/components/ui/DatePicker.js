@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
+
+const PANEL_WIDTH = 256;
+// 6-week grid + header + optional Clear row; only used to decide whether the
+// calendar opens below or above the trigger.
+const PANEL_HEIGHT = 320;
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 const MONTHS = [
@@ -37,15 +43,31 @@ function formatDisplay(value) {
 // own click handler, which unmounts the clicked node before the click event
 // finishes bubbling to document — `ref.contains(e.target)` then sees a
 // detached node and reads as "outside", closing the parent calendar too.
-function useOutsideClick(ref, active, onOutside) {
+function useOutsideClick(refs, active, onOutside) {
   useEffect(() => {
     if (!active) return;
+    const list = Array.isArray(refs) ? refs : [refs];
     const onDocMouseDown = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) onOutside();
+      if (list.some((ref) => ref.current?.contains(e.target))) return;
+      onOutside();
     };
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
-  }, [active, ref, onOutside]);
+  }, [active, refs, onOutside]);
+}
+
+// Anchors the calendar to the trigger in viewport coordinates, flipping above it
+// when there is more room there and clamping to the viewport edges.
+function computePanelPosition(triggerRect) {
+  const spaceBelow = window.innerHeight - triggerRect.bottom;
+  const openUpward = spaceBelow < PANEL_HEIGHT && triggerRect.top > spaceBelow;
+
+  return {
+    top: openUpward
+      ? Math.max(8, triggerRect.top - PANEL_HEIGHT - 4)
+      : Math.min(triggerRect.bottom + 4, window.innerHeight - PANEL_HEIGHT - 8),
+    left: Math.max(8, Math.min(triggerRect.left, window.innerWidth - PANEL_WIDTH - 8)),
+  };
 }
 
 function isSameDay(a, b) {
@@ -83,14 +105,30 @@ export default function DatePicker({ value, onChange, placeholder = "dd/mm/yyyy"
   const [monthOpen, setMonthOpen] = useState(false);
   const [yearOpen, setYearOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => fromIsoDate(value) || new Date());
+  const [panelPosition, setPanelPosition] = useState({ top: 0, left: 0 });
   const ref = useRef(null);
+  const panelRef = useRef(null);
   const monthRef = useRef(null);
   const yearRef = useRef(null);
   const selectedYearRef = useRef(null);
 
-  useOutsideClick(ref, open, () => setOpen(false));
+  // The panel lives in a body portal, so it is outside `ref` — both count as "inside".
+  useOutsideClick([ref, panelRef], open, () => setOpen(false));
   useOutsideClick(monthRef, monthOpen, () => setMonthOpen(false));
   useOutsideClick(yearRef, yearOpen, () => setYearOpen(false));
+
+  useEffect(() => {
+    if (!open) return;
+    const reposition = () => {
+      if (ref.current) setPanelPosition(computePanelPosition(ref.current.getBoundingClientRect()));
+    };
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
+    return () => {
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -116,7 +154,10 @@ export default function DatePicker({ value, onChange, placeholder = "dd/mm/yyyy"
   }, [open]);
 
   const toggle = () => {
-    if (!open) setViewDate(fromIsoDate(value) || new Date());
+    if (!open) {
+      setViewDate(fromIsoDate(value) || new Date());
+      if (ref.current) setPanelPosition(computePanelPosition(ref.current.getBoundingClientRect()));
+    }
     setOpen((v) => !v);
   };
 
@@ -141,8 +182,17 @@ export default function DatePicker({ value, onChange, placeholder = "dd/mm/yyyy"
         </span>
       </button>
 
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-lg border border-border-subtle bg-bg-card p-3 shadow-lg">
+      {open &&
+        createPortal(
+          <div
+            ref={panelRef}
+            // data-datepicker-panel: the panel is no longer a DOM child of whatever
+            // popover owns this field, so that popover's outside-click check has to
+            // recognise it explicitly (see FilterPopover).
+            data-datepicker-panel=""
+            style={{ position: "fixed", top: panelPosition.top, left: panelPosition.left, width: PANEL_WIDTH }}
+            className="z-[300] rounded-lg border border-border-subtle bg-bg-card p-3 shadow-lg"
+          >
           <div className="flex items-center justify-between mb-2">
             <button
               type="button"
@@ -283,8 +333,9 @@ export default function DatePicker({ value, onChange, placeholder = "dd/mm/yyyy"
               Clear
             </button>
           )}
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

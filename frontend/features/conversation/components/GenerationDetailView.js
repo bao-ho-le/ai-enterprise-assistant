@@ -216,6 +216,12 @@ export default function GenerationDetailView({ conversationId }) {
               </p>
             </div>
 
+            {detail.hasDeletedAttachedDocuments && (
+              <DeletedDocumentsWarning
+                documentIds={detail.attachedDocuments?.map((doc) => doc.documentId)}
+              />
+            )}
+
             <GenerationForm
               conversationType={detail.conversationType}
               conversationId={conversationId}
@@ -269,8 +275,6 @@ export default function GenerationDetailView({ conversationId }) {
                 )}
               </section>
             )}
-
-            {detail.hasDeletedAttachedDocuments && <DeletedDocumentsWarning />}
           </>
         )}
       </div>

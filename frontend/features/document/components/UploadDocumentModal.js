@@ -142,7 +142,7 @@ function UploadItemCard({ index, item, isDuplicateTitle, onChange, onRemove }) {
 // this one array by item.id, so files[] and documents[] built at submit time (see
 // submit()) are guaranteed to stay index-aligned with each other, matching the
 // backend's strict by-index files[i] <-> request.documents[i] mapping.
-export default function UploadDocumentModal({ open, onClose, onUploaded }) {
+export default function UploadDocumentModal({ open, onClose, onUploaded, folderId }) {
   const [items, setItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -228,7 +228,8 @@ export default function UploadDocumentModal({ open, onClose, onUploaded }) {
           title: title.trim(),
           description: description.trim(),
           documentType,
-        }))
+        })),
+        folderId
       );
       onUploaded(items.length);
       onClose();
