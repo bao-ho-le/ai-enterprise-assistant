@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class FolderContentsResponse {
 
-    // null nếu đang ở thư mục gốc (root)
+    // Folder đang xem, luôn có giá trị (kể cả khi gọi /root/contents)
     private FolderResponse currentFolder;
 
     // Đường dẫn từ root -> currentFolder, dùng để render breadcrumb trên UI

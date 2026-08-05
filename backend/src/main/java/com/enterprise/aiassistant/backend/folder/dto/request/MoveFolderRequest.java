@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class MoveFolderRequest {
 
-    // null = di chuyển ra thư mục gốc (root)
+    // Bắt buộc: muốn đưa folder về ngoài cùng thì truyền id của root
     private Long targetParentId;
 }

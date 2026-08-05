@@ -7,6 +7,6 @@ public class CreateFolderRequest {
 
     private String name;
 
-    // null = tạo ở thư mục gốc (root)
+    // Bắt buộc: chỉ root mới không có cha, và root do hệ thống tự tạo
     private Long parentId;
 }

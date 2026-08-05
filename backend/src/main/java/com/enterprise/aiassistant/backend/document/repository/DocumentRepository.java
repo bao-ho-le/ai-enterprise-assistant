@@ -14,4 +14,7 @@ public interface DocumentRepository extends JpaRepository<Document, Long>,
 
     // Dùng cho hard delete folder: lấy tất cả document trong folder bất kể status.
     List<Document> findByFolderId(Long folderId);
+
+    // Backfill lúc khởi động: document cũ tạo trước khi có thư mục gốc bắt buộc.
+    List<Document> findByFolderIsNull();
 }

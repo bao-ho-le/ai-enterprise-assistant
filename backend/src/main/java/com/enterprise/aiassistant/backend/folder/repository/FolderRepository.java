@@ -7,11 +7,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface FolderRepository extends JpaRepository<Folder, Long>,
         FolderRepositoryCustom {
 
-    List<Folder> findByParentIsNullAndStatusOrderByNameAsc(FolderStatus status);
+    // Root được định danh bằng "tên root + không có cha"; dùng lúc khởi tạo và mỗi khi cần giải ra root thật.
+    Optional<Folder> findFirstByNameAndParentIsNull(String name);
+
+    // Backfill lúc khởi động: mọi folder không có cha (trừ root) đều là dữ liệu cũ cần gắn lại vào root.
+    List<Folder> findByParentIsNull();
 
     List<Folder> findByParentIdAndStatusOrderByNameAsc(Long parentId, FolderStatus status);
 

@@ -529,6 +529,11 @@ public enum ErrorCode {
             "Parent folder not found"
     ),
 
+    FOLDER_PARENT_REQUIRED(
+            BAD_REQUEST,
+            "Parent folder is required, only the root folder has no parent"
+    ),
+
     FOLDER_REQUEST_REQUIRED(
             BAD_REQUEST,
             "Folder request is required"
@@ -582,6 +587,16 @@ public enum ErrorCode {
     FOLDER_NOT_EMPTY(
             CONFLICT,
             "Folder is not empty"
+    ),
+
+    FOLDER_ROOT_CANNOT_BE_MODIFIED(
+            BAD_REQUEST,
+            "Root folder cannot be renamed, moved or deleted"
+    ),
+
+    FOLDER_ROOT_NOT_INITIALIZED(
+            INTERNAL_SERVER_ERROR,
+            "Root folder has not been initialized"
     ),
 
     // ===================== AI/LLM =====================

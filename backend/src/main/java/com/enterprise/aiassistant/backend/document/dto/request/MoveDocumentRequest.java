@@ -5,6 +5,6 @@ import lombok.Data;
 @Data
 public class MoveDocumentRequest {
 
-    // null = di chuyển document ra thư mục gốc (root)
+    // null = chuyển document về thư mục gốc (root)
     private Long folderId;
 }

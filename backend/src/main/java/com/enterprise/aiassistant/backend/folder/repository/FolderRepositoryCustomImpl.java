@@ -20,25 +20,20 @@ public class FolderRepositoryCustomImpl implements FolderRepositoryCustom {
     @Override
     public Page<DocumentListResponse> getDocumentsInFolder(Long folderId, Pageable pageable) {
 
-        String folderCondition = (folderId == null)
-                ? "d.folder IS NULL"
-                : "d.folder.id = :folderId";
-
+        // Mọi document đều thuộc 1 folder (root là mặc định), nên không còn nhánh "folder IS NULL".
         String jpql = "SELECT new com.enterprise.aiassistant.backend.document.dto.response.DocumentListResponse(" +
-                "d.id, d.title, v.createdAt, f.extension, d.documentType, f.fileSize, v.status, d.status) " +
+                "d.id, d.title, v.createdAt, f.extension, d.documentType, f.fileSize, v.status, d.status, d.folder.id) " +
                 "FROM Document d " +
                 "JOIN d.currentVersion v " +
                 "JOIN v.file f " +
                 "WHERE d.status = com.enterprise.aiassistant.backend.document.enums.DocumentStatus.ACTIVE " +
-                "AND " + folderCondition + " " +
+                "AND d.folder.id = :folderId " +
                 "ORDER BY v.createdAt DESC";
 
         TypedQuery<DocumentListResponse> query =
                 entityManager.createQuery(jpql, DocumentListResponse.class);
 
-        if (folderId != null) {
-            query.setParameter("folderId", folderId);
-        }
+        query.setParameter("folderId", folderId);
 
         query.setFirstResult((int) pageable.getOffset());
         query.setMaxResults(pageable.getPageSize());
@@ -47,13 +42,11 @@ public class FolderRepositoryCustomImpl implements FolderRepositoryCustom {
 
         String countJpql = "SELECT COUNT(d) FROM Document d " +
                 "WHERE d.status = com.enterprise.aiassistant.backend.document.enums.DocumentStatus.ACTIVE " +
-                "AND " + folderCondition;
+                "AND d.folder.id = :folderId";
 
         TypedQuery<Long> countQuery = entityManager.createQuery(countJpql, Long.class);
 
-        if (folderId != null) {
-            countQuery.setParameter("folderId", folderId);
-        }
+        countQuery.setParameter("folderId", folderId);
 
         long total = countQuery.getSingleResult();
 

@@ -11,10 +11,8 @@ import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
-import com.enterprise.aiassistant.backend.common.exception.business_exception.FolderException;
 import com.enterprise.aiassistant.backend.folder.entity.Folder;
-import com.enterprise.aiassistant.backend.folder.enums.FolderStatus;
-import com.enterprise.aiassistant.backend.folder.repository.FolderRepository;
+import com.enterprise.aiassistant.backend.folder.service.FolderService;
 import com.enterprise.aiassistant.backend.processing.orchestration.event.DocumentVersionCreatedBatchEvent;
 import com.enterprise.aiassistant.backend.processing.orchestration.event.DocumentVersionCreatedEvent;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
@@ -56,7 +54,7 @@ public class DocumentServiceImpl implements DocumentService{
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    private final FolderRepository folderRepository;
+    private final FolderService folderService;
 
 
     @Override
@@ -96,17 +94,8 @@ public class DocumentServiceImpl implements DocumentService{
             fileRepository.save(newFile);
 
 
-            // 3. Document
-            Folder folder = null;
-
-            if (item.getFolderId() != null) {
-                folder = folderRepository.findById(item.getFolderId())
-                        .orElseThrow(() -> new FolderException(ErrorCode.FOLDER_NOT_FOUND));
-
-                if (folder.getStatus() == FolderStatus.DELETED) {
-                    throw new FolderException(ErrorCode.FOLDER_DELETED);
-                }
-            }
+            // 3. Document — không truyền folderId thì tự vào thư mục gốc, document luôn thuộc 1 folder
+            Folder folder = folderService.resolveTargetFolder(item.getFolderId());
 
             Document document =
                     documentMapper.toDocument(item, folder);
@@ -387,7 +376,7 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     @Transactional
-    public com.enterprise.aiassistant.backend.document.dto.response.DocumentMoveResponse moveDocument(
+    public DocumentMoveResponse moveDocument(
             Long documentId,
             MoveDocumentRequest request
     ) {
@@ -399,26 +388,14 @@ public class DocumentServiceImpl implements DocumentService{
 
         documentHelper.validateDocumentStatus(document);
 
-        Folder folder = null;
-
-        if (request.getFolderId() != null) {
-
-            folder = folderRepository.findById(request.getFolderId())
-                    .orElseThrow(() -> new FolderException(ErrorCode.FOLDER_NOT_FOUND));
-
-            if (folder.getStatus() == FolderStatus.DELETED) {
-                throw new FolderException(ErrorCode.FOLDER_DELETED);
-            }
-        }
+        // folderId = null nghĩa là chuyển về thư mục gốc, không phải bỏ ra ngoài mọi folder.
+        Folder folder = folderService.resolveTargetFolder(request.getFolderId());
 
         document.setFolder(folder);
 
         documentRepository.save(document);
 
-        return com.enterprise.aiassistant.backend.document.dto.response.DocumentMoveResponse.builder()
-                .documentId(document.getId())
-                .folderId(folder != null ? folder.getId() : null)
-                .build();
+        return documentMapper.toDocumentMoveResponse(document, folder);
     }
 
 }

@@ -37,7 +37,7 @@ public class Folder {
     @Column(nullable = false, length = 255)
     private String name;
 
-    // null = root folder (không có cha)
+    // null CHỈ dành cho root — mọi folder khác bắt buộc có cha (validate ở FolderService)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Folder parent;

@@ -52,7 +52,7 @@ public class Document {
     @JoinColumn(name = "current_version_id")
     private DocumentVersion currentVersion;
 
-    // null = nằm ở thư mục gốc (root), giống My Drive của Google Drive
+    // Luôn có giá trị: không chỉ định folder khi upload thì mặc định là thư mục gốc
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "folder_id")
     private Folder folder;

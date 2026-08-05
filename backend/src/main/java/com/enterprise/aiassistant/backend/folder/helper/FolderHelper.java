@@ -16,6 +16,7 @@ public class FolderHelper {
 
     private final FolderRepository folderRepository;
 
+
     public void validateFolderId(Long folderId) {
         if (folderId == null) {
             throw new FolderException(ErrorCode.FOLDER_ID_REQUIRED);
@@ -30,6 +31,21 @@ public class FolderHelper {
             throw new FolderException(ErrorCode.FOLDER_REQUEST_REQUIRED);
         }
         validateName(request.getName());
+        validateParentRequired(request.getParentId());
+    }
+
+    // Root là folder duy nhất được phép không có cha, nên mọi folder tạo/di chuyển qua API đều phải có cha.
+    public void validateParentRequired(Long parentFolderId) {
+        if (parentFolderId == null) {
+            throw new FolderException(ErrorCode.FOLDER_PARENT_REQUIRED);
+        }
+    }
+
+    // Nhận diện root qua "không có cha" (bất biến của hệ thống) để khỏi phải truy vấn thêm.
+    public void validateNotRootFolder(Folder folder) {
+        if (folder.getParent() == null) {
+            throw new FolderException(ErrorCode.FOLDER_ROOT_CANNOT_BE_MODIFIED);
+        }
     }
 
     public void validateRenameRequest(RenameFolderRequest request) {

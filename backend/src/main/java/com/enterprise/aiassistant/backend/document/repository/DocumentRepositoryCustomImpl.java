@@ -38,7 +38,8 @@ public class DocumentRepositoryCustomImpl implements DocumentRepositoryCustom {
                     d.documentType,
                     f.fileSize,
                     v.status,
-                    d.status
+                    d.status,
+                    d.folder.id
                 )
                 
                 FROM Document d

@@ -21,6 +21,13 @@ import java.util.List;
 @Component
 public class DocumentMapper {
 
+    public DocumentMoveResponse toDocumentMoveResponse(Document document, Folder folder) {
+        return DocumentMoveResponse.builder()
+                .documentId(document.getId())
+                .folderId(folder.getId())
+                .build();
+    }
+
     public Document toDocument(DocumentUploadRequest request, Folder folder) {
 
         return Document.builder()

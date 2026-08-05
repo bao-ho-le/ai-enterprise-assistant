@@ -12,6 +12,6 @@ public class DocumentUploadRequest {
 
     private DocumentType documentType;
 
-    // null = upload vào thư mục gốc (root)
+    // null = upload vào thư mục gốc (root), backend tự gán chứ không để trống
     private Long folderId;
 }
