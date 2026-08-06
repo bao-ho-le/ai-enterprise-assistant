@@ -35,6 +35,7 @@ import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
 import com.enterprise.aiassistant.backend.ai.generation.dto.request.TriggerGenerationRequest;
 import com.enterprise.aiassistant.backend.ai.generation.dto.response.TriggerGenerationResponse;
@@ -268,6 +269,9 @@ public class AIConversationServiceImpl implements AIConversationService {
             throw new DocumentException(ErrorCode.DOCUMENT_VERSION_NOT_FOUND);
         }
 
+        // Chặn attach document đã bị soft-delete
+        aiConversationHelper.validateVersionsNotDeleted(versions);
+
         // Get already attached documents
         List<Long> alreadyAttachedIds =
                 conversationDocumentRepository.findDocumentVersionIdsByConversationId(conversationId);
@@ -319,6 +323,7 @@ public class AIConversationServiceImpl implements AIConversationService {
                 .orElseThrow(() -> new AIConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
 
         List<ConversationDocumentResponse> attachedDocuments = getConversationDocuments(conversationId);
+        boolean hasDeletedAttachedDocuments = hasDeletedAttachedDocuments(conversationId);
 
         // beforeId=null -> the latest `recentMessagesLimit` messages (see AIMessageServiceImpl),
         // not the oldest — a conversation longer than the limit must open showing its tail end.
@@ -332,7 +337,8 @@ public class AIConversationServiceImpl implements AIConversationService {
                 conversation,
                 attachedDocuments,
                 recentMessages.getContent(),
-                recentMessages.isHasMore()
+                recentMessages.isHasMore(),
+                hasDeletedAttachedDocuments
         );
     }
 
@@ -372,12 +378,17 @@ public class AIConversationServiceImpl implements AIConversationService {
                 .orElseThrow(() -> new AIConversationException(ErrorCode.GENERATION_NOT_FOUND));
 
         // Nếu conversation type là email thì không có attach document
+        boolean isEmailGeneration = conversation.getConversationType() == ConversationType.EMAIL_GENERATION;
         List<ConversationDocumentResponse> attachedDocuments =
-                conversation.getConversationType() == ConversationType.EMAIL_GENERATION
-                        ? null
-                        : getConversationDocuments(conversationId);
+                isEmailGeneration ? null : getConversationDocuments(conversationId);
+        boolean hasDeletedAttachedDocuments = !isEmailGeneration && hasDeletedAttachedDocuments(conversationId);
 
-        return aiConversationMapper.toGenerationDetailResponse(conversation, generation, attachedDocuments);
+        return aiConversationMapper.toGenerationDetailResponse(
+                conversation,
+                generation,
+                attachedDocuments,
+                hasDeletedAttachedDocuments
+        );
     }
 
     @Override
@@ -415,6 +426,11 @@ public class AIConversationServiceImpl implements AIConversationService {
         conversationRepository.findByIdAndStatus(conversationId, ConversationStatus.ACTIVE)
                 .orElseThrow(() -> new ConversationException(ErrorCode.CONVERSATION_NOT_FOUND));
 
+    }
+
+    private boolean hasDeletedAttachedDocuments(Long conversationId) {
+        return conversationDocumentRepository
+                .existsByConversationIdAndDocumentVersionDocumentStatus(conversationId, DocumentStatus.DELETED);
     }
 }
 

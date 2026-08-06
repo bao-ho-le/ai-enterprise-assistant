@@ -286,6 +286,17 @@ public class DocumentHelper {
         }
     }
 
+    // Đối lập với validateDocumentStatus: chỉ document đang DELETED mới được restore
+    public void validateDocumentIsDeleted(Document document){
+
+        if(document.getStatus() != DocumentStatus.DELETED){
+
+            throw new DocumentException(
+                    ErrorCode.DOCUMENT_NOT_DELETED
+            );
+        }
+    }
+
     public void validateUpdateMetadataRequest(
             DocumentUpdateMetadataRequest request
     ){

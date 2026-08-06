@@ -10,6 +10,8 @@ export default function ConfirmDialog({
   title = "Are you sure?",
   message,
   confirmLabel = "Confirm",
+  loadingLabel = "Deleting…",
+  tone = "danger",
 }) {
   return (
     <Modal open={open} onClose={onClose} title={title} maxWidth="max-w-md">
@@ -20,12 +22,12 @@ export default function ConfirmDialog({
         </button>
         <button
           type="button"
-          className="btn-primary text-sm bg-error hover:bg-error"
-          style={{ backgroundColor: "var(--error)" }}
+          className={`btn-primary text-sm ${tone === "danger" ? "bg-error hover:bg-error" : ""}`}
+          style={tone === "danger" ? { backgroundColor: "var(--error)" } : undefined}
           onClick={onConfirm}
           disabled={loading}
         >
-          {loading ? "Deleting…" : confirmLabel}
+          {loading ? loadingLabel : confirmLabel}
         </button>
       </div>
     </Modal>

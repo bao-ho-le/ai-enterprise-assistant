@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class GeminiEmbeddingService implements EmbeddingService {
 
-    // Ước lượng token: ~4 ký tự/token (cùng quy ước với ProcessingMapper.CHARS_PER_TOKEN) —
+    // Ước lượng token: ~4 ký tự/token (cùng quy ước với ChunkingMapper.CHARS_PER_TOKEN) —
     // dùng khi Gemini không trả token usage cho embedding call (xem estimateTokens()).
     private static final int CHARS_PER_TOKEN = 4;
 

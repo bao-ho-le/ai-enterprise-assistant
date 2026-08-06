@@ -3,9 +3,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Send, Loader2, Quote, FileText, AlertTriangle, Copy } from "lucide-react";
 import MessageSourcesDialog from "./MessageSourcesDialog";
+import DeletedDocumentsWarning from "./DeletedDocumentsWarning";
 import { getDocumentQaConversationDetail, getConversationDocuments } from "@/services/conversationService";
 import { sendMessage, getMessages } from "@/services/messageService";
-import { formatDateTime } from "@/utils/format";
+import { formatDateTime, formatDateTimeSlash } from "@/utils/format";
+import { conversationTypeLabel } from "@/constants/conversation";
 import { ApiError } from "@/lib/apiClient";
 
 const RECENT_MESSAGES_LIMIT = 20;
@@ -258,7 +260,12 @@ export default function DocumentQaDetailView({ conversationId }) {
     <main className="flex-1 flex flex-col overflow-hidden">
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="text-sm font-medium text-text-primary">{conversation?.title}</h1>
+          {/* Reconstructed the same way GenerationDetailView builds its header (Write
+              Email/Report/Summary), instead of showing the raw stored title verbatim —
+              keeps the format identical across all conversation types. */}
+          <h1 className="text-sm font-medium text-text-primary">
+            {conversationTypeLabel(conversation?.conversationType)} - {formatDateTimeSlash(conversation?.createdAt)}
+          </h1>
 
           {hasMore && (
             <div className="flex justify-center py-2">
@@ -331,6 +338,13 @@ export default function DocumentQaDetailView({ conversationId }) {
               );
             })
           )}
+
+          {conversation?.hasDeletedAttachedDocuments && (
+            <DeletedDocumentsWarning
+              documentIds={conversation.attachedDocuments?.map((doc) => doc.documentId)}
+            />
+          )}
+
           <div ref={bottomRef} />
         </div>
       </div>

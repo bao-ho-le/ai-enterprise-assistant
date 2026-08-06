@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { MoreHorizontal, Pencil, Trash2, ShieldAlert } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 const MENU_WIDTH = 200;
-// ponytail: fixed 3-item menu height; measure menuRef after mount instead if items become dynamic.
-const MENU_HEIGHT = 132;
+// ponytail: fixed 2-item menu height; measure menuRef after mount instead if items become dynamic.
+const MENU_HEIGHT = 88;
 
 // Anchors to the right of the button, flipping above it when there isn't
 // enough room left at the bottom of the viewport.
@@ -18,9 +18,9 @@ function computeMenuPosition(buttonRect) {
   };
 }
 
-// Rename / soft delete / hard delete are three distinct, clearly separated
-// actions — never merged into a single button or a single confirm dialog.
-export default function ConversationRowMenu({ conversation, onRename, onDelete, onHardDelete }) {
+// Only rename + soft delete live here; permanent delete is on the Deleted
+// Conversations screen, so it can't be hit by mistake from the active list.
+export default function ConversationRowMenu({ conversation, onRename, onDelete }) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef(null);
@@ -67,14 +67,21 @@ export default function ConversationRowMenu({ conversation, onRename, onDelete, 
 
   return (
     <>
+      {/* .btn-ghost is unlayered CSS (globals.css) so its own padding beats a
+          Tailwind p-* utility here — sized via inline style instead (same
+          workaround ConfirmDialog/DeletedConversationsView use). 0.125rem keeps
+          the button's height at 20px (= 16px icon + 4px), matching the sidebar
+          row's text line-height so this row is no taller than the New
+          conversation / Deleted conversations buttons above it. */}
       <button
         ref={buttonRef}
         type="button"
-        className="flex h-5 w-5 items-center justify-center rounded-md text-text-secondary transition-colors hover:text-text-primary hover:bg-bg-elevated"
+        className="btn-ghost"
+        style={{ padding: "0.125rem" }}
         aria-label="Conversation actions"
         onClick={toggleOpen}
       >
-        <MoreHorizontal className="h-3.5 w-3.5" />
+        <MoreHorizontal className="h-4 w-4" />
       </button>
       {open &&
         createPortal(
@@ -99,14 +106,6 @@ export default function ConversationRowMenu({ conversation, onRename, onDelete, 
               >
                 <Trash2 className="h-4 w-4 text-text-muted" />
                 Delete
-              </button>
-              <button
-                type="button"
-                onClick={run(onHardDelete)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-error/10 transition-colors"
-              >
-                <ShieldAlert className="h-4 w-4" />
-                Delete permanently
               </button>
             </div>
           </div>,

@@ -9,9 +9,23 @@ export const DOCUMENT_TYPES = [
   { value: "OTHER", label: "Other" },
 ];
 
+// Display-only: turns a raw enum value (e.g. "MEETING_MINUTES") into Title Case
+// ("Meeting Minutes"). Never mutates the stored value.
+function documentTypeToTitleCase(value) {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function documentTypeLabel(value) {
+  if (!value) return "—";
   const t = DOCUMENT_TYPES.find((x) => x.value === value);
-  return t ? t.label : value || "—";
+  // Known types use their curated label; anything else (e.g. a type added
+  // later, like PRESENTATION) is formatted into Title Case for display.
+  return t ? t.label : documentTypeToTitleCase(value);
 }
 
 // DocumentVersion.status -> badge class + label ("Processing" column)
@@ -68,13 +82,3 @@ export const EXTENSION_OPTIONS = [
 // Accept attribute + allowed MIME types for upload (matches backend DocumentHelper).
 export const UPLOAD_ACCEPT =
   ".pdf,.doc,.docx,.xls,.xlsx,.txt";
-
-// Semantic search score (0..1) buckets — mirrors the "Similarity" filter select.
-const SIMILARITY_THRESHOLDS = { high: 0.9, medium: 0.7 };
-
-export function matchesSimilarityBucket(score, bucket) {
-  if (!bucket) return true;
-  if (bucket === "high") return score >= SIMILARITY_THRESHOLDS.high;
-  if (bucket === "medium") return score >= SIMILARITY_THRESHOLDS.medium && score < SIMILARITY_THRESHOLDS.high;
-  return score < SIMILARITY_THRESHOLDS.medium; // "low"
-}

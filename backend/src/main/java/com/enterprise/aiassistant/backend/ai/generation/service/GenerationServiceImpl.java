@@ -18,6 +18,7 @@ import com.enterprise.aiassistant.backend.ai.generation.enums.GenerationStatus;
 import com.enterprise.aiassistant.backend.ai.generation.handler.GenerationHandler;
 import com.enterprise.aiassistant.backend.ai.generation.helper.GenerationHelper;
 import com.enterprise.aiassistant.backend.ai.generation.mapper.GeneratedMapper;
+import com.enterprise.aiassistant.backend.ai.generation.mapper.GenerationMapper;
 import com.enterprise.aiassistant.backend.ai.generation.repository.GeneratedContentRepository;
 import com.enterprise.aiassistant.backend.ai.generation.repository.GenerationRepository;
 import com.enterprise.aiassistant.backend.ai.llm.dto.LLMRequest;
@@ -29,6 +30,7 @@ import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.ai.usage.service.AIUsageLogService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -49,6 +51,7 @@ public class GenerationServiceImpl implements GenerationService {
     private final AIConversationMapper aiConversationMapper;
     private final GenerationHelper generationHelper;
     private final GeneratedMapper generatedMapper;
+    private final GenerationMapper generationMapper;
     private final AIUsageLogService aiUsageLogService;
     private final LLMService llmService;
 
@@ -57,6 +60,8 @@ public class GenerationServiceImpl implements GenerationService {
     @Override
     @Transactional
     public TriggerGenerationResponse generate(Long conversationId, TriggerGenerationRequest request) {
+
+        // 1. Validate request và conversation
 
         aiConversationHelper.validateConversationId(conversationId);
         generationHelper.validateTriggerRequest(request);
@@ -67,24 +72,18 @@ public class GenerationServiceImpl implements GenerationService {
 
         aiConversationHelper.validateGenerationConversationType(conversation.getConversationType());
 
-        GenerationHandler handler = handlers.stream()
-                .filter(h -> h.supports(conversation.getConversationType()))
-                .findFirst()
-                .orElseThrow(() -> new AIConversationException(ErrorCode.GENERATION_HANDLER_NOT_FOUND));
+        // 2. Resolve handler và chuẩn bị dữ liệu đầu vào
 
-        JsonNode inputData = generationHelper.toJsonNode(request.getInputData());
+        GenerationHandler handler = resolveHandler(conversation.getConversationType());
+
+        JsonNode inputData = generationMapper.toJsonNode(request.getInputData());
 
         GenerationContext context = handler.handle(inputData, conversation);
 
+        // 3. Khởi tạo Generation và đánh dấu bắt đầu xử lý
+
         Generation generation = generationRepository.save(
-                Generation.builder()
-                        .aiConversation(conversation)
-                        .generatedType(context.getGeneratedType())
-                        .title(context.getTitle())
-                        .userPrompt(context.getPrompt())
-                        .inputData(inputData)
-                        .status(GenerationStatus.PENDING)
-                        .build()
+                generationMapper.toGeneration(conversation, context, inputData)
         );
 
         generation.setStatus(GenerationStatus.RUNNING);
@@ -95,6 +94,9 @@ public class GenerationServiceImpl implements GenerationService {
         Integer outputTokens = null;
 
         try {
+
+            // 4. Gọi LLM để sinh nội dung
+
             LLMResponse llmResponse = llmService.generate(
                     LLMRequest.builder()
                             .prompt(context.getPrompt())
@@ -106,6 +108,8 @@ public class GenerationServiceImpl implements GenerationService {
                 inputTokens = llmResponse.getTokenUsage().getInputTokens();
                 outputTokens = llmResponse.getTokenUsage().getOutputTokens();
             }
+
+            // 5. Lưu GeneratedContent và cập nhật Generation thành công
 
             GeneratedContent generatedContent = generatedContentRepository.save(
                     generatedMapper.toCreateGeneratedContentObject(
@@ -119,25 +123,27 @@ public class GenerationServiceImpl implements GenerationService {
             generation.setStatus(GenerationStatus.COMPLETED);
             generationRepository.save(generation);
 
+            // 6. Ghi nhận usage thành công và trả kết quả
+
             logUsage(conversation, model, inputTokens, outputTokens, AIUsageStatus.SUCCESS, null);
 
-            return TriggerGenerationResponse.builder()
-                    .generationId(generation.getId())
-                    .status(generation.getStatus())
-                    .generatedContentId(generatedContent.getId())
-                    .build();
+            return generationMapper.toTriggerGenerationResponse(generation, generatedContent);
 
         } catch (RuntimeException ex) {
+
+            // Đánh dấu thất bại, ghi log usage và ném exception
+
             generation.setStatus(GenerationStatus.FAILED);
             generation.setErrorMessage(ex.getMessage());
             generationRepository.save(generation);
 
             logUsage(conversation, model, inputTokens, outputTokens, AIUsageStatus.FAILED, ex.getMessage());
 
-            throw ex;
+            throw new AIConversationException(ErrorCode.GENERATION_RUN_FAILED, ex);
         }
     }
 
+    // Hiện đang không được dùng
     @Override
     @Transactional(readOnly = true)
     public GenerationConversationDetailResponse getGenerationDetail(Long generationId) {
@@ -150,15 +156,34 @@ public class GenerationServiceImpl implements GenerationService {
         AIConversation conversation = generation.getAiConversation();
 
         // Nếu conversation type là email thì không có attach document
+        boolean isEmailGeneration = conversation.getConversationType() == ConversationType.EMAIL_GENERATION;
         List<ConversationDocumentResponse> attachedDocuments =
-                conversation.getConversationType() == ConversationType.EMAIL_GENERATION
+                isEmailGeneration
                         ? null
                         : conversationDocumentRepository.findByAiConversationIdWithDocument(conversation.getId())
                                 .stream()
                                 .map(aiConversationMapper::toConversationDocumentResponse)
                                 .toList();
+        boolean hasDeletedAttachedDocuments = !isEmailGeneration
+                && conversationDocumentRepository.existsByConversationIdAndDocumentVersionDocumentStatus(
+                        conversation.getId(), DocumentStatus.DELETED);
 
-        return aiConversationMapper.toGenerationDetailResponse(conversation, generation, attachedDocuments);
+        return aiConversationMapper.toGenerationDetailResponse(
+                conversation,
+                generation,
+                attachedDocuments,
+                hasDeletedAttachedDocuments
+        );
+    }
+
+    // Strategy Pattern: chọn handler theo conversationType, không rẽ nhánh theo type ở đâu khác.
+    // Đặt private ở đây (không đưa vào GenerationHelper) để tránh cycle: các handler tự inject
+    // GenerationHelper (dùng parseInput/truncateTitle), nên Helper không được quay lại phụ thuộc handlers.
+    private GenerationHandler resolveHandler(ConversationType conversationType) {
+        return handlers.stream()
+                .filter(handler -> handler.supports(conversationType))
+                .findFirst()
+                .orElseThrow(() -> new AIConversationException(ErrorCode.GENERATION_HANDLER_NOT_FOUND));
     }
 
     private void logUsage(

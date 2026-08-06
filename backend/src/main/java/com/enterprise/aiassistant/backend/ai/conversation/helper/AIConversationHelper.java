@@ -5,12 +5,15 @@ import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConv
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartDocumentQaConversationRequest;
 import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartGenerationConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
 
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
+import com.enterprise.aiassistant.backend.common.exception.business_exception.DocumentException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -85,6 +88,27 @@ public class AIConversationHelper {
         validateConversationId(conversationId);
         if (request == null || request.getDocumentVersionIds() == null || request.getDocumentVersionIds().isEmpty()) {
             throw new BusinessException(ErrorCode.REQUEST_REQUIRED);
+        }
+    }
+
+    // Chặn attach document đã bị soft-delete vào conversation
+    public void validateVersionsNotDeleted(List<DocumentVersion> versions) {
+        boolean hasDeletedDocument = versions.stream()
+                .anyMatch(version -> version.getDocument().getStatus() == DocumentStatus.DELETED);
+
+        if (hasDeletedDocument) {
+            throw new DocumentException(ErrorCode.DOCUMENT_DELETED);
+        }
+    }
+
+    // Dùng chung cho Document QA / Report / Summary: chặn build context và gọi LLM
+    // khi có tài liệu đính kèm đã bị soft-delete sau khi attach.
+    public void validateAttachedDocumentsNotDeleted(List<AIConversationDocument> attachedDocuments) {
+        boolean hasDeletedDocument = attachedDocuments.stream()
+                .anyMatch(link -> link.getDocumentVersion().getDocument().getStatus() == DocumentStatus.DELETED);
+
+        if (hasDeletedDocument) {
+            throw new AIConversationException(ErrorCode.ATTACHED_DOCUMENT_DELETED);
         }
     }
 

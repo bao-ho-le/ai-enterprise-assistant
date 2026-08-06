@@ -33,4 +33,7 @@ public class DocumentListResponse {
 
     // Document.status (soft-delete state of the document itself)
     private DocumentStatus documentStatus;
+
+    // Folder chứa document, để UI điều hướng thẳng tới vị trí của nó từ kết quả tìm kiếm.
+    private Long folderId;
 }

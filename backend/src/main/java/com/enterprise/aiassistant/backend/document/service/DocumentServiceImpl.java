@@ -11,8 +11,10 @@ import com.enterprise.aiassistant.backend.document.helper.DocumentHelper;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.repository.DocumentRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
-import com.enterprise.aiassistant.backend.processing.event.DocumentVersionCreatedBatchEvent;
-import com.enterprise.aiassistant.backend.processing.event.DocumentVersionCreatedEvent;
+import com.enterprise.aiassistant.backend.folder.entity.Folder;
+import com.enterprise.aiassistant.backend.folder.service.FolderService;
+import com.enterprise.aiassistant.backend.processing.orchestration.event.DocumentVersionCreatedBatchEvent;
+import com.enterprise.aiassistant.backend.processing.orchestration.event.DocumentVersionCreatedEvent;
 import com.enterprise.aiassistant.backend.storage.dto.response.StoredFileDto;
 import com.enterprise.aiassistant.backend.storage.entity.FileEntity;
 import com.enterprise.aiassistant.backend.storage.mapper.FileMapper;
@@ -52,6 +54,8 @@ public class DocumentServiceImpl implements DocumentService{
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
+    private final FolderService folderService;
+
 
     @Override
     @Transactional
@@ -90,9 +94,11 @@ public class DocumentServiceImpl implements DocumentService{
             fileRepository.save(newFile);
 
 
-            // 3. Document
+            // 3. Document — không truyền folderId thì tự vào thư mục gốc, document luôn thuộc 1 folder
+            Folder folder = folderService.resolveTargetFolder(item.getFolderId());
+
             Document document =
-                    documentMapper.toDocument(item);
+                    documentMapper.toDocument(item, folder);
 
             documentRepository.save(document);
 
@@ -312,6 +318,24 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     @Transactional
+    public DocumentRestoreResponse restoreDocument(Long documentId) {
+
+        documentHelper.validateDocumentId(documentId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+        documentHelper.validateDocumentIsDeleted(document);
+
+        document.setStatus(DocumentStatus.ACTIVE);
+        document.setDeletedAt(null);
+        documentRepository.save(document);
+
+        return documentMapper.toRestoreResponse(document);
+    }
+
+    @Override
+    @Transactional
     public Page<DocumentListResponse> getDocuments(DocumentFilterRequest filter, Pageable pageable){
 
         documentHelper.validateFilter(filter);
@@ -349,6 +373,29 @@ public class DocumentServiceImpl implements DocumentService{
     public boolean existsByTitle(String title) {
         return documentRepository.existsByTitle(title);
     }
+
+    @Override
+    @Transactional
+    public DocumentMoveResponse moveDocument(
+            Long documentId,
+            MoveDocumentRequest request
+    ) {
+
+        documentHelper.validateDocumentId(documentId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new DocumentException(DOCUMENT_NOT_FOUND));
+
+        documentHelper.validateDocumentStatus(document);
+
+        // folderId = null nghĩa là chuyển về thư mục gốc, không phải bỏ ra ngoài mọi folder.
+        Folder folder = folderService.resolveTargetFolder(request.getFolderId());
+
+        document.setFolder(folder);
+
+        documentRepository.save(document);
+
+        return documentMapper.toDocumentMoveResponse(document, folder);
+    }
+
 }
-
-

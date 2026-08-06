@@ -78,6 +78,10 @@ public class AIMessageServiceImpl implements AIMessageService {
 
         getConversationOrThrow(conversationId);
 
+        // Phần này không dùng Pageble thuần được vì có khả năng lỗi khi lấy me, sử dụng beforeId để giải quyết
+        // Do nếu dùng page, để lấy thông tin trang 2, thì khi có message mới, trang 2 đã bị thay đổi, còn dùng
+        // beforeId, đóng vai trò như một mark, dù có message mới thì mốc ban đầu không đổi
+        // Phần PageRequest (là implements của Pageable) dùng để lấy limit = size
         Slice<AIMessage> page = messageRepository.findByConversationIdAndIdLessThanOrderByIdDesc(
                 conversationId,
                 beforeId != null ? beforeId : Long.MAX_VALUE,

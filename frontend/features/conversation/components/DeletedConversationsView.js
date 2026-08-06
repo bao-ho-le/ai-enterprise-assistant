@@ -4,18 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, RotateCcw, Trash2 } from "lucide-react";
 import LoadMore from "@/components/ui/LoadMore";
 import Toast from "@/components/ui/Toast";
+import ConfirmDialog from "@/features/document/components/ConfirmDialog";
 import ConversationTypeFilter from "./ConversationTypeFilter";
 import {
   getDeletedConversations,
+  hardDeleteConversation,
   restoreConversation,
 } from "@/services/conversationService";
 import { conversationTypeLabel } from "@/constants/conversation";
-import { formatDateTime } from "@/utils/format";
+import { formatConversationTitle, formatDateTime } from "@/utils/format";
 
 const PAGE_SIZE = 10;
 
 // Rows aren't navigable (every detail endpoint resolves conversations by status = ACTIVE,
-// so a soft-deleted one has no detail page to open) — the only row action is Restore.
+// so a soft-deleted one has no detail page to open) — the row actions are Restore and
+// permanent delete, which only lives here and no longer in the active-list row menu.
 export default function DeletedConversationsView() {
   const [items, setItems] = useState([]);
   const [selectedType, setSelectedType] = useState("");
@@ -25,6 +28,8 @@ export default function DeletedConversationsView() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [restoringId, setRestoringId] = useState(null);
+  const [hardDeleteTarget, setHardDeleteTarget] = useState(null);
+  const [hardDeleting, setHardDeleting] = useState(false);
   const [toast, setToast] = useState(null);
 
   const notify = useCallback((type, text) => setToast({ type, text }), []);
@@ -42,6 +47,20 @@ export default function DeletedConversationsView() {
       notify("error", err.message || "Failed to restore conversation");
     } finally {
       setRestoringId(null);
+    }
+  };
+
+  const confirmHardDelete = async () => {
+    setHardDeleting(true);
+    try {
+      await hardDeleteConversation(hardDeleteTarget.id);
+      setItems((prev) => prev.filter((x) => x.id !== hardDeleteTarget.id));
+      notify("success", "Conversation permanently deleted");
+      setHardDeleteTarget(null);
+    } catch (err) {
+      notify("error", err.message || "Permanent delete failed");
+    } finally {
+      setHardDeleting(false);
     }
   };
 
@@ -79,7 +98,7 @@ export default function DeletedConversationsView() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
         <div>
           <h1 className="text-lg font-semibold text-text-primary">Deleted conversations</h1>
           <p className="text-sm text-text-muted mt-1">
@@ -121,15 +140,22 @@ export default function DeletedConversationsView() {
                   <Trash2 className="h-4 w-4 shrink-0 text-text-muted" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-text-primary" title={c.title}>
-                      {c.title}
+                      {formatConversationTitle(c.title)}
                     </p>
                     <p className="text-xs text-text-muted">
                       {conversationTypeLabel(c.conversationType)} · Deleted {formatDateTime(c.deletedAt)}
                     </p>
                   </div>
+                  {/* Icon-only: .btn-secondary is unlayered CSS (globals.css), so it beats
+                      Tailwind utilities for both padding (sized for a text label, needs an
+                      explicit override for a square icon button) and colour (the destructive
+                      tint has to be inline too) — the same workaround ConfirmDialog uses. */}
                   <button
                     type="button"
-                    className="btn-secondary text-sm shrink-0"
+                    className="btn-secondary shrink-0"
+                    style={{ padding: "0.5rem" }}
+                    aria-label="Restore"
+                    title="Restore"
                     disabled={restoringId != null}
                     onClick={() => onRestore(c)}
                   >
@@ -138,7 +164,17 @@ export default function DeletedConversationsView() {
                     ) : (
                       <RotateCcw className="h-4 w-4" />
                     )}
-                    Restore
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary shrink-0"
+                    style={{ padding: "0.5rem", color: "var(--error)", borderColor: "var(--error)" }}
+                    aria-label="Delete permanently"
+                    title="Delete permanently"
+                    disabled={restoringId != null}
+                    onClick={() => setHardDeleteTarget(c)}
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </li>
               );
@@ -148,6 +184,16 @@ export default function DeletedConversationsView() {
 
         <LoadMore hasMore={hasMore} loading={loadingMore} onClick={() => load(page + 1, true)} />
       </div>
+
+      <ConfirmDialog
+        open={Boolean(hardDeleteTarget)}
+        onClose={() => setHardDeleteTarget(null)}
+        onConfirm={confirmHardDelete}
+        loading={hardDeleting}
+        title="Permanently delete conversation"
+        confirmLabel="Delete permanently"
+        message={`Permanently delete "${hardDeleteTarget?.title}"? This erases all messages, attached documents, and generated content for this conversation. This action cannot be undone.`}
+      />
 
       <Toast toast={toast} onDone={() => setToast(null)} />
     </main>

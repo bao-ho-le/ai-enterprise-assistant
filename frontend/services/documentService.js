@@ -19,11 +19,12 @@ export function checkTitle(title, signal) {
 }
 
 // POST /documents/upload  (multipart: repeated "files" parts + "request" JSON part
-// { documents: [{ title, description, documentType }, ...] })
+// { documents: [{ title, description, documentType, folderId }, ...] })
 // Backend maps files[i] <-> request.documents[i] strictly by index (DocumentServiceImpl.upload),
 // so `items` must already be in the exact order to send — build it from one paired
 // array, never from two separately-maintained lists.
-export function uploadDocument(items) {
+// folderId null/undefined lets the backend drop the document into the root folder.
+export function uploadDocument(items, folderId) {
   const form = new FormData();
   items.forEach(({ file }) => form.append("files", file));
   form.append(
@@ -35,6 +36,7 @@ export function uploadDocument(items) {
             title,
             description,
             documentType,
+            folderId,
           })),
         }),
       ],
@@ -67,6 +69,12 @@ export function updateMetadata(id, { title, description, documentType }) {
 // DELETE /documents/{id}
 export function deleteDocument(id) {
   return apiClient.del(`/documents/${id}`);
+}
+
+// POST /documents/{id}/restore -> un-soft-deletes the same document (status back to
+// ACTIVE, deletedAt cleared). Only soft-deleted documents can be restored.
+export function restoreDocument(id) {
+  return apiClient.postJson(`/documents/${id}/restore`);
 }
 
 // GET /documents/{documentId}/{versionId}/download -> save file to disk

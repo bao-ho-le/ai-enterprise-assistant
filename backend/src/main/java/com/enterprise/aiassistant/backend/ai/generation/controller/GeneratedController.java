@@ -21,6 +21,7 @@ public class GeneratedController {
 
     private final GeneratedContentService generatedContentService;
 
+    // 3 Controller bên dưới hiện đang không sử dụng, trang generated content tại frontend đang bị ẩn đi
 
     @GetMapping
     public ResponseEntity<Slice<GeneratedContentResponse>> getGeneratedContents(

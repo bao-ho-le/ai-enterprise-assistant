@@ -119,16 +119,26 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.apache.pdfbox</groupId>
-			<artifactId>pdfbox</artifactId>
-			<version>3.0.6</version>
-		</dependency>
+		<!-- PDFBox không còn dùng trực tiếp (PDF đã đọc qua Tika), để Tika tự quản version của nó -->
 
+		<!-- Version khớp với poi-ooxml-full mà tika-parsers kéo vào, tránh lệch version POI -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
-			<version>5.4.1</version>
+			<version>5.5.1</version>
+		</dependency>
+
+		<!-- Tika 3.x vì nó build trên PDFBox 3.x / POI 5.4.x, khớp version đã khai báo ở trên -->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>3.3.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-parsers-standard-package</artifactId>
+			<version>3.3.1</version>
 		</dependency>
 
 		<dependency>
