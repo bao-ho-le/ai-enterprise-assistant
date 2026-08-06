@@ -106,7 +106,7 @@ body {
 .btn-primary:disabled,
 .btn-secondary:disabled {
   opacity: 0.5;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .btn-secondary {

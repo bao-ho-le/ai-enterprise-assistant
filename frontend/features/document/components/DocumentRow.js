@@ -18,6 +18,7 @@ import RowActionsMenu from "./RowActionsMenu";
 import { documentTypeLabel, versionStatusBadge } from "@/constants/document";
 import { formatBytes, formatDateTime } from "@/utils/format";
 import { hrefForFolderId } from "@/utils/folderPath";
+import { gridTemplateColumns } from "./documentTableGrid";
 
 // Match dot colour per score band. The two middle bands are a linear RGB gradient
 // between the endpoints --success (#22c55e) and --warning (#eab308): t=1/3 ->
@@ -138,33 +139,40 @@ export default function DocumentRow({
     // Clicking anywhere on the row opens the document detail page; the checkbox and
     // Actions cells stop the click so selecting/acting doesn't navigate away.
     //
-    // The row divider lives on every <td>, not this <tr>: the table uses
-    // border-separate (needed for the sticky header), and in the separated-borders
-    // model <tr> borders are ignored — only cell borders render.
-    <tr
-      className="bg-bg-primary cursor-pointer transition-colors hover:bg-bg-elevated/50"
+    // grid, not <tr>: the header row lives outside the scroll container (see
+    // DocumentTable.js), so there's no shared <table> left to align columns —
+    // gridTemplateColumns is the same shared value the header uses instead.
+    // Every cell carries its own border-b (that part is unchanged from the old
+    // border-separate table) plus flex/items-center to replace the vertical
+    // centering a <td> gave for free.
+    <div
+      role="row"
+      className="grid bg-bg-primary cursor-pointer transition-colors hover:bg-bg-elevated/50"
+      style={{ gridTemplateColumns: gridTemplateColumns(showSemanticColumn) }}
       onClick={() => router.push(`/file-storage/${doc.id}`)}
     >
-      <td className="border-b border-border-default px-4 py-1">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
-            <ExtIcon className={`h-3.5 w-3.5 ${iconColor}`} />
-          </span>
-          {/* No max-width cap: the File Name column expands to fill the table,
-              so the filename only truncates when it genuinely exceeds the
-              available width. */}
-          <div className="min-w-0">
-            <Link
-              href={`/file-storage/${doc.id}`}
-              className="block truncate text-xs font-medium text-text-primary hover:text-accent transition-colors"
-              title={doc.title}
-            >
-              {doc.title}
-            </Link>
-          </div>
+      <div role="cell" className="min-w-0 flex items-center gap-3 border-b border-border-default px-4 py-1">
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
+          <ExtIcon className={`h-3.5 w-3.5 ${iconColor}`} />
+        </span>
+        {/* No max-width cap: the File Name column expands to fill the table,
+            so the filename only truncates when it genuinely exceeds the
+            available width. */}
+        <div className="min-w-0">
+          <Link
+            href={`/file-storage/${doc.id}`}
+            className="block truncate text-xs font-medium text-text-primary hover:text-accent transition-colors"
+            title={doc.title}
+          >
+            {doc.title}
+          </Link>
         </div>
-      </td>
-      <td className="border-b border-border-default px-4 py-1" onClick={(e) => e.stopPropagation()}>
+      </div>
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1"
+        onClick={(e) => e.stopPropagation()}
+      >
         <input
           type="checkbox"
           className="h-4 w-4 rounded border-border-default bg-bg-primary accent-accent"
@@ -172,28 +180,40 @@ export default function DocumentRow({
           onChange={() => onToggle(doc.id)}
           aria-label={`Select ${doc.title}`}
         />
-      </td>
+      </div>
 
-      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap">
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap"
+      >
         {formatDateTime(doc.uploadTime)}
-      </td>
+      </div>
 
       {/* uppercase is display-only, the same utility the Extension cell already
           uses — the stored DocumentType enum value is untouched. */}
-      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap uppercase">
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap uppercase"
+      >
         {documentTypeLabel(doc.documentType)}
-      </td>
+      </div>
 
-      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary uppercase">
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary uppercase"
+      >
         {doc.extension || "—"}
-      </td>
+      </div>
 
-      <td className="border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap">
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap"
+      >
         {formatBytes(doc.size)}
-      </td>
+      </div>
 
       {showSemanticColumn && (
-        <td className="border-b border-border-default px-4 py-1 text-xs">
+        <div role="cell" className="flex items-center border-b border-border-default px-4 py-1 text-xs">
           {hasMatch ? (
             <div className="flex items-center gap-1.5">
               {/* Fixed width + right-aligned + tabular-nums: "71%" and "99%" render at
@@ -212,59 +232,61 @@ export default function DocumentRow({
           ) : (
             <span className="text-text-muted">—</span>
           )}
-        </td>
+        </div>
       )}
 
-      <td className="border-b border-border-default px-4 py-1">
+      <div role="cell" className="flex items-center border-b border-border-default px-4 py-1">
         <span className={`badge ${processing.badge}`}>{processing.label}</span>
-      </td>
+      </div>
 
       {/* Search results only carry the two actions that make sense on a match:
           inspect the evidence, or jump to where the document lives. */}
-      <td className="border-b border-border-default px-4 py-1" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-end gap-1">
-          {showSemanticColumn ? (
-            <>
-              <button
-                type="button"
-                className="btn-ghost p-1.5"
-                aria-label="View matching chunks"
-                title="View matching chunks"
-                disabled={!hasMatch}
-                onClick={() => onViewEvidence(doc)}
-              >
-                <ScanSearch className="h-4 w-4" />
-              </button>
-              <Link
-                href={hrefForFolderId(doc.folderId)}
-                className="btn-ghost p-1.5"
-                aria-label="Go to containing folder"
-                title="Go to containing folder"
-              >
-                <FolderOpen className="h-4 w-4" />
-              </Link>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="btn-ghost p-1.5"
-                aria-label="Download"
-                onClick={() => onDownload(doc)}
-              >
-                <Download className="h-4 w-4" />
-              </button>
-              <DocumentActionsMenu
-                doc={doc}
-                onUploadVersion={onUploadVersion}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                onRestore={onRestore}
-              />
-            </>
-          )}
-        </div>
-      </td>
-    </tr>
+      <div
+        role="cell"
+        className="flex items-center justify-end gap-1 border-b border-border-default px-4 py-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {showSemanticColumn ? (
+          <>
+            <button
+              type="button"
+              className="btn-ghost p-1.5"
+              aria-label="View matching chunks"
+              title="View matching chunks"
+              disabled={!hasMatch}
+              onClick={() => onViewEvidence(doc)}
+            >
+              <ScanSearch className="h-4 w-4" />
+            </button>
+            <Link
+              href={hrefForFolderId(doc.folderId)}
+              className="btn-ghost p-1.5"
+              aria-label="Go to containing folder"
+              title="Go to containing folder"
+            >
+              <FolderOpen className="h-4 w-4" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="btn-ghost p-1.5"
+              aria-label="Download"
+              onClick={() => onDownload(doc)}
+            >
+              <Download className="h-4 w-4" />
+            </button>
+            <DocumentActionsMenu
+              doc={doc}
+              onUploadVersion={onUploadVersion}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onRestore={onRestore}
+            />
+          </>
+        )}
+      </div>
+    </div>
   );
 }
