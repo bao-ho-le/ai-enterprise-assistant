@@ -35,3 +35,14 @@ export function getDeletedFolders(params, signal) {
 export function restoreFolder(folderId) {
   return apiClient.postJson(`/folders/${folderId}/restore`);
 }
+
+// GET /folders/search?keyword=&page=&size= -> Page<FolderResponse> (ACTIVE only)
+export function searchFolders(keyword, params, signal) {
+  return apiClient.get("/folders/search", { params: { keyword, ...params }, signal });
+}
+
+// PUT /folders/{folderId}/move -> FolderResponse. targetParentId is required — pass
+// the root folder's real id (from getFolderContents' currentFolder.id) to move to root.
+export function moveFolder(folderId, targetParentId) {
+  return apiClient.putJson(`/folders/${folderId}/move`, { targetParentId });
+}
