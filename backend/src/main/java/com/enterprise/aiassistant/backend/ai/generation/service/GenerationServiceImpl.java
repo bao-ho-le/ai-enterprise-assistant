@@ -154,9 +154,9 @@ public class GenerationServiceImpl implements GenerationService {
                 conversation.getConversationType() == ConversationType.EMAIL_GENERATION
                         ? null
                         : conversationDocumentRepository.findByAiConversationIdWithDocument(conversation.getId())
-                                .stream()
-                                .map(aiConversationMapper::toConversationDocumentResponse)
-                                .toList();
+                        .stream()
+                        .map(aiConversationMapper::toConversationDocumentResponse)
+                        .toList();
 
         return aiConversationMapper.toGenerationDetailResponse(conversation, generation, attachedDocuments);
     }

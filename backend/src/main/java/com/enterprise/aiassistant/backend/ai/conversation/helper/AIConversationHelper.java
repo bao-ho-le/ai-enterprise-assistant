@@ -1,14 +1,9 @@
 package com.enterprise.aiassistant.backend.ai.conversation.helper;
 
-import com.enterprise.aiassistant.backend.ai.conversation.dto.request.AttachDocumentsRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.request.CreateConversationRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.request.RenameConversationRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartDocumentQaConversationRequest;
-import com.enterprise.aiassistant.backend.ai.conversation.dto.request.StartGenerationConversationRequest;
+import com.enterprise.aiassistant.backend.ai.conversation.dto.request.*;
 import com.enterprise.aiassistant.backend.ai.usage.enums.ConversationType;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
-
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
 import org.springframework.stereotype.Component;

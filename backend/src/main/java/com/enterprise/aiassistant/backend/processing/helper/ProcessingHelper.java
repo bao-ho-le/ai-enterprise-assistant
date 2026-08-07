@@ -13,7 +13,6 @@ import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRep
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,7 @@ public class ProcessingHelper {
     // Chặn các trường hợp document đã được xử lí thành công
     public void validateStatus(DocumentVersion version) {
 
-        if(version.getStatus() == VersionStatus.READY){
+        if (version.getStatus() == VersionStatus.READY) {
 
             throw new BusinessException(
                     ErrorCode.DOCUMENT_VERSION_INVALID_STATUS
@@ -82,7 +81,7 @@ public class ProcessingHelper {
     ) {
         boolean alreadySucceeded =
                 version != null
-                && version.getStatus() == VersionStatus.READY;
+                        && version.getStatus() == VersionStatus.READY;
 
         if (!alreadySucceeded) {
             ProcessingStep failedStep =

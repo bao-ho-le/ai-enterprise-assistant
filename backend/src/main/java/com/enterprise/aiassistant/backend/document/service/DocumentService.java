@@ -1,6 +1,9 @@
 package com.enterprise.aiassistant.backend.document.service;
 
-import com.enterprise.aiassistant.backend.document.dto.request.*;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentBatchUploadRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
 import com.enterprise.aiassistant.backend.document.dto.response.*;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -31,6 +34,7 @@ public interface DocumentService {
     Resource loadProcessingResource(
             Long versionId
     );
+
     void deleteDocument(Long documentId);
 
 

@@ -18,19 +18,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleBusinessException(
             BusinessException exception,
             HttpServletRequest request
-    ){
+    ) {
 
         log.error("Unhandled exception", exception);
 
         ErrorCode errorCode = exception.getErrorCode();
 
         ErrorResponseDto response = ErrorResponseDto.builder()
-                        .timestamp(LocalDateTime.now())
-                        .status(errorCode.getStatus().value())
-                        .error(errorCode.name())
-                        .message(exception.getMessage())
-                        .path(request.getRequestURI())
-                        .build();
+                .timestamp(LocalDateTime.now())
+                .status(errorCode.getStatus().value())
+                .error(errorCode.name())
+                .message(exception.getMessage())
+                .path(request.getRequestURI())
+                .build();
 
 
         return ResponseEntity
@@ -43,7 +43,7 @@ public class GlobalExceptionHandler {
             Exception exception,
             HttpServletRequest request
 
-    ){
+    ) {
         log.error("Unhandled exception", exception);
 
 

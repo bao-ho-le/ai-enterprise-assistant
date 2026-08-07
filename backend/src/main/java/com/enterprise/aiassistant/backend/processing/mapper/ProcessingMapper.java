@@ -47,7 +47,7 @@ public class ProcessingMapper {
                 .build();
     }
 
-    public DocumentText toDocumentText(DocumentVersion version, ExtractedText extractedText ) {
+    public DocumentText toDocumentText(DocumentVersion version, ExtractedText extractedText) {
         return DocumentText.builder()
                 .documentVersion(version)
                 .content(extractedText.getContent())

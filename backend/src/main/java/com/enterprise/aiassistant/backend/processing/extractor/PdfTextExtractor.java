@@ -5,12 +5,13 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.Pr
 import com.enterprise.aiassistant.backend.document.enums.ExtractionMethod;
 import com.enterprise.aiassistant.backend.processing.dto.ExtractedText;
 import com.enterprise.aiassistant.backend.processing.mapper.ProcessingMapper;
+import lombok.RequiredArgsConstructor;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.springframework.core.io.Resource;import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.io.IOException;
 import java.io.InputStream;

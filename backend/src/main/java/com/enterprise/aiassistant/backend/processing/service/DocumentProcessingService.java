@@ -89,9 +89,9 @@ public class DocumentProcessingService {
 
 
             ExtractedText extractedText = textExtractionService.extract(
-                            resource,
-                            version.getFile().getMimeType()
-                    );
+                    resource,
+                    version.getFile().getMimeType()
+            );
 
             processingHelper.validateExtractedText(extractedText);
 
@@ -121,7 +121,7 @@ public class DocumentProcessingService {
 
             List<DocumentChunk> savedChunks = new ArrayList<>();
 
-            for (TextChunk textChunk: listTextChunk){
+            for (TextChunk textChunk : listTextChunk) {
                 DocumentChunk newDocumentChunk = processingMapper.toDocumentChunk(version, textChunk);
                 savedChunks.add(documentChunkRepository.save(newDocumentChunk));
             }
@@ -176,8 +176,6 @@ public class DocumentProcessingService {
             );
         }
     }
-
-
 
 
 }

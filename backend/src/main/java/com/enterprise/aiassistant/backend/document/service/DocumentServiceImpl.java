@@ -34,7 +34,7 @@ import static com.enterprise.aiassistant.backend.common.exception.ErrorCode.DOCU
 
 @Service
 @RequiredArgsConstructor
-public class DocumentServiceImpl implements DocumentService{
+public class DocumentServiceImpl implements DocumentService {
 
     private final FileStorageService fileStorageService;
 
@@ -141,7 +141,7 @@ public class DocumentServiceImpl implements DocumentService{
             Long documentId,
             MultipartFile file,
             UploadNewVersionRequest request
-    ){
+    ) {
 
         documentHelper.validateDocumentId(documentId);
         documentHelper.validateFile(file);
@@ -205,7 +205,7 @@ public class DocumentServiceImpl implements DocumentService{
     public DocumentUpdateMetadataResponse updateDocumentMetadata(
             Long documentId,
             DocumentUpdateMetadataRequest request
-    ){
+    ) {
 
         documentHelper.validateDocumentId(documentId);
         documentHelper.validateUpdateMetadataRequest(request);
@@ -238,7 +238,7 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     @Transactional(readOnly = true)
-    public DocumentDownloadResource downloadSelectedVersion(Long documentId, Long  versionId) {
+    public DocumentDownloadResource downloadSelectedVersion(Long documentId, Long versionId) {
 
         documentHelper.validateDocumentId(documentId);
 
@@ -312,7 +312,7 @@ public class DocumentServiceImpl implements DocumentService{
 
     @Override
     @Transactional
-    public Page<DocumentListResponse> getDocuments(DocumentFilterRequest filter, Pageable pageable){
+    public Page<DocumentListResponse> getDocuments(DocumentFilterRequest filter, Pageable pageable) {
 
         documentHelper.validateFilter(filter);
 

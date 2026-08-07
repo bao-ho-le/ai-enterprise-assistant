@@ -277,48 +277,48 @@ public enum ErrorCode {
 
     INVALID_DOCUMENT_ID(
             BAD_REQUEST,
-        "documentId must be a positive number"
+            "documentId must be a positive number"
     ),
     // ===================== AI Usage =====================
 
     AI_USAGE_REQUEST_REQUIRED(
             BAD_REQUEST,
-        "AI usage log request is required"
+            "AI usage log request is required"
     ),
 
     AI_USAGE_CONVERSATION_TYPE_REQUIRED(
             BAD_REQUEST,
-        "Conversation type is required"
+            "Conversation type is required"
     ),
 
     AI_USAGE_MODEL_REQUIRED(
             BAD_REQUEST,
-        "Model is required"
+            "Model is required"
     ),
 
     AI_USAGE_STATUS_REQUIRED(
             BAD_REQUEST,
-        "Status is required"
+            "Status is required"
     ),
 
     AI_USAGE_INVALID_TOKEN_COUNT(
             BAD_REQUEST,
-        "Input/output tokens must not be negative"
+            "Input/output tokens must not be negative"
     ),
 
     AI_USAGE_INVALID_ESTIMATED_COST(
             BAD_REQUEST,
-        "Estimated cost must not be negative"
+            "Estimated cost must not be negative"
     ),
 
     AI_USAGE_MODEL_TOO_LONG(
             BAD_REQUEST,
-        "Model name exceeds maximum length"
+            "Model name exceeds maximum length"
     ),
 
     AI_USAGE_INVALID_DAYS(
             BAD_REQUEST,
-        "days must be between 1 and 90"
+            "days must be between 1 and 90"
     ),
 
     // ===================== Conversation =====================
@@ -383,7 +383,6 @@ public enum ErrorCode {
     ),
 
 
-
     // ===================== Generated Document =====================
 
 
@@ -391,7 +390,6 @@ public enum ErrorCode {
             NOT_FOUND,
             "Generated content not found"
     ),
-
 
 
     GENERATED_CONTENT_TITLE_REQUIRED(
@@ -502,6 +500,40 @@ public enum ErrorCode {
     LLM_INVALID_PROMPT(
             BAD_REQUEST,
             "Prompt is required"
+    ),
+
+    // ===================== Authentication/JWT =====================
+    JWT_INVALID(
+            UNAUTHORIZED,
+            "Invalid or expired token."
+    ),
+    USER_NOT_FOUND(
+            UNAUTHORIZED,
+            "User not found."
+    ),
+    REFRESH_TOKEN_NOT_FOUND(
+            UNAUTHORIZED,
+            "Refresh token not found."
+    ),
+    REFRESH_TOKEN_REVOKED(
+            UNAUTHORIZED,
+            "Refresh token has been revoked."
+    ),
+    REFRESH_TOKEN_EXPIRED(
+            UNAUTHORIZED,
+            "Refresh token has expired."
+    ),
+    INVALID_REFRESH_TOKEN(
+            UNAUTHORIZED,
+            "Invalid refresh token."
+    ),
+    USERNAME_ALREADY_EXISTS(
+            BAD_REQUEST,
+            "Username already exists."
+    ),
+    EMAIL_ALREADY_EXISTS(
+            BAD_REQUEST,
+            "Email already exists."
     );
 
     private final HttpStatus status;
@@ -511,7 +543,7 @@ public enum ErrorCode {
     ErrorCode(
             HttpStatus status,
             String message
-    ){
+    ) {
         this.status = status;
         this.message = message;
     }

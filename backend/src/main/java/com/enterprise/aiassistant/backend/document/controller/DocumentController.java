@@ -1,15 +1,14 @@
 package com.enterprise.aiassistant.backend.document.controller;
 
-import com.enterprise.aiassistant.backend.document.dto.request.*;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentBatchUploadRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
 import com.enterprise.aiassistant.backend.document.dto.response.*;
-
-
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
 import com.enterprise.aiassistant.backend.document.service.DocumentService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -95,7 +94,7 @@ public class DocumentController {
 
             @PageableDefault(page = 0, size = 10)
             Pageable pageable
-    ){
+    ) {
 
         return documentService.getDocuments(
                 filter,

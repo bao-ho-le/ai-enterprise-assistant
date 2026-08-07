@@ -74,7 +74,7 @@ public class DocumentMapper {
     public UploadNewVersionResponse toUploadNewVersionResponse(
             Document document,
             DocumentVersion version,
-            FileEntity fileEntity){
+            FileEntity fileEntity) {
 
         return UploadNewVersionResponse.builder()
                 .documentId(document.getId())
@@ -89,7 +89,7 @@ public class DocumentMapper {
 
     public DocumentDownloadResource toDocumentDownloadResource(
             Resource resource,
-            FileEntity fileEntity){
+            FileEntity fileEntity) {
 
         return DocumentDownloadResource.builder()
                 .resource(resource)
