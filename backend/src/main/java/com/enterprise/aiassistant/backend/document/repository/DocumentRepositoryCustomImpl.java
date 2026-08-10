@@ -29,18 +29,20 @@ public class DocumentRepositoryCustomImpl implements DocumentRepositoryCustom {
 
 
         StringBuilder jpql = new StringBuilder("""
-                
-                    SELECT new com.enterprise.aiassistant.backend.document.dto.response.DocumentListResponse(
-                        d.id,
-                        d.title,
-                        v.createdAt,
-                        f.extension,
-                        d.documentType,
-                        f.fileSize,
-                        v.status,
-                        d.status
-                    )
-                
+
+                SELECT new com.enterprise.aiassistant.backend.document.dto.response.DocumentListResponse(
+                    d.id,
+                    d.title,
+                    v.createdAt,
+                    f.extension,
+                    d.documentType,
+                    f.fileSize,
+                    v.status,
+                    d.status,
+                    d.folder.id,
+                    d.deletedAt
+                )
+
                     FROM Document d
                 
                     JOIN d.currentVersion v

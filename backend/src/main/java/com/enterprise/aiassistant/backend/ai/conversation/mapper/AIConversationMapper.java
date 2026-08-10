@@ -59,7 +59,8 @@ public class AIConversationMapper {
             AIConversation conversation,
             List<ConversationDocumentResponse> attachedDocuments,
             List<AIMessageResponse> recentMessages,
-            boolean hasMoreMessages
+            boolean hasMoreMessages,
+            boolean hasDeletedAttachedDocuments
     ) {
         return DocumentQaConversationDetailResponse.builder()
                 .id(conversation.getId())
@@ -71,13 +72,15 @@ public class AIConversationMapper {
                 .attachedDocuments(attachedDocuments)
                 .recentMessages(recentMessages)
                 .hasMoreMessages(hasMoreMessages)
+                .hasDeletedAttachedDocuments(hasDeletedAttachedDocuments)
                 .build();
     }
 
     public GenerationConversationDetailResponse toGenerationDetailResponse(
             AIConversation conversation,
             Generation generation,
-            List<ConversationDocumentResponse> attachedDocuments
+            List<ConversationDocumentResponse> attachedDocuments,
+            boolean hasDeletedAttachedDocuments
     ) {
         return GenerationConversationDetailResponse.builder()
                 .generationId(generation.getId())
@@ -96,6 +99,7 @@ public class AIConversationMapper {
                                 ? generation.getGeneratedContent().getId()
                                 : null
                 )
+                .hasDeletedAttachedDocuments(hasDeletedAttachedDocuments)
                 .build();
     }
 

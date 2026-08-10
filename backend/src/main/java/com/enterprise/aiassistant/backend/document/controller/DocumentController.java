@@ -3,6 +3,7 @@ package com.enterprise.aiassistant.backend.document.controller;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentBatchUploadRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentFilterRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.DocumentUpdateMetadataRequest;
+import com.enterprise.aiassistant.backend.document.dto.request.MoveDocumentRequest;
 import com.enterprise.aiassistant.backend.document.dto.request.UploadNewVersionRequest;
 import com.enterprise.aiassistant.backend.document.dto.response.*;
 import com.enterprise.aiassistant.backend.document.mapper.DocumentMapper;
@@ -73,6 +74,19 @@ public class DocumentController {
     public ResponseEntity<Void> deleteDocument(@PathVariable Long documentId) {
         documentService.deleteDocument(documentId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{documentId}/restore")
+    public ResponseEntity<DocumentRestoreResponse> restoreDocument(@PathVariable Long documentId) {
+        return ResponseEntity.ok(documentService.restoreDocument(documentId));
+    }
+
+    @PutMapping("/{documentId}/move")
+    public ResponseEntity<com.enterprise.aiassistant.backend.document.dto.response.DocumentMoveResponse> moveDocument(
+            @PathVariable Long documentId,
+            @RequestBody MoveDocumentRequest request
+    ) {
+        return ResponseEntity.ok(documentService.moveDocument(documentId, request));
     }
 
     @GetMapping("/{documentId}/{versionId}/download")

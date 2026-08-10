@@ -1,11 +1,14 @@
 package com.enterprise.aiassistant.backend.ai.qa.service;
 
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversation;
+import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
+import com.enterprise.aiassistant.backend.ai.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.ai.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.ai.embedding.dto.EmbeddingResult;
 import com.enterprise.aiassistant.backend.ai.embedding.service.EmbeddingService;
 import com.enterprise.aiassistant.backend.ai.llm.dto.LLMResponse;
 import com.enterprise.aiassistant.backend.ai.llm.service.LLMService;
+import com.enterprise.aiassistant.backend.ai.memory.service.ConversationMemoryService;
 import com.enterprise.aiassistant.backend.ai.message.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.message.entity.AIMessageSource;
 import com.enterprise.aiassistant.backend.ai.message.enums.AIMessageRole;
@@ -39,18 +42,27 @@ public class DocumentQAServiceImpl implements DocumentQAService {
 
     private final EmbeddingService embeddingService;
     private final VectorStoreService vectorStoreService;
+    private final ConversationMemoryService conversationMemoryService;
     private final PromptBuilderService promptBuilderService;
     private final LLMService llmService;
     private final AIUsageLogService aiUsageLogService;
 
     private final AIMessageMapper messageMapper;
     private final QAMapper qaMapper;
+    private final AIConversationHelper aiConversationHelper;
 
     @Override
     public AIMessage answer(AIConversation conversation, String question) {
 
-        List<Long> attachedVersionIds =
-                conversationDocumentRepository.findDocumentVersionIdsByConversationId(conversation.getId());
+        List<AIConversationDocument> attachedDocuments =
+                conversationDocumentRepository.findByAiConversationIdWithDocument(conversation.getId());
+
+        // Không build context / không gọi LLM nếu có tài liệu đính kèm đã bị soft-delete
+        aiConversationHelper.validateAttachedDocumentsNotDeleted(attachedDocuments);
+
+        List<Long> attachedVersionIds = attachedDocuments.stream()
+                .map(link -> link.getDocumentVersion().getId())
+                .toList();
 
         String model = llmService.getModelName();
         Integer inputTokens = null;
@@ -58,13 +70,17 @@ public class DocumentQAServiceImpl implements DocumentQAService {
         Long messageId = null;
 
         try {
+            // Context các lượt trước (chưa gồm câu hỏi hiện tại): giúp LLM hiểu tham chiếu
+            String conversationMemory = conversationMemoryService.buildMemoryContext(conversation.getId());
+
             List<SearchResult> relevantHits = attachedVersionIds.isEmpty()
                     ? List.of()
                     : retrieveRelevantChunks(question, attachedVersionIds);
 
             String prompt = promptBuilderService.buildDocumentQaPrompt(
                     question,
-                    relevantHits.stream().map(hit -> hit.getPayload().getContent()).toList()
+                    relevantHits.stream().map(hit -> hit.getPayload().getContent()).toList(),
+                    conversationMemory
             );
 
             LLMResponse llmResponse = llmService.generate(
@@ -125,6 +141,7 @@ public class DocumentQAServiceImpl implements DocumentQAService {
 
     // Helper
 
+    // Chỉ lấy tối đa 5 chunks có độ liên quan cao nhất (CHAT_TOP_K)
     private List<SearchResult> retrieveRelevantChunks(String question, List<Long> attachedVersionIds) {
 
         EmbeddingResult queryEmbedding = embeddingService.embed(question);

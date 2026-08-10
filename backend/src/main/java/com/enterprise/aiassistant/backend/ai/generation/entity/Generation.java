@@ -37,8 +37,6 @@ public class Generation {
     @JoinColumn(name = "ai_conversation_id", nullable = false)
     private AIConversation aiConversation;
 
-    // 1:1 with GeneratedContent (item 4: GeneratedContent is a child of Generation, not
-    // of AIConversation directly anymore) - Generation stays the owning side of the FK.
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "generated_content_id", unique = true)
     private GeneratedContent generatedContent;
@@ -47,6 +45,9 @@ public class Generation {
     @Column(name = "generated_type", nullable = false)
     private GeneratedType generatedType;
 
+    // LƯU Ý: Hiện tại phần title này chỉ lưu vào database, chứ chưa có nơi nào gọi để dùng
+    // Phần hiển thị title trên lịch sử conversation tại frontend là dùng title của conversation đang
+    // được khởi tạo mặc định bên trong /conversation/helper
     @Column(length = 500)
     private String title;
 

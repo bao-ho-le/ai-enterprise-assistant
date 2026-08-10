@@ -36,6 +36,7 @@ public class ReportGenerationHandler implements GenerationHandler {
             throw new AIConversationException(ErrorCode.REPORT_GENERATION_TITLE_REQUIRED);
         }
 
+        // String ở đây lưu là text của toàn bộ tài liệu
         String documentContext = documentContextService.buildContext(conversation.getId());
         generationHelper.validateSourceDocumentsRequired(documentContext);
 

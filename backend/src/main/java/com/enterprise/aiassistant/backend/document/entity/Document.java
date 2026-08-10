@@ -2,6 +2,7 @@ package com.enterprise.aiassistant.backend.document.entity;
 
 import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.document.enums.DocumentType;
+import com.enterprise.aiassistant.backend.folder.entity.Folder;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +25,10 @@ import java.util.List;
                         columnList = "document_type"),
                 @Index(
                         name = "idx_document_created_at",
-                        columnList = "created_at")
+                        columnList = "created_at"),
+                @Index(
+                        name = "idx_document_folder_id",
+                        columnList = "folder_id")
         }
 )
 @Getter
@@ -47,6 +51,11 @@ public class Document {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "current_version_id")
     private DocumentVersion currentVersion;
+
+    // Luôn có giá trị: không chỉ định folder khi upload thì mặc định là thư mục gốc
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private Folder folder;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "document_type")

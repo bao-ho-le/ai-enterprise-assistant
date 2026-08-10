@@ -37,6 +37,9 @@ public class DocumentQaConversationDetailResponse {
 
     private boolean hasMoreMessages;
 
+    // True nếu có tài liệu đính kèm đang bị soft-delete — FE dùng để hiển thị cảnh báo
+    private boolean hasDeletedAttachedDocuments;
+
     @Data
     @Builder
     @NoArgsConstructor

@@ -36,6 +36,7 @@ public class SummaryGenerationHandler implements GenerationHandler {
             throw new AIConversationException(ErrorCode.SUMMARY_GENERATION_STYLE_REQUIRED);
         }
 
+        // String ở đây lưu là text của toàn bộ tài liệu
         String documentContext = documentContextService.buildContext(conversation.getId());
         generationHelper.validateSourceDocumentsRequired(documentContext);
 

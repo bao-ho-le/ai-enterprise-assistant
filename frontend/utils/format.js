@@ -59,6 +59,15 @@ export function formatDateShort(value) {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
+// Backend conversation titles are generated as "<Type Name> - 29/07/2026 12:29"
+// (see AIConversationHelper.defaultTitle). "12:29" (and "· 12:29") -> "- 12:29" so
+// the date and time are both dash-separated wherever a title is shown verbatim
+// (sidebar, deleted conversations) — titles that already separate them are left alone.
+export function formatConversationTitle(title) {
+  if (!title) return title;
+  return title.replace(/(\d{2}\/\d{2}\/\d{4})\s*(?:·|-)?\s*(\d{2}:\d{2})/, "$1 - $2");
+}
+
 // A <input type="date"> value ("2026-07-19") -> ISO LocalDateTime the backend expects.
 export function dateInputToIso(value, endOfDay = false) {
   if (!value) return null;

@@ -1,6 +1,7 @@
 package com.enterprise.aiassistant.backend.ai.conversation.repository;
 
 import com.enterprise.aiassistant.backend.ai.conversation.entity.AIConversationDocument;
+import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -35,5 +36,12 @@ public interface AIConversationDocumentRepository extends JpaRepository<AIConver
     findByConversationIdAndDocumentVersionId(
             Long conversationId,
             Long documentVersionId);
+
+    @Query("SELECT COUNT(acd) > 0 FROM AIConversationDocument acd " +
+            "WHERE acd.conversation.id = :conversationId " +
+            "AND acd.documentVersion.document.status = :status")
+    boolean existsByConversationIdAndDocumentVersionDocumentStatus(
+            @Param("conversationId") Long conversationId,
+            @Param("status") DocumentStatus status);
 
 }

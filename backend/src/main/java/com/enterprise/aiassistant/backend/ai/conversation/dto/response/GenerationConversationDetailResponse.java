@@ -47,4 +47,7 @@ public class GenerationConversationDetailResponse {
     private List<ConversationDocumentResponse> attachedDocuments;
 
     private Long generatedContentId;
+
+    // True nếu có tài liệu đính kèm đang bị soft-delete — FE dùng để hiển thị cảnh báo
+    private boolean hasDeletedAttachedDocuments;
 }

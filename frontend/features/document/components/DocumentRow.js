@@ -1,183 +1,119 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import Link from "next/link";
-import {
-  FileText,
-  FileSpreadsheet,
-  File as FileIcon,
-  ScanSearch,
-  Download,
-  MoreHorizontal,
-  Upload,
-  Pencil,
-  Trash2,
-} from "lucide-react";
-import { documentTypeLabel, versionStatusBadge, documentStatusBadge } from "@/constants/document";
+import { useRouter } from "next/navigation";
+import { ScanSearch, Download, FolderOpen, MoreHorizontal } from "lucide-react";
+import { documentTypeLabel, versionStatusBadge, extensionIcon } from "@/constants/document";
 import { formatBytes, formatDateTime } from "@/utils/format";
+import { hrefForFolderId } from "@/utils/folderPath";
+import { gridTemplateColumns } from "./documentTableGrid";
+import { useClickVsDoubleClick } from "@/hooks/useClickVsDoubleClick";
 
-// File Name icon + color, picked by extension (PDF red, Word blue, Excel green,
-// plain text neutral, anything else falls back to a generic file icon).
-const EXTENSION_ICON = {
-  pdf: { Icon: FileText, bg: "bg-red-500/10", color: "text-red-400" },
-  doc: { Icon: FileText, bg: "bg-blue-500/10", color: "text-blue-400" },
-  docx: { Icon: FileText, bg: "bg-blue-500/10", color: "text-blue-400" },
-  xls: { Icon: FileSpreadsheet, bg: "bg-green-500/10", color: "text-green-400" },
-  xlsx: { Icon: FileSpreadsheet, bg: "bg-green-500/10", color: "text-green-400" },
-  txt: { Icon: FileText, bg: "bg-bg-elevated", color: "text-text-secondary" },
-};
-
-function extensionIcon(extension) {
-  return (
-    EXTENSION_ICON[(extension || "").toLowerCase()] || {
-      Icon: FileIcon,
-      bg: "bg-bg-elevated",
-      color: "text-text-secondary",
-    }
-  );
-}
-
-const MENU_WIDTH = 192; // w-48
-// ponytail: assumes the fixed 4-item menu height below; if items become
-// dynamic, measure menuRef after mount instead of hardcoding this.
-const MENU_HEIGHT = 160;
-
-// Anchors below the button, flipping above it when there isn't enough
-// room left at the bottom of the viewport (e.g. the table's last rows).
-function computeMenuPosition(buttonRect) {
-  const openUpward = window.innerHeight - buttonRect.bottom < MENU_HEIGHT + 8;
-  return {
-    top: openUpward ? buttonRect.top - MENU_HEIGHT - 4 : buttonRect.bottom + 4,
-    left: buttonRect.right - MENU_WIDTH,
-  };
-}
-
-function RowActionsMenu({ doc, onUploadVersion, onEdit, onDelete }) {
-  const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  const buttonRef = useRef(null);
-  const menuRef = useRef(null);
-
-  // Dropdown is portaled to <body> with fixed positioning so it can't get
-  // clipped by the table's overflow-x-auto scroll container. On scroll/resize
-  // it re-anchors to the button instead of closing (closing would also fire
-  // on the scroll-into-view a click itself can trigger).
-  useEffect(() => {
-    if (!open) return;
-
-    const reposition = () => {
-      if (!buttonRef.current) return;
-      setPosition(computeMenuPosition(buttonRef.current.getBoundingClientRect()));
-    };
-    const onOutsideClick = (e) => {
-      if (
-        !buttonRef.current?.contains(e.target) &&
-        !menuRef.current?.contains(e.target)
-      ) {
-        setOpen(false);
-      }
-    };
-
-    document.addEventListener("click", onOutsideClick);
-    window.addEventListener("scroll", reposition, true);
-    window.addEventListener("resize", reposition);
-    return () => {
-      document.removeEventListener("click", onOutsideClick);
-      window.removeEventListener("scroll", reposition, true);
-      window.removeEventListener("resize", reposition);
-    };
-  }, [open]);
-
-  const toggleOpen = () => {
-    if (!open && buttonRef.current) {
-      setPosition(computeMenuPosition(buttonRef.current.getBoundingClientRect()));
-    }
-    setOpen((v) => !v);
-  };
-
-  const run = (fn) => () => {
-    setOpen(false);
-    fn(doc);
-  };
-
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        className="btn-ghost p-1.5"
-        aria-label="More actions"
-        onClick={toggleOpen}
-      >
-        <MoreHorizontal className="h-4 w-4" />
-      </button>
-      {open &&
-        createPortal(
-          <div
-            ref={menuRef}
-            style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
-            className="rounded-lg border border-border-subtle bg-bg-card shadow-lg z-[200]"
-          >
-            <div className="py-1">
-              <Link
-                href={`/file-storage/${doc.id}`}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                <FileText className="h-4 w-4 text-text-muted" />
-                Document Details
-              </Link>
-              <button
-                type="button"
-                onClick={run(onUploadVersion)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                <Upload className="h-4 w-4 text-text-muted" />
-                Upload New Version
-              </button>
-              <button
-                type="button"
-                onClick={run(onEdit)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-text-primary hover:bg-bg-elevated transition-colors"
-              >
-                <Pencil className="h-4 w-4 text-text-muted" />
-                Edit Metadata
-              </button>
-              <button
-                type="button"
-                onClick={run(onDelete)}
-                className="flex items-center gap-2 w-full px-3 py-2 text-sm text-error hover:bg-error/10 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Document
-              </button>
-            </div>
-          </div>,
-          document.body
-        )}
-    </>
-  );
+// Match dot colour per score band. The two middle bands are a linear RGB gradient
+// between the endpoints --success (#22c55e) and --warning (#eab308): t=1/3 ->
+// #65bf41, t=2/3 -> #a7b925. Below 65% is unreachable on screen —
+// qdrant.score-threshold=0.65 drops those hits server-side — so it falls back to
+// the muted neutral instead of getting a band of its own.
+function matchDotColor(percent) {
+  if (percent >= 80) return "var(--success)";
+  if (percent >= 75) return "#65bf41";
+  if (percent >= 70) return "#a7b925";
+  if (percent >= 65) return "var(--warning)";
+  return "var(--text-muted)";
 }
 
 export default function DocumentRow({
   doc,
+  showSemanticColumn,
   selected,
   onToggle,
+  onRowSelect,
+  buildDragPayload,
   onDownload,
-  onUploadVersion,
-  onEdit,
-  onDelete,
+  onMenuTrigger,
+  isContextMenuTarget,
   onViewEvidence,
 }) {
   const processing = versionStatusBadge(doc.versionStatus);
-  const status = documentStatusBadge(doc.documentStatus);
   const hasMatch = doc.semanticScore !== null && doc.semanticScore !== undefined;
   const similarityPercent = hasMatch ? Math.round(doc.semanticScore * 100) : 0;
   const { Icon: ExtIcon, bg: iconBg, color: iconColor } = extensionIcon(doc.extension);
+  const router = useRouter();
+  // Delays the select-on-click so a double-click (open the document) doesn't
+  // flash a selection highlight right before navigating away — see
+  // useClickVsDoubleClick.
+  const { onClick, onDoubleClick } = useClickVsDoubleClick(
+    (mods) => onRowSelect?.("document", doc.id, mods),
+    () => router.push(`/file-storage/${doc.id}`)
+  );
 
   return (
-    <tr className="border-b border-border-subtle transition-colors hover:bg-bg-elevated/50">
-      <td className="px-4 py-4">
+    // Clicking anywhere on the row selects it (Finder/Explorer semantics — see
+    // FileStorageView's selectRow); double-click opens the document detail page.
+    // The checkbox and Actions cells stop the click so selecting/acting doesn't
+    // also re-select the row underneath.
+    //
+    // grid, not <tr>: the header row lives outside the scroll container (see
+    // DocumentTable.js), so there's no shared <table> left to align columns —
+    // gridTemplateColumns is the same shared value the header uses instead.
+    // Every cell carries its own border-b (that part is unchanged from the old
+    // border-separate table) plus flex/items-center to replace the vertical
+    // centering a <td> gave for free.
+    //
+    // Right-click and the "..." button both open the table's ONE context menu
+    // (see DocumentTable's contextMenu state) via onMenuTrigger — no menu lives
+    // inside the row anymore, so there can never be two menus at once. Only
+    // wired when that menu actually exists (search-result rows show different
+    // actions with no row menu).
+    //
+    // draggable: drags the whole current selection if this row is part of it,
+    // otherwise just this row (see buildDragPayload in FileStorageView).
+    <div
+      role="row"
+      draggable={!showSemanticColumn}
+      className={`grid cursor-pointer transition-colors hover:bg-bg-elevated/50 ${
+        isContextMenuTarget ? "bg-bg-elevated/70" : "bg-bg-primary"
+      }`}
+      style={{ gridTemplateColumns: gridTemplateColumns(showSemanticColumn) }}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("application/json", JSON.stringify(buildDragPayload?.("document", doc.id) || []));
+      }}
+      onContextMenu={
+        showSemanticColumn
+          ? undefined
+          : (e) => {
+              e.preventDefault();
+              onMenuTrigger?.("document", doc, { kind: "point", x: e.clientX, y: e.clientY });
+            }
+      }
+    >
+      <div role="cell" className="min-w-0 flex items-center gap-3 border-b border-border-default px-4 py-1">
+        <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${iconBg}`}>
+          <ExtIcon className={`h-3.5 w-3.5 ${iconColor}`} />
+        </span>
+        {/* No max-width cap: the File Name column expands to fill the table,
+            so the filename only truncates when it genuinely exceeds the
+            available width. */}
+        <div className="min-w-0">
+          {/* Plain text, not a Link: a Link here would navigate on the first
+              click and bypass the row's double-click-to-open behavior. */}
+          <span
+            className="block truncate text-xs font-medium text-text-primary"
+            title={doc.title}
+          >
+            {doc.title}
+          </span>
+        </div>
+      </div>
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1"
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+      >
         <input
           type="checkbox"
           className="h-4 w-4 rounded border-border-default bg-bg-primary accent-accent"
@@ -185,92 +121,115 @@ export default function DocumentRow({
           onChange={() => onToggle(doc.id)}
           aria-label={`Select ${doc.title}`}
         />
-      </td>
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconBg}`}>
-            <ExtIcon className={`h-4 w-4 ${iconColor}`} />
-          </span>
-          <div className="min-w-0 max-w-[220px]">
-            <Link
-              href={`/file-storage/${doc.id}`}
-              className="block truncate text-sm font-medium text-text-primary hover:text-accent transition-colors"
-              title={doc.title}
-            >
-              {doc.title}
-            </Link>
-            <p className="text-xs text-text-muted truncate">
-              {documentTypeLabel(doc.documentType)}
-            </p>
-          </div>
-        </div>
-      </td>
+      </div>
 
-      <td className="px-4 py-4 text-sm text-text-secondary whitespace-nowrap">
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap"
+      >
         {formatDateTime(doc.uploadTime)}
-      </td>
+      </div>
 
-      <td className="px-4 py-4 text-sm text-text-secondary uppercase">
+      {/* uppercase is display-only, the same utility the Extension cell already
+          uses — the stored DocumentType enum value is untouched. */}
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap uppercase"
+      >
+        {documentTypeLabel(doc.documentType)}
+      </div>
+
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary uppercase"
+      >
         {doc.extension || "—"}
-      </td>
+      </div>
 
-      <td className="px-4 py-4 text-sm text-text-secondary whitespace-nowrap">
+      <div
+        role="cell"
+        className="flex items-center border-b border-border-default px-4 py-1 text-xs text-text-secondary whitespace-nowrap"
+      >
         {formatBytes(doc.size)}
-      </td>
+      </div>
 
-      <td className="px-4 py-4 text-sm">
-        {hasMatch ? (
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 flex-1 rounded-full bg-bg-elevated overflow-hidden">
-              <div
-                className="h-full rounded-full bg-accent"
-                style={{ width: `${similarityPercent}%` }}
+      {showSemanticColumn && (
+        <div role="cell" className="flex items-center border-b border-border-default px-4 py-1 text-xs">
+          {hasMatch ? (
+            <div className="flex items-center gap-1.5">
+              {/* Fixed width + right-aligned + tabular-nums: "71%" and "99%" render at
+                  slightly different widths otherwise (proportional digit spacing), which
+                  shifts the dot that follows. Locking the text column's width keeps the
+                  dot's position constant regardless of the digits. */}
+              <span className="w-7 shrink-0 text-right text-xs tabular-nums text-text-secondary whitespace-nowrap">
+                {similarityPercent}%
+              </span>
+              <span
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: matchDotColor(similarityPercent) }}
+                aria-hidden="true"
               />
             </div>
-            <span className="text-xs text-text-secondary whitespace-nowrap">{similarityPercent}%</span>
-          </div>
-        ) : (
-          <span className="text-text-muted">—</span>
-        )}
-      </td>
+          ) : (
+            <span className="text-text-muted">—</span>
+          )}
+        </div>
+      )}
 
-      <td className="px-4 py-4">
+      <div role="cell" className="flex items-center border-b border-border-default px-4 py-1">
         <span className={`badge ${processing.badge}`}>{processing.label}</span>
-      </td>
+      </div>
 
-      <td className="px-4 py-4">
-        <span className={`badge ${status.badge}`}>{status.label}</span>
-      </td>
-
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-1">
-          {hasMatch && (
+      {/* Search results only carry the two actions that make sense on a match:
+          inspect the evidence, or jump to where the document lives. */}
+      <div
+        role="cell"
+        className="flex items-center justify-end gap-1 border-b border-border-default px-4 py-1"
+        onClick={(e) => e.stopPropagation()}
+        onDoubleClick={(e) => e.stopPropagation()}
+      >
+        {showSemanticColumn ? (
+          <>
             <button
               type="button"
               className="btn-ghost p-1.5"
               aria-label="View matching chunks"
               title="View matching chunks"
+              disabled={!hasMatch}
               onClick={() => onViewEvidence(doc)}
             >
               <ScanSearch className="h-4 w-4" />
             </button>
-          )}
-          <button
-            type="button"
-            className="btn-ghost p-1.5"
-            aria-label="Download"
-            onClick={() => onDownload(doc)}
-          >
-            <Download className="h-4 w-4" />
-          </button>
-          <RowActionsMenu
-            doc={doc}
-            onUploadVersion={onUploadVersion}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        </div>
-      </td>
-    </tr>
+            <Link
+              href={hrefForFolderId(doc.folderId)}
+              className="btn-ghost p-1.5"
+              aria-label="Go to containing folder"
+              title="Go to containing folder"
+            >
+              <FolderOpen className="h-4 w-4" />
+            </Link>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="btn-ghost p-1.5"
+              aria-label="Download"
+              onClick={() => onDownload(doc)}
+            >
+              <Download className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              className="btn-ghost p-1.5"
+              aria-label="More actions"
+              onClick={(e) => onMenuTrigger?.("document", doc, { kind: "button", node: e.currentTarget })}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
