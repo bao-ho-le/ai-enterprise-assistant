@@ -39,3 +39,7 @@ build/
 .postman/
 postman/
 **/.freebuff/
+
+.env
+.env.*
+!.env.example
