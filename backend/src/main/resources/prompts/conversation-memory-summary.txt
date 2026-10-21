@@ -1,0 +1,15 @@
+Compress the conversation context below into a single memory summary that will be reused as context for the next turns of this same conversation.
+
+Keep: the topics being discussed, decisions already made, the user's requirements and preferences, important entities/terms/numbers, and anything needed to understand follow-up questions and references ("that number", "the previous one", ...).
+
+Drop: greetings, small talk, repetition, and wording that carries no information.
+
+Write at most 6000 characters, shorter if the important information still fits. Write compact plain prose in the language of the conversation. Do not use Markdown or any other rich-text formatting.
+
+Do not add information that is not present below. Do not answer any question found in the context. Output only the memory summary and nothing else.
+
+Previous memory summary:
+{{summarizedContext}}
+
+New conversation turns since that summary:
+{{pendingContext}}

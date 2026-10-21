@@ -5,11 +5,11 @@ import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversa
 import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.helper.GenerationHelper;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.service.DocumentContextService;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMRequest;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMResponse;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.LLMService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
 import com.enterprise.aiassistant.backend.ai.chat.message.helper.AIMessageHelper;
 import com.enterprise.aiassistant.backend.ai.infrastructure.prompt.service.PromptBuilderService;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.ChatModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +22,8 @@ public class SummaryChatServiceImpl implements SummaryChatService {
 
     private final DocumentContextService documentContextService;
     private final PromptBuilderService promptBuilderService;
-    private final LLMService llmService;
+    private final ChatModel chatModel;
+    private final LLMHelper llmHelper;
 
     private final GenerationHelper generationHelper;
     private final AIConversationHelper aiConversationHelper;
@@ -39,14 +40,9 @@ public class SummaryChatServiceImpl implements SummaryChatService {
         String documentContext = documentContextService.buildContext(conversation.getId());
         generationHelper.validateSourceDocumentsRequired(documentContext);
 
-        LLMResponse llmResponse = llmService.generate(
-                LLMRequest.builder()
-                        .prompt(promptBuilderService.buildSummaryPrompt(handlerHelper.toSummaryInput(message), documentContext))
-                        .conversationType(conversation.getConversationType())
-                        .build()
-        );
+        String prompt = promptBuilderService.buildSummaryPrompt(handlerHelper.toSummaryInput(message), documentContext);
 
-        return llmResponse.getContent();
+        return llmHelper.call(() -> chatModel.chat(UserMessage.from(prompt))).aiMessage().text();
     }
 
 }

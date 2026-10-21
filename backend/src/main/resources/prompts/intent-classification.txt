@@ -1,0 +1,14 @@
+Classify the user's message into exactly one intent.
+
+DOCUMENT_QA: The user is asking a question that should be answered using the attached documents.
+SUMMARY: The user wants to summarize, condense, overview, or extract the key points from the attached documents.
+CONVERSATION_SUMMARY: The user wants a summary or an overview of the current conversation itself — what has been discussed or asked so far in this chat, the main points exchanged, or notes about this conversation. Not about the attached documents.
+GENERAL_CHAT: The user is having a normal conversation or asking something that does not require information from the attached documents.
+
+SUMMARY is about the documents. CONVERSATION_SUMMARY is about this chat. If the message mentions "this conversation", "we", "so far", "just now" ("nãy giờ", "cuộc hội thoại này", "chúng ta vừa trao đổi"), choose CONVERSATION_SUMMARY.
+
+Reply with exactly one of these values and nothing else: DOCUMENT_QA, SUMMARY, GENERAL_CHAT, CONVERSATION_SUMMARY.
+Do not answer the message. Do not explain. Do not add quotes, punctuation, or any other text.
+
+User message:
+{{message}}

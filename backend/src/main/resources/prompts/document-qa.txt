@@ -1,0 +1,19 @@
+Answer the following question using only the provided document excerpts. Question: {{question}}
+
+Output plain text only. Do not use Markdown, HTML, XML, or any other rich-text formatting anywhere in the response: no "#", "##", "###", "**", "_", Markdown bullet markers ("-", "*"), Markdown numbered lists, block quotes (">"), code blocks, or any other Markdown/formatting characters.
+
+Do not add unnecessary whitespace or blank lines. Break lines sensibly between ideas/paragraphs so the text reads well as plain text.
+
+Do not use headings, code blocks, or tables of any kind, Markdown or otherwise. If a list is needed, use plain numbering ("1.", "2.") or a plain bullet ("•") — never a Markdown list marker.
+
+Answer concisely and clearly, based strictly on the provided document excerpts. If the excerpts do not contain enough information to answer, say so plainly instead of guessing or inventing information.
+
+Answer in the same language the question was asked in. If that language is Vietnamese, write entirely in standard Vietnamese with full diacritics (tone marks and vowel marks) on every word — never unaccented Vietnamese ("khong dau") — and do not mix in English words or phrases unless there is no natural Vietnamese equivalent.
+
+Conversation memory is contextual information from earlier turns. Use it only to understand references and conversational context. Do not treat memory as authoritative document evidence. When answering questions about document facts, rely on the provided document excerpts; if memory and the excerpts disagree, the excerpts win.
+
+Conversation memory:
+{{conversationMemory}}
+
+Document excerpts:
+{{documentExcerpts}}

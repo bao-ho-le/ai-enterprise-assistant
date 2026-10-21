@@ -2,12 +2,10 @@ package com.enterprise.aiassistant.backend.ai.knowledge.qa.service;
 
 import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversationHelper;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMRequest;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMResponse;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.LLMService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
 import com.enterprise.aiassistant.backend.ai.chat.memory.service.ConversationMemoryService;
 import com.enterprise.aiassistant.backend.ai.chat.message.helper.AIMessageHelper;
-import com.enterprise.aiassistant.backend.ai.infrastructure.prompt.service.PromptBuilderService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.LLMException;
@@ -21,8 +19,8 @@ import org.springframework.stereotype.Service;
 public class QuestionRewriterImpl implements QuestionRewriter {
 
     private final ConversationMemoryService conversationMemoryService;
-    private final PromptBuilderService promptBuilderService;
-    private final LLMService llmService;
+    private final ChatAssistant chatAssistant;
+    private final LLMHelper llmHelper;
 
     private final AIConversationHelper aiConversationHelper;
     private final AIMessageHelper messageHelper;
@@ -38,13 +36,9 @@ public class QuestionRewriterImpl implements QuestionRewriter {
         String conversationMemory = conversationMemoryService.buildMemoryContext(conversation.getId());
 
         try {
-            LLMResponse llmResponse = llmService.generate(
-                    LLMRequest.builder()
-                            .prompt(promptBuilderService.buildQuestionRewritePrompt(userMessage, conversationMemory))
-                            .build()
-            );
+            String rewrittenQuestion = llmHelper.call(() -> chatAssistant.rewriteQuestion(userMessage, conversationMemory));
 
-            return normalize(llmResponse.getContent(), userMessage);
+            return normalize(rewrittenQuestion, userMessage);
 
         } catch (LLMException e) {
             // Rewrite chỉ hỗ trợ retrieval, không phải bước bắt buộc: lỗi thì dùng nguyên

@@ -22,9 +22,7 @@ import com.enterprise.aiassistant.backend.ai.knowledge.generation.mapper.Generat
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.mapper.GenerationMapper;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.repository.GeneratedContentRepository;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.repository.GenerationRepository;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMRequest;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMResponse;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.LLMService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
@@ -34,6 +32,9 @@ import com.enterprise.aiassistant.backend.common.exception.business_exception.AI
 import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
 import com.enterprise.aiassistant.backend.user.enums.Permission;
 import com.fasterxml.jackson.databind.JsonNode;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +58,8 @@ public class GenerationServiceImpl implements GenerationService {
     private final GeneratedMapper generatedMapper;
     private final GenerationMapper generationMapper;
     private final AIUsageLogService aiUsageLogService;
-    private final LLMService llmService;
+    private final ChatModel chatModel;
+    private final LLMHelper llmHelper;
 
     private final List<GenerationHandler> handlers;
 
@@ -97,24 +99,19 @@ public class GenerationServiceImpl implements GenerationService {
         generation.setStatus(GenerationStatus.RUNNING);
         generationRepository.save(generation);
 
-        String model = llmService.getModelName();
+        String model = llmHelper.getModelName();
         Integer inputTokens = null;
         Integer outputTokens = null;
 
         try {
 
-            // 4. Gọi LLM để sinh nội dung
+            // 4. Gọi LLM để sinh nội dung. Prompt đã được handler điền sẵn (PromptTemplate) nên gửi
+            // thẳng qua ChatModel, không qua AI Service (xem PromptBuilderService)
 
-            LLMResponse llmResponse = llmService.generate(
-                    LLMRequest.builder()
-                            .prompt(context.getPrompt())
-                            .conversationType(conversation.getConversationType())
-                            .build()
-            );
-            model = llmResponse.getModelName();
-            if (llmResponse.getTokenUsage() != null) {
-                inputTokens = llmResponse.getTokenUsage().getInputTokens();
-                outputTokens = llmResponse.getTokenUsage().getOutputTokens();
+            ChatResponse response = llmHelper.call(() -> chatModel.chat(UserMessage.from(context.getPrompt())));
+            if (response.tokenUsage() != null) {
+                inputTokens = response.tokenUsage().inputTokenCount();
+                outputTokens = response.tokenUsage().outputTokenCount();
             }
 
             // 5. Lưu GeneratedContent và cập nhật Generation thành công
@@ -123,7 +120,7 @@ public class GenerationServiceImpl implements GenerationService {
                     generatedMapper.toCreateGeneratedContentObject(
                             GeneratedDocumentType.valueOf(context.getGeneratedType().name()),
                             context.getTitle(),
-                            llmResponse.getContent()
+                            response.aiMessage().text()
                     )
             );
 

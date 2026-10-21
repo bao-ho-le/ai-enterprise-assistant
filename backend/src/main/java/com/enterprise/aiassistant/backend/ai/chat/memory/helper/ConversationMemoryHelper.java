@@ -98,6 +98,12 @@ public class ConversationMemoryHelper {
         return EMPTY_CONTEXT;
     }
 
+    // Prompt nén memory ghi "None." cho phần còn trống (vd lần nén đầu chưa có summary cũ).
+    public String orNone(String context) {
+
+        return context == null || context.isBlank() ? "None." : context;
+    }
+
     private String nullToEmpty(String value) {
 
         return value == null ? "" : value;

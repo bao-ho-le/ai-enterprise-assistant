@@ -1,0 +1,12 @@
+Reply to the user's message as a helpful assistant. The user is not asking about any attached document, so answer from general knowledge.
+
+Output plain text only. Do not use Markdown, HTML, XML, or any other rich-text formatting anywhere in the response: no "#", "##", "###", "**", "_", Markdown bullet markers ("-", "*"), Markdown numbered lists, block quotes (">"), code blocks, or any other Markdown/formatting characters.
+
+Do not add unnecessary whitespace or blank lines. Break lines sensibly between ideas/paragraphs so the text reads well as plain text.
+
+Do not use headings, code blocks, or tables of any kind, Markdown or otherwise. If a list is needed, use plain numbering ("1.", "2.") or a plain bullet ("•") — never a Markdown list marker.
+
+Answer in the same language the message was written in. If that language is Vietnamese, write entirely in standard Vietnamese with full diacritics (tone marks and vowel marks) on every word — never unaccented Vietnamese ("khong dau") — and do not mix in English words or phrases unless there is no natural Vietnamese equivalent.
+
+User message:
+{{message}}

@@ -1,0 +1,17 @@
+The user is asking about the current conversation itself, not about any attached document. Answer their request using only the conversation memory below.
+
+Output plain text only. Do not use Markdown, HTML, XML, or any other rich-text formatting anywhere in the response: no "#", "##", "###", "**", "_", Markdown bullet markers ("-", "*"), Markdown numbered lists, block quotes (">"), code blocks, or any other Markdown/formatting characters.
+
+Do not add unnecessary whitespace or blank lines. Break lines sensibly between ideas/paragraphs so the text reads well as plain text.
+
+Do not use headings, code blocks, or tables of any kind, Markdown or otherwise. If a list is needed, use plain numbering ("1.", "2.") or a plain bullet ("•") — never a Markdown list marker.
+
+Summarize only what the conversation memory actually contains: do not add information, do not invent turns that are not there, and do not answer questions about attached documents. Follow the length and shape the user asked for — if they asked for notes, produce something they can paste straight into their notes. If the memory does not contain enough information to answer, say so plainly.
+
+Answer in the same language the message was written in. If that language is Vietnamese, write entirely in standard Vietnamese with full diacritics (tone marks and vowel marks) on every word — never unaccented Vietnamese ("khong dau") — and do not mix in English words or phrases unless there is no natural Vietnamese equivalent.
+
+Conversation memory:
+{{conversationMemory}}
+
+User message:
+{{message}}

@@ -6,8 +6,8 @@ import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversa
 import com.enterprise.aiassistant.backend.ai.chat.conversation.repository.AIConversationDocumentRepository;
 import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.dto.EmbeddingResult;
 import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.service.EmbeddingService;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMResponse;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.LLMService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
 import com.enterprise.aiassistant.backend.ai.chat.memory.service.ConversationMemoryService;
 import com.enterprise.aiassistant.backend.ai.chat.message.entity.AIMessage;
 import com.enterprise.aiassistant.backend.ai.chat.message.entity.AIMessageSource;
@@ -16,7 +16,6 @@ import com.enterprise.aiassistant.backend.ai.chat.message.mapper.AIMessageMapper
 import com.enterprise.aiassistant.backend.ai.chat.message.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.ai.chat.message.repository.AIMessageSourceRepository;
 import com.enterprise.aiassistant.backend.ai.infrastructure.prompt.service.PromptBuilderService;
-import com.enterprise.aiassistant.backend.ai.knowledge.qa.mapper.QAMapper;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.service.AIUsageLogService;
@@ -26,6 +25,7 @@ import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.service.
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.repository.DocumentChunkRepository;
 import com.enterprise.aiassistant.backend.document.service.DocumentAuthorizationService;
+import dev.langchain4j.service.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -47,11 +47,11 @@ public class DocumentQAServiceImpl implements DocumentQAService {
     private final VectorStoreService vectorStoreService;
     private final ConversationMemoryService conversationMemoryService;
     private final PromptBuilderService promptBuilderService;
-    private final LLMService llmService;
+    private final ChatAssistant chatAssistant;
+    private final LLMHelper llmHelper;
     private final AIUsageLogService aiUsageLogService;
 
     private final AIMessageMapper messageMapper;
-    private final QAMapper qaMapper;
     private final AIConversationHelper aiConversationHelper;
     private final DocumentAuthorizationService documentAuthorizationService;
 
@@ -77,7 +77,7 @@ public class DocumentQAServiceImpl implements DocumentQAService {
                 .map(link -> link.getDocumentVersion().getId())
                 .toList();
 
-        String model = llmService.getModelName();
+        String model = llmHelper.getModelName();
         Integer inputTokens = null;
         Integer outputTokens = null;
         Long messageId = null;
@@ -90,28 +90,21 @@ public class DocumentQAServiceImpl implements DocumentQAService {
                     ? List.of()
                     : retrieveRelevantChunks(question, attachedVersionIds);
 
-            String prompt = promptBuilderService.buildDocumentQaPrompt(
-                    question,
-                    relevantHits.stream().map(hit -> hit.getPayload().getContent()).toList(),
-                    conversationMemory
+            String documentExcerpts = promptBuilderService.buildDocumentExcerpts(
+                    relevantHits.stream().map(hit -> hit.getPayload().getContent()).toList()
             );
 
-            LLMResponse llmResponse = llmService.generate(
-                    qaMapper.toLLMRequest(
-                            prompt,
-                            conversation.getConversationType(),
-                            relevantHits.size()
-                    )
+            Result<String> answer = llmHelper.call(() ->
+                    chatAssistant.answerFromDocuments(question, conversationMemory, documentExcerpts)
             );
 
-            model = llmResponse.getModelName();
-            if (llmResponse.getTokenUsage() != null) {
-                inputTokens = llmResponse.getTokenUsage().getInputTokens();
-                outputTokens = llmResponse.getTokenUsage().getOutputTokens();
+            if (answer.tokenUsage() != null) {
+                inputTokens = answer.tokenUsage().inputTokenCount();
+                outputTokens = answer.tokenUsage().outputTokenCount();
             }
 
             AIMessage assistantMessage = messageRepository.save(
-                    messageMapper.toMessage(conversation, AIMessageRole.ASSISTANT, llmResponse.getContent())
+                    messageMapper.toMessage(conversation, AIMessageRole.ASSISTANT, answer.content())
             );
 
             if (!relevantHits.isEmpty()) {

@@ -1,0 +1,16 @@
+Draft a professional email.
+Recipient: {{recipient}}
+Purpose: {{purpose}}
+Additional context: {{optionalContext}}
+Sender: {{sender}}
+
+Language: {{language}}. {{languageInstruction}}
+Tone: {{tone}}. {{toneInstruction}}
+Length: {{length}}. {{lengthInstruction}}
+Audience: {{audience}}. {{audienceInstruction}}
+
+Output plain text only. Do not use Markdown, HTML, XML, or any other rich-text formatting anywhere in the response: no "#", "##", "###", "**", "_", Markdown bullet markers ("-", "*"), Markdown numbered lists, block quotes (">"), code blocks, or any other Markdown/formatting characters.
+
+Do not add unnecessary whitespace or blank lines. Break lines sensibly between ideas/paragraphs so the text reads well as plain text.
+
+This is a professional email. Use a normal plain-text email format — greeting, body, closing, and signature — written as plain sentences and paragraphs, never as Markdown headings or lists.

@@ -1,0 +1,18 @@
+Write a business report titled "{{title}}".
+Instructions: {{instructions}}
+Reporting period: {{period}}
+
+Language: {{language}}. {{languageInstruction}}
+Length: {{length}}. {{lengthInstruction}}
+Audience: {{audience}}. {{audienceInstruction}}
+
+Output plain text only. Do not use Markdown, HTML, XML, or any other rich-text formatting anywhere in the response: no "#", "##", "###", "**", "_", Markdown bullet markers ("-", "*"), Markdown numbered lists, block quotes (">"), code blocks, or any other Markdown/formatting characters.
+
+Do not add unnecessary whitespace or blank lines. Break lines sensibly between ideas/paragraphs so the text reads well as plain text.
+
+This is a professional business report. Number every section heading as a plain line, for example "1. Executive Summary" then "2. Background", continuing sequentially through the last section. A heading is only the number, a period, a space, and the title — never prefix it with "#", "##", "###", or any other symbol, and never bold or underline it.
+
+Leave exactly one blank line between the report title, each heading, and each section's content — no extra blank lines, no trailing whitespace. Keep the information coherent, do not repeat the same point in multiple sections, and always end with a numbered "Conclusion" section.
+
+Source documents:
+{{documentContext}}

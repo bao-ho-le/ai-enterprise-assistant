@@ -2,14 +2,12 @@ package com.enterprise.aiassistant.backend.ai.chat.memory.service;
 
 import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversation;
 import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversationHelper;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMRequest;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.dto.LLMResponse;
-import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.LLMService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
 import com.enterprise.aiassistant.backend.ai.chat.memory.entity.ConversationMemory;
 import com.enterprise.aiassistant.backend.ai.chat.memory.helper.ConversationMemoryHelper;
 import com.enterprise.aiassistant.backend.ai.chat.memory.mapper.MemoryMapper;
 import com.enterprise.aiassistant.backend.ai.chat.memory.repository.ConversationMemoryRepository;
-import com.enterprise.aiassistant.backend.ai.infrastructure.prompt.service.PromptBuilderService;
 
 import com.enterprise.aiassistant.backend.common.exception.business_exception.LLMException;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +22,8 @@ public class ConversationMemoryServiceImpl implements ConversationMemoryService 
 
     private final ConversationMemoryRepository conversationMemoryRepository;
 
-    private final PromptBuilderService promptBuilderService;
-    private final LLMService llmService;
+    private final ChatAssistant chatAssistant;
+    private final LLMHelper llmHelper;
 
     private final ConversationMemoryHelper memoryHelper;
     private final AIConversationHelper aiConversationHelper;
@@ -83,16 +81,10 @@ public class ConversationMemoryServiceImpl implements ConversationMemoryService 
     private void compress(ConversationMemory memory) {
 
         try {
-            LLMResponse llmResponse = llmService.generate(
-                    LLMRequest.builder()
-                            .prompt(promptBuilderService.buildConversationMemorySummaryPrompt(
-                                    memory.getSummarizedContext(),
-                                    memory.getPendingContext()
-                            ))
-                            .build()
-            );
-
-            String generatedSummary = llmResponse.getContent();
+            String generatedSummary = llmHelper.call(() -> chatAssistant.compressMemory(
+                    memoryHelper.orNone(memory.getSummarizedContext()),
+                    memoryHelper.orNone(memory.getPendingContext())
+            ));
 
             if (generatedSummary == null || generatedSummary.isBlank()) {
                 return;

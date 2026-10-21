@@ -1,0 +1,17 @@
+Summarize the attached documents.
+Instructions: {{instructions}}
+Audience: {{audience}}
+Include a dedicated action items section: {{includeActionItems}}
+
+Language: {{language}}. {{languageInstruction}}
+Length: {{length}}. {{lengthInstruction}}
+Presentation style: {{style}}. {{styleInstruction}}
+
+Output plain text only. Do not use Markdown, HTML, XML, or any other rich-text formatting anywhere in the response: no "#", "##", "###", "**", "_", Markdown bullet markers ("-", "*"), Markdown numbered lists, block quotes (">"), code blocks, or any other Markdown/formatting characters.
+
+Do not add unnecessary whitespace or blank lines. Break lines sensibly between ideas/paragraphs so the text reads well as plain text.
+
+This is a document summary. If presented as bullet points, use a plain-text bullet marker ("•") or an ordinary number followed by a period — never a Markdown "-" or "*" marker. If presented under headings, write each heading as a plain line of text — never prefixed with "#", "##", "###", or any other symbol.
+
+Source documents:
+{{documentContext}}
