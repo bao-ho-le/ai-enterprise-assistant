@@ -63,15 +63,33 @@ function refreshAccessToken() {
   return refreshPromise;
 }
 
+// Rejects as soon as `signal` aborts, without handing the signal to fetch().
+// Passing it to fetch makes the underlying promise reject on abort, and fetch
+// wrappers (some browser extensions) leave that rejection unhandled, which
+// the Next dev overlay reports as "signal is aborted without reason".
+// ponytail: the aborted HTTP request still completes in the background.
+function abortable(promise, signal) {
+  if (!signal) return promise;
+  return new Promise((resolve, reject) => {
+    const onAbort = () =>
+      reject(signal.reason ?? new DOMException("The operation was aborted.", "AbortError"));
+    if (signal.aborted) return onAbort();
+    signal.addEventListener("abort", onAbort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", onAbort));
+  });
+}
+
 async function request(path, { method = "GET", params, body, headers, signal, _retried } = {}) {
   const token = getAccessToken();
-  const res = await fetch(`${BASE_URL}${path}${buildQuery(params)}`, {
-    method,
-    body,
-    headers: token ? { ...headers, Authorization: `Bearer ${token}` } : headers,
-    signal,
-    credentials: "include",
-  });
+  const res = await abortable(
+    fetch(`${BASE_URL}${path}${buildQuery(params)}`, {
+      method,
+      body,
+      headers: token ? { ...headers, Authorization: `Bearer ${token}` } : headers,
+      credentials: "include",
+    }),
+    signal
+  );
   if (res.status === 401 && !path.startsWith("/auth/")) {
     if (!_retried) {
       try {
