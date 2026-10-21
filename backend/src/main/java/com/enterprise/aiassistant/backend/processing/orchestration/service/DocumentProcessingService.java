@@ -1,10 +1,9 @@
 package com.enterprise.aiassistant.backend.processing.orchestration.service;
 
-import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.dto.EmbeddingResult;
-import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.service.EmbeddingService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.helper.EmbeddingHelper;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.VectorPoint;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.service.VectorStoreService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.helper.VectorStoreHelper;
+import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
@@ -15,7 +14,6 @@ import com.enterprise.aiassistant.backend.document.enums.VersionStatus;
 import com.enterprise.aiassistant.backend.document.repository.DocumentChunkRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentTextRepository;
 import com.enterprise.aiassistant.backend.document.repository.DocumentVersionRepository;
-import com.enterprise.aiassistant.backend.processing.chunking.dto.TextChunk;
 import com.enterprise.aiassistant.backend.processing.chunking.service.ChunkingService;
 import com.enterprise.aiassistant.backend.processing.extraction.dto.ExtractedText;
 import com.enterprise.aiassistant.backend.processing.extraction.helper.ExtractionHelper;
@@ -23,6 +21,11 @@ import com.enterprise.aiassistant.backend.processing.extraction.service.TextExtr
 import com.enterprise.aiassistant.backend.processing.orchestration.helper.ProcessingHelper;
 import com.enterprise.aiassistant.backend.processing.orchestration.mapper.ProcessingMapper;
 import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.model.output.Response;
+import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DocumentProcessingService {
 
+    // Giới hạn số đoạn của 1 request batchEmbedContents của Gemini: mỗi lô là đúng 1 request và 1 dòng usage log.
+    private static final int EMBEDDING_BATCH_SIZE = 100;
 
     private final DocumentVersionRepository documentVersionRepository;
 
@@ -50,9 +55,15 @@ public class DocumentProcessingService {
 
     private final DocumentChunkRepository documentChunkRepository;
 
-    private final EmbeddingService embeddingService;
+    private final EmbeddingModel embeddingModel;
 
-    private final VectorStoreService vectorStoreService;
+    private final EmbeddingHelper embeddingHelper;
+
+    private final EmbeddingStore<TextSegment> embeddingStore;
+
+    private final VectorStoreHelper vectorStoreHelper;
+
+    private final VectorStoreMapper vectorStoreMapper;
 
     private final ProcessingMapper processingMapper;
 
@@ -117,21 +128,21 @@ public class DocumentProcessingService {
 
             version.setProcessingStep(ProcessingStep.CHUNKING);
 
-            List<TextChunk> listTextChunk = chunkingService.chunk(
+            List<TextSegment> segments = chunkingService.chunk(
                     extractedText,
                     version.getFile().getExtension()
             );
 
 
             /*
-             * Save document_chunks
+             * Save document_chunks, rồi gắn id của chunk vừa lưu vào segment để ghi lên Qdrant
              */
 
-            List<DocumentChunk> savedChunks = new ArrayList<>();
+            String embeddingModelName = embeddingHelper.getModelName();
 
-            for (TextChunk textChunk : listTextChunk) {
-                DocumentChunk newDocumentChunk = processingMapper.toDocumentChunk(version, textChunk);
-                savedChunks.add(documentChunkRepository.save(newDocumentChunk));
+            for (TextSegment segment : segments) {
+                DocumentChunk savedChunk = documentChunkRepository.save(processingMapper.toDocumentChunk(version, segment));
+                vectorStoreMapper.addChunkIdentity(segment, savedChunk, embeddingModelName);
             }
 
 
@@ -142,26 +153,34 @@ public class DocumentProcessingService {
 
             version.setProcessingStep(ProcessingStep.EMBEDDING);
 
-            List<VectorPoint> vectorPoints = new ArrayList<>();
+            List<Embedding> embeddings = new ArrayList<>();
 
-            for (DocumentChunk chunk : savedChunks) {
+            for (int from = 0; from < segments.size(); from += EMBEDDING_BATCH_SIZE) {
 
-                String model = embeddingService.getModelName();
+                List<TextSegment> batch = segments.subList(from, Math.min(from + EMBEDDING_BATCH_SIZE, segments.size()));
 
                 try {
-                    EmbeddingResult embeddingResult = embeddingService.embed(chunk.getContent());
+                    Response<List<Embedding>> response = embeddingHelper.call(() -> embeddingModel.embedAll(batch));
                     processingHelper.logUsage(
-                            embeddingResult.getModel(), embeddingResult.getInputTokens(), AIUsageStatus.SUCCESS, null);
+                            embeddingModelName,
+                            embeddingHelper.inputTokens(response, batch.stream().map(TextSegment::text).toList()),
+                            AIUsageStatus.SUCCESS,
+                            null
+                    );
 
-                    vectorPoints.add(processingMapper.toVectorPoint(chunk, embeddingResult));
+                    embeddings.addAll(response.content());
 
                 } catch (RuntimeException e) {
-                    processingHelper.logUsage(model, null, AIUsageStatus.FAILED, e.getMessage());
+                    processingHelper.logUsage(embeddingModelName, null, AIUsageStatus.FAILED, e.getMessage());
                     throw e;
                 }
             }
 
-            vectorStoreService.upsert(vectorPoints);
+            vectorStoreHelper.run(ErrorCode.VECTOR_UPSERT_FAILED, () -> embeddingStore.addAll(
+                    segments.stream().map(vectorStoreMapper::pointId).toList(),
+                    embeddings,
+                    segments
+            ));
 
             version.setStatus(VersionStatus.READY);
 

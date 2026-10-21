@@ -2,7 +2,7 @@ package com.enterprise.aiassistant.backend.processing.chunking.service;
 
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ProcessingException;
-import com.enterprise.aiassistant.backend.processing.chunking.dto.TextChunk;
+import dev.langchain4j.data.segment.TextSegment;
 import com.enterprise.aiassistant.backend.processing.chunking.strategy.ChunkingStrategy;
 import com.enterprise.aiassistant.backend.processing.chunking.strategy.ChunkingStrategyFactory;
 import com.enterprise.aiassistant.backend.processing.extraction.dto.ExtractedText;
@@ -21,7 +21,7 @@ public class ChunkingServiceImpl implements ChunkingService {
     private final ChunkingStrategyFactory chunkingStrategyFactory;
 
     @Override
-    public List<TextChunk> chunk(ExtractedText extractedText, String fileExtension) {
+    public List<TextSegment> chunk(ExtractedText extractedText, String fileExtension) {
 
         validateChunkInput(extractedText, fileExtension);
 

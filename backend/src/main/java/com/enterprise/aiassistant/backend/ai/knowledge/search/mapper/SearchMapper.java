@@ -1,33 +1,36 @@
 package com.enterprise.aiassistant.backend.ai.knowledge.search.mapper;
 
+import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper;
 import com.enterprise.aiassistant.backend.ai.knowledge.search.dto.response.SemanticSearchResult;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.SearchResult;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.VectorPayload;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class SearchMapper {
 
-    public SemanticSearchResult toSemanticSearchResult(SearchResult searchResult) {
+    private final VectorStoreMapper vectorStoreMapper;
 
-        VectorPayload payload = searchResult.getPayload();
+    public SemanticSearchResult toSemanticSearchResult(EmbeddingMatch<TextSegment> match) {
 
         return SemanticSearchResult.builder()
-                .documentId(payload.getDocumentId())
-                .versionId(payload.getDocumentVersionId())
-                .chunkId(payload.getChunkId())
-                .score(searchResult.getScore())
-                .page(payload.getPageNumber())
-                .startChar(payload.getStartChar())
-                .endChar(payload.getEndChar())
-                .content(payload.getContent())
+                .documentId(vectorStoreMapper.documentId(match))
+                .versionId(vectorStoreMapper.documentVersionId(match))
+                .chunkId(vectorStoreMapper.chunkId(match))
+                .score(vectorStoreMapper.cosineScore(match))
+                .page(vectorStoreMapper.pageNumber(match))
+                .startChar(vectorStoreMapper.startChar(match))
+                .endChar(vectorStoreMapper.endChar(match))
+                .content(match.embedded().text())
                 .build();
     }
 
     public List<SemanticSearchResult> toSemanticSearchResults(
-            List<SearchResult> hits
+            List<EmbeddingMatch<TextSegment>> hits
     ) {
         return hits.stream()
                 .map(this::toSemanticSearchResult)

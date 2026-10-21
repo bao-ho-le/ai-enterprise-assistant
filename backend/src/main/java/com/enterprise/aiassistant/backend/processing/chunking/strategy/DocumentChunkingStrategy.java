@@ -1,6 +1,6 @@
 package com.enterprise.aiassistant.backend.processing.chunking.strategy;
 
-import com.enterprise.aiassistant.backend.processing.chunking.dto.TextChunk;
+import dev.langchain4j.data.segment.TextSegment;
 import com.enterprise.aiassistant.backend.processing.chunking.mapper.ChunkingMapper;
 import com.enterprise.aiassistant.backend.processing.chunking.support.SlidingWindowSplitter;
 import com.enterprise.aiassistant.backend.processing.extraction.dto.DocumentElement;
@@ -28,9 +28,9 @@ public class DocumentChunkingStrategy implements ChunkingStrategy {
     private final SlidingWindowSplitter slidingWindowSplitter;
 
     @Override
-    public List<TextChunk> chunk(ExtractedText extractedText) {
+    public List<TextSegment> chunk(ExtractedText extractedText) {
 
-        List<TextChunk> chunks = new ArrayList<>();
+        List<TextSegment> chunks = new ArrayList<>();
 
         // Group toàn bộ DocumentElement theo page
         Map<Integer, List<DocumentElement>> elementsByPage = extractedText.getElements().stream()
@@ -59,7 +59,7 @@ public class DocumentChunkingStrategy implements ChunkingStrategy {
             int pageNumber,
             List<DocumentElement> pageElements,
             int startChunkIndex,
-            List<TextChunk> chunks
+            List<TextSegment> chunks
     ) {
 
         int chunkIndex = startChunkIndex;
@@ -102,7 +102,7 @@ public class DocumentChunkingStrategy implements ChunkingStrategy {
             if (content.length() > CHUNK_SIZE) {
 
                 if (!buffer.isEmpty()) {
-                    chunks.add(chunkingMapper.toTextChunk(
+                    chunks.add(chunkingMapper.toTextSegment(
                             chunkIndex++, buffer.toString(), pageNumber, bufferStart, elementStart));
                     buffer.setLength(0);
                 }
@@ -116,7 +116,7 @@ public class DocumentChunkingStrategy implements ChunkingStrategy {
                             ? breadcrumb + "\n" + piece
                             : piece;
 
-                    chunks.add(chunkingMapper.toTextChunk(
+                    chunks.add(chunkingMapper.toTextSegment(
                             chunkIndex++, pieceContent, pageNumber, elementStart, elementStart + piece.length()));
                 }
 
@@ -127,7 +127,7 @@ public class DocumentChunkingStrategy implements ChunkingStrategy {
             // flush nội dung đã gom trước đó trong buffer thành một chunk.
             if (!buffer.isEmpty() && buffer.length() + content.length() + 1 > CHUNK_SIZE) {
 
-                chunks.add(chunkingMapper.toTextChunk(
+                chunks.add(chunkingMapper.toTextSegment(
                         chunkIndex++, buffer.toString(), pageNumber, bufferStart, elementStart));
                 buffer.setLength(0);
             }
@@ -151,7 +151,7 @@ public class DocumentChunkingStrategy implements ChunkingStrategy {
         // buffer có thể vẫn còn nội dung chưa đủ lớn để trigger flush trong vòng lặp.
         // Cần tạo chunk cuối cùng để không bỏ sót phần text còn lại.
         if (!buffer.isEmpty()) {
-            chunks.add(chunkingMapper.toTextChunk(
+            chunks.add(chunkingMapper.toTextSegment(
                     chunkIndex++, buffer.toString(), pageNumber, bufferStart, cursor));
         }
 

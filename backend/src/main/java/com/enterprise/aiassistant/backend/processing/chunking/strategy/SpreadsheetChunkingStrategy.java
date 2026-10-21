@@ -1,6 +1,6 @@
 package com.enterprise.aiassistant.backend.processing.chunking.strategy;
 
-import com.enterprise.aiassistant.backend.processing.chunking.dto.TextChunk;
+import dev.langchain4j.data.segment.TextSegment;
 import com.enterprise.aiassistant.backend.processing.chunking.mapper.ChunkingMapper;
 import com.enterprise.aiassistant.backend.processing.chunking.support.SlidingWindowSplitter;
 import com.enterprise.aiassistant.backend.processing.extraction.dto.DocumentElement;
@@ -29,9 +29,9 @@ public class SpreadsheetChunkingStrategy implements ChunkingStrategy {
     // Gộp row theo từng sheet, mỗi chunk luôn kèm header row để không mất ngữ nghĩa cột.
     // chunkIndex tăng liên tục xuyên suốt cả document.
     @Override
-    public List<TextChunk> chunk(ExtractedText extractedText) {
+    public List<TextSegment> chunk(ExtractedText extractedText) {
 
-        List<TextChunk> chunks = new ArrayList<>();
+        List<TextSegment> chunks = new ArrayList<>();
 
         // pageNumber của element Excel chính là sheet index (xem ExcelTextExtractor).
         Map<Integer, List<DocumentElement>> rowsBySheet = extractedText.getElements().stream()
@@ -59,7 +59,7 @@ public class SpreadsheetChunkingStrategy implements ChunkingStrategy {
             int sheetNumber,
             List<DocumentElement> sheetRows,
             int startChunkIndex,
-            List<TextChunk> chunks
+            List<TextSegment> chunks
     ) {
 
         int chunkIndex = startChunkIndex;
@@ -85,14 +85,14 @@ public class SpreadsheetChunkingStrategy implements ChunkingStrategy {
 
                 // Đảm bảo chỉ flush khi buffer hiện có lưu nội dung, chứ không chỉ lưu mỗi heading
                 if (buffer.length() > header.length()) {
-                    chunks.add(chunkingMapper.toTextChunk(
+                    chunks.add(chunkingMapper.toTextSegment(
                             chunkIndex++, buffer.toString(), sheetNumber, bufferStart, rowStart));
                 }
 
                 // Mỗi piece vẫn được ghép header ở đầu để giữ ngữ nghĩa cột,
                 // dù row bị SlidingWindowSplitter cắt thành nhiều phần.
                 for (String piece : slidingWindowSplitter.split(row)) {
-                    chunks.add(chunkingMapper.toTextChunk(
+                    chunks.add(chunkingMapper.toTextSegment(
                             chunkIndex++,
                             header + ROW_SEPARATOR + piece,
                             sheetNumber,
@@ -112,7 +112,7 @@ public class SpreadsheetChunkingStrategy implements ChunkingStrategy {
             // flush nội dung đã gom trước đó trong buffer thành một chunk.
             if (buffer.length() + row.length() + ROW_SEPARATOR.length() > CHUNK_SIZE) {
 
-                chunks.add(chunkingMapper.toTextChunk(
+                chunks.add(chunkingMapper.toTextSegment(
                         chunkIndex++, buffer.toString(), sheetNumber, bufferStart, rowStart));
 
                 // Bắt đầu chunk mới, vẫn giữ header để không mất ngữ nghĩa cột.
@@ -127,7 +127,7 @@ public class SpreadsheetChunkingStrategy implements ChunkingStrategy {
         // Chỉ flush khi còn row chưa ghi
         // hoặc sheet chỉ có mỗi header thì vẫn nên tạo chunk cho sheet này
         if (buffer.length() > header.length() || chunkIndex == startChunkIndex) {
-            chunks.add(chunkingMapper.toTextChunk(
+            chunks.add(chunkingMapper.toTextSegment(
                     chunkIndex++, buffer.toString(), sheetNumber, bufferStart, cursor));
         }
 

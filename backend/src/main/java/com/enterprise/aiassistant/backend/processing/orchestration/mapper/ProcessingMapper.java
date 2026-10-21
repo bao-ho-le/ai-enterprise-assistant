@@ -1,14 +1,14 @@
 package com.enterprise.aiassistant.backend.processing.orchestration.mapper;
 
-import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.dto.EmbeddingResult;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.VectorPayload;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.VectorPoint;
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
 import com.enterprise.aiassistant.backend.document.entity.DocumentText;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
-import com.enterprise.aiassistant.backend.processing.chunking.dto.TextChunk;
 import com.enterprise.aiassistant.backend.processing.extraction.dto.ExtractedText;
+import dev.langchain4j.data.document.Metadata;
+import dev.langchain4j.data.segment.TextSegment;
 import org.springframework.stereotype.Component;
+
+import static com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper.*;
 
 
 @Component
@@ -23,37 +23,16 @@ public class ProcessingMapper {
                 .build();
     }
 
-    public DocumentChunk toDocumentChunk(DocumentVersion version, TextChunk textChunk) {
+    public DocumentChunk toDocumentChunk(DocumentVersion version, TextSegment segment) {
+        Metadata metadata = segment.metadata();
         return DocumentChunk.builder()
                 .documentVersion(version)
-                .chunkIndex(textChunk.getChunkIndex())
-                .content(textChunk.getContent())
-                .pageNumber(textChunk.getPageNumber())
-                .startChar(textChunk.getStartChar())
-                .endChar(textChunk.getEndChar())
-                .tokenCount(textChunk.getTokenCount())
-                .build();
-    }
-
-    public VectorPoint toVectorPoint(DocumentChunk chunk, EmbeddingResult embeddingResult) {
-
-        VectorPayload payload = VectorPayload.builder()
-                .chunkId(chunk.getId())
-                .documentId(chunk.getDocumentVersion().getDocument().getId())
-                .documentVersionId(chunk.getDocumentVersion().getId())
-                .chunkIndex(chunk.getChunkIndex())
-                .pageNumber(chunk.getPageNumber())
-                .startChar(chunk.getStartChar())
-                .endChar(chunk.getEndChar())
-                .tokenCount(chunk.getTokenCount())
-                .embeddingModel(embeddingResult.getModel())
-                .content(chunk.getContent())
-                .build();
-
-        return VectorPoint.builder()
-                .id(chunk.getId())
-                .vector(embeddingResult.getVector())
-                .payload(payload)
+                .chunkIndex(metadata.getInteger(CHUNK_INDEX))
+                .content(segment.text())
+                .pageNumber(metadata.getInteger(PAGE_NUMBER))
+                .startChar(metadata.getInteger(START_CHAR))
+                .endChar(metadata.getInteger(END_CHAR))
+                .tokenCount(metadata.getInteger(TOKEN_COUNT))
                 .build();
     }
 }

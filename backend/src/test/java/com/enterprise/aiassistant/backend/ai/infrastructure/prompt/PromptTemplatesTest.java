@@ -76,8 +76,8 @@ class PromptTemplatesTest {
         assertFilled(promptBuilderService.buildFormPrompt(form), "Đăng ký nghỉ phép", "Infer reasonable fields");
     }
 
-    // Dữ liệu chứa đúng tên biến của prompt phải được giữ nguyên (SinglePassPromptTemplateFactory),
-    // không bị thay bằng giá trị của biến khác như bộ điền mặc định của LangChain4j.
+    // Dữ liệu chứa đúng tên biến của prompt phải được giữ nguyên, không bị thay bằng giá trị của biến
+    // khác. LangChain4j từ 1.22 tự điền template một lượt; bản 1.4 thì không, test này sẽ fail.
     @Test
     void valuesContainingVariableNamesStayLiteral() {
 

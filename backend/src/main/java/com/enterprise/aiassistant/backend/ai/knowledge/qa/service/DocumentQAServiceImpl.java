@@ -4,8 +4,7 @@ import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversa
 import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversationDocument;
 import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.ai.chat.conversation.repository.AIConversationDocumentRepository;
-import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.dto.EmbeddingResult;
-import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.service.EmbeddingService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.helper.EmbeddingHelper;
 import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
 import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
 import com.enterprise.aiassistant.backend.ai.chat.memory.service.ConversationMemoryService;
@@ -19,18 +18,26 @@ import com.enterprise.aiassistant.backend.ai.infrastructure.prompt.service.Promp
 import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.service.AIUsageLogService;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.SearchResult;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.dto.VectorPayload;
-import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.service.VectorStoreService;
+import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.helper.VectorStoreHelper;
+import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper;
+import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.document.entity.Document;
 import com.enterprise.aiassistant.backend.document.repository.DocumentChunkRepository;
 import com.enterprise.aiassistant.backend.document.service.DocumentAuthorizationService;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.service.Result;
+import dev.langchain4j.store.embedding.EmbeddingMatch;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+
+import static dev.langchain4j.store.embedding.filter.MetadataFilterBuilder.metadataKey;
 
 @Service
 @RequiredArgsConstructor
@@ -43,8 +50,11 @@ public class DocumentQAServiceImpl implements DocumentQAService {
     private final AIMessageSourceRepository messageSourceRepository;
     private final DocumentChunkRepository documentChunkRepository;
 
-    private final EmbeddingService embeddingService;
-    private final VectorStoreService vectorStoreService;
+    private final EmbeddingModel embeddingModel;
+    private final EmbeddingHelper embeddingHelper;
+    private final EmbeddingStore<TextSegment> embeddingStore;
+    private final VectorStoreHelper vectorStoreHelper;
+    private final VectorStoreMapper vectorStoreMapper;
     private final ConversationMemoryService conversationMemoryService;
     private final PromptBuilderService promptBuilderService;
     private final ChatAssistant chatAssistant;
@@ -86,12 +96,12 @@ public class DocumentQAServiceImpl implements DocumentQAService {
             // Context các lượt trước (chưa gồm câu hỏi hiện tại): giúp LLM hiểu tham chiếu
             String conversationMemory = conversationMemoryService.buildMemoryContext(conversation.getId());
 
-            List<SearchResult> relevantHits = attachedVersionIds.isEmpty()
+            List<EmbeddingMatch<TextSegment>> relevantHits = attachedVersionIds.isEmpty()
                     ? List.of()
                     : retrieveRelevantChunks(question, attachedVersionIds);
 
             String documentExcerpts = promptBuilderService.buildDocumentExcerpts(
-                    relevantHits.stream().map(hit -> hit.getPayload().getContent()).toList()
+                    relevantHits.stream().map(hit -> hit.embedded().text()).toList()
             );
 
             Result<String> answer = llmHelper.call(() ->
@@ -151,27 +161,35 @@ public class DocumentQAServiceImpl implements DocumentQAService {
         return document != null && readableDocumentIds.contains(document.getId());
     }
 
-    // Chỉ lấy tối đa 5 chunks có độ liên quan cao nhất (CHAT_TOP_K)
-    private List<SearchResult> retrieveRelevantChunks(String question, List<Long> attachedVersionIds) {
+    // Chỉ lấy tối đa 5 chunks có độ liên quan cao nhất (CHAT_TOP_K) trong các tài liệu đính kèm.
+    // Lọc theo version ngay trong Qdrant, không lấy top-K toàn kho rồi mới lọc (cách cũ có thể mất
+    // hết kết quả khi tài liệu khác điểm cao hơn); ngưỡng điểm vẫn như semantic search.
+    private List<EmbeddingMatch<TextSegment>> retrieveRelevantChunks(String question, List<Long> attachedVersionIds) {
 
-        EmbeddingResult queryEmbedding = embeddingService.embed(question);
+        Embedding queryEmbedding = embeddingHelper.call(() -> embeddingModel.embed(question)).content();
 
-        return vectorStoreService.search(queryEmbedding.getVector(), CHAT_TOP_K, null).stream()
-                .filter(hit -> attachedVersionIds.contains(hit.getPayload().getDocumentVersionId()))
-                .toList();
+        EmbeddingSearchRequest request = EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedding)
+                .maxResults(CHAT_TOP_K)
+                .minScore(vectorStoreHelper.minScore())
+                .filter(metadataKey(VectorStoreMapper.DOCUMENT_VERSION_ID).isIn(attachedVersionIds))
+                .build();
+
+        return vectorStoreHelper.call(ErrorCode.VECTOR_SEARCH_FAILED, () -> embeddingStore.search(request).matches());
     }
 
-    private AIMessageSource toMessageSource(AIMessage assistantMessage, SearchResult hit) {
+    private AIMessageSource toMessageSource(AIMessage assistantMessage, EmbeddingMatch<TextSegment> hit) {
 
-        VectorPayload payload = hit.getPayload();
+        Long chunkId = vectorStoreMapper.chunkId(hit);
+        double score = vectorStoreMapper.cosineScore(hit);
 
         return AIMessageSource.builder()
                 .aiMessage(assistantMessage)
-                .documentChunk(documentChunkRepository.getReferenceById(payload.getChunkId()))
-                .similarityScore(hit.getScore())
-                .documentVersionId(payload.getDocumentVersionId())
-                .chunkId(payload.getChunkId())
-                .score(hit.getScore())
+                .documentChunk(documentChunkRepository.getReferenceById(chunkId))
+                .similarityScore(score)
+                .documentVersionId(vectorStoreMapper.documentVersionId(hit))
+                .chunkId(chunkId)
+                .score(score)
                 .build();
     }
 

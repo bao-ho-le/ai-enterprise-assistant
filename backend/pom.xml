@@ -35,7 +35,7 @@
 			<dependency>
 				<groupId>dev.langchain4j</groupId>
 				<artifactId>langchain4j-bom</artifactId>
-				<version>1.4.0</version>
+				<version>1.22.0</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -204,7 +204,8 @@
 		<dependency>
 			<groupId>io.qdrant</groupId>
 			<artifactId>client</artifactId>
-			<version>1.15.0</version>
+			<!-- Khớp với bản mà langchain4j-qdrant 1.22.0-beta32 được build cùng -->
+			<version>1.17.0</version>
 		</dependency>
 
 	</dependencies>

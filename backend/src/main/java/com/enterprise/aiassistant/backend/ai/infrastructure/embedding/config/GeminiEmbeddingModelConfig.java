@@ -12,8 +12,8 @@ public class GeminiEmbeddingModelConfig {
 
     private final GeminiProperties properties;
 
-    // Exposed as the provider-agnostic LangChain4j EmbeddingModel type so
-    // GeminiEmbeddingService only depends on the SDK abstraction, not this Gemini class.
+    // Exposed as the provider-agnostic LangChain4j EmbeddingModel type so callers
+    // only depend on the SDK abstraction, not this Gemini class.
     @Bean
     public EmbeddingModel embeddingModel() {
         return GoogleAiEmbeddingModel.builder()
