@@ -176,11 +176,15 @@ public class DocumentProcessingService {
                 }
             }
 
-            vectorStoreHelper.run(ErrorCode.VECTOR_UPSERT_FAILED, () -> embeddingStore.addAll(
-                    segments.stream().map(vectorStoreMapper::pointId).toList(),
-                    embeddings,
-                    segments
-            ));
+            vectorStoreHelper.call(ErrorCode.VECTOR_UPSERT_FAILED, () -> {
+                embeddingStore.addAll(
+                        segments.stream().map(vectorStoreMapper::pointId).toList(), // Lấy UUID của từng segment
+                        embeddings, // Lấy kiểu vector số
+                        segments    // Lấy kiểu gốc, ở đây là TextSegment
+                );
+
+                return null; // ở đây phải return do Supplier<T> luôn cần trả về 1 giá trị, nói chung cũng không cần để ý chổ này
+            });
 
             version.setStatus(VersionStatus.READY);
 

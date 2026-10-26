@@ -35,7 +35,7 @@ public class QdrantConfig {
     }
 
     // destroyMethod rỗng: QdrantClient đã được Spring đóng ở bean của chính nó.
-    @Bean(destroyMethod = "")
+    @Bean
     public EmbeddingStore<TextSegment> embeddingStore(QdrantClient qdrantClient) {
 
         return QdrantEmbeddingStore.builder()

@@ -32,10 +32,4 @@ public class VectorStoreHelper {
         }
     }
 
-    public void run(ErrorCode errorCode, Runnable storeCall) {
-        call(errorCode, () -> {
-            storeCall.run();
-            return null;
-        });
-    }
 }

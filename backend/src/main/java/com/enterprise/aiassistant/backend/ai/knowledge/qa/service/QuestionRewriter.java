@@ -66,6 +66,8 @@ public class QuestionRewriter extends CompressingQueryTransformer {
         ));
 
         try {
+
+            // transform đang dùng prompt của question-rewrite.txt, khởi tạo phía trên
             String rewrittenQuestion = llmHelper.call(() -> transform(query)).iterator().next().text();
 
             return normalize(rewrittenQuestion, userMessage);
