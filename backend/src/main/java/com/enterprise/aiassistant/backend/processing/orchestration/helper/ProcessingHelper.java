@@ -1,9 +1,5 @@
 package com.enterprise.aiassistant.backend.processing.orchestration.helper;
 
-import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.service.AIUsageLogService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.BusinessException;
 import com.enterprise.aiassistant.backend.document.entity.DocumentVersion;
@@ -22,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProcessingHelper {
 
     private final DocumentVersionRepository documentVersionRepository;
-
-    private final AIUsageLogService aiUsageLogService;
 
     // Chặn các trường hợp document đã được xử lí thành công
     public void validateStatus(DocumentVersion version) {
@@ -78,15 +72,5 @@ public class ProcessingHelper {
         }
     }
 
-    public void logUsage(String model, Integer inputTokens, AIUsageStatus status, String errorMessage) {
-        aiUsageLogService.logAiUsage(AIUsageLogRequest.builder()
-                .conversationType(ConversationType.DOCUMENT_INDEXING)
-                .model(model)
-                .inputTokens(inputTokens)
-                .outputTokens(0)
-                .status(status)
-                .errorMessage(errorMessage)
-                .build());
-    }
 
 }

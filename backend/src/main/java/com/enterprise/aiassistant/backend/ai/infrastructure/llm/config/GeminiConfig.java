@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.ai.infrastructure.llm.config;
 
+import com.enterprise.aiassistant.backend.ai.analytics.usage.listener.AIUsageListener;
 import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
 import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.ChatModel;
@@ -11,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Configuration
 public class GeminiConfig {
@@ -28,7 +30,7 @@ public class GeminiConfig {
     private boolean logRequests;
 
     @Bean
-    public ChatModel geminiChatModel() {
+    public ChatModel geminiChatModel(AIUsageListener aiUsageListener) {
 
         return GoogleAiGeminiChatModel.builder()
                 .apiKey(apiKey)
@@ -37,6 +39,8 @@ public class GeminiConfig {
                 // AI Service trả enum (classifyIntent) thì gửi kèm JSON schema để Gemini chỉ trả giá trị
                 // hợp lệ; method trả String và các lời gọi ChatModel trực tiếp không bị ảnh hưởng.
                 .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
+                // Mọi lượt gọi Gemini (AI Service, ChatModel trực tiếp, luồng RAG) đều ghi AI usage log.
+                .listeners(List.of(aiUsageListener))
                 .build();
     }
 

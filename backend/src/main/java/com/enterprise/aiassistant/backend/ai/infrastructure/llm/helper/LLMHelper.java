@@ -3,7 +3,6 @@ package com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.LLMException;
 import dev.langchain4j.exception.InvalidRequestException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Locale;
@@ -11,14 +10,6 @@ import java.util.function.Supplier;
 
 @Component
 public class LLMHelper {
-
-    @Value("${gemini.llm-model.model-name}")
-    private String modelName;
-
-    // Tên model ghi vào AI usage log, kể cả khi lời gọi model thất bại.
-    public String getModelName() {
-        return modelName;
-    }
 
     // Mọi lời gọi Gemini (ChatAssistant hoặc ChatModel) đi qua đây để lỗi của LangChain4j thành
     // LLMException: intent/rewrite/nén memory bắt LLMException để fallback, lỗi vượt token

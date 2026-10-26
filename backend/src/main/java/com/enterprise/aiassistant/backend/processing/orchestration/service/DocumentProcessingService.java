@@ -1,7 +1,8 @@
 package com.enterprise.aiassistant.backend.processing.orchestration.service;
 
 import com.enterprise.aiassistant.backend.ai.infrastructure.embedding.helper.EmbeddingHelper;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
+import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
+import com.enterprise.aiassistant.backend.ai.analytics.usage.listener.AIUsageContext;
 import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.helper.VectorStoreHelper;
 import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
@@ -24,7 +25,6 @@ import com.enterprise.aiassistant.backend.storage.service.FileStorageService;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -155,24 +155,14 @@ public class DocumentProcessingService {
 
             List<Embedding> embeddings = new ArrayList<>();
 
-            for (int from = 0; from < segments.size(); from += EMBEDDING_BATCH_SIZE) {
+            // Mỗi lô là một lượt gọi embedding, AIUsageListener ghi một dòng usage log cho từng lô.
+            try (AIUsageContext ignored = AIUsageContext.open(ConversationType.DOCUMENT_INDEXING, null, null)) {
 
-                List<TextSegment> batch = segments.subList(from, Math.min(from + EMBEDDING_BATCH_SIZE, segments.size()));
+                for (int from = 0; from < segments.size(); from += EMBEDDING_BATCH_SIZE) {
 
-                try {
-                    Response<List<Embedding>> response = embeddingHelper.call(() -> embeddingModel.embedAll(batch));
-                    processingHelper.logUsage(
-                            embeddingModelName,
-                            embeddingHelper.inputTokens(response, batch.stream().map(TextSegment::text).toList()),
-                            AIUsageStatus.SUCCESS,
-                            null
-                    );
+                    List<TextSegment> batch = segments.subList(from, Math.min(from + EMBEDDING_BATCH_SIZE, segments.size()));
 
-                    embeddings.addAll(response.content());
-
-                } catch (RuntimeException e) {
-                    processingHelper.logUsage(embeddingModelName, null, AIUsageStatus.FAILED, e.getMessage());
-                    throw e;
+                    embeddings.addAll(embeddingHelper.call(() -> embeddingModel.embedAll(batch)).content());
                 }
             }
 

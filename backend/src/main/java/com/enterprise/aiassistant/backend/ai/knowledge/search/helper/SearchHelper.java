@@ -1,24 +1,16 @@
 package com.enterprise.aiassistant.backend.ai.knowledge.search.helper;
 
 import com.enterprise.aiassistant.backend.ai.knowledge.search.dto.request.SemanticSearchRequest;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.service.AIUsageLogService;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.SearchException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class SearchHelper {
 
     private static final int DEFAULT_TOP_K = 10;
     private static final int MAX_TOP_K = 50;
     private static final int MAX_KEYWORD_LENGTH = 255;
-
-    private final AIUsageLogService aiUsageLogService;
 
     public void validateSearchRequest(SemanticSearchRequest request) {
 
@@ -48,15 +40,5 @@ public class SearchHelper {
         return topK != null ? topK : DEFAULT_TOP_K;
     }
 
-    public void logUsage(String model, Integer inputTokens, AIUsageStatus status, String errorMessage) {
-        aiUsageLogService.logAiUsage(AIUsageLogRequest.builder()
-                .conversationType(ConversationType.SEMANTIC_SEARCH)
-                .model(model)
-                .inputTokens(inputTokens)
-                .outputTokens(0)
-                .status(status)
-                .errorMessage(errorMessage)
-                .build());
-    }
 
 }

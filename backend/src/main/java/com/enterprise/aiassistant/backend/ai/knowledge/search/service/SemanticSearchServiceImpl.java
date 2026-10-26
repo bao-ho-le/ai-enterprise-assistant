@@ -5,7 +5,8 @@ import com.enterprise.aiassistant.backend.ai.knowledge.search.dto.request.Semant
 import com.enterprise.aiassistant.backend.ai.knowledge.search.dto.response.SemanticSearchResult;
 import com.enterprise.aiassistant.backend.ai.knowledge.search.helper.SearchHelper;
 import com.enterprise.aiassistant.backend.ai.knowledge.search.mapper.SearchMapper;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
+import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
+import com.enterprise.aiassistant.backend.ai.analytics.usage.listener.AIUsageContext;
 import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.helper.VectorStoreHelper;
 import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
@@ -18,7 +19,6 @@ import com.enterprise.aiassistant.backend.user.enums.Permission;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.model.output.Response;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
@@ -68,48 +68,38 @@ public class SemanticSearchServiceImpl implements SemanticSearchService {
 
         int topK = searchHelper.resolveTopK(request.getTopK());
 
-        String model = embeddingHelper.getModelName();
-        Integer inputTokens = null;
-
-        try {
-            Response<Embedding> queryEmbedding = embeddingHelper.call(() -> embeddingModel.embed(request.getKeyword()));
-            inputTokens = embeddingHelper.inputTokens(queryEmbedding, List.of(request.getKeyword()));
-
-            // Nếu có documentId thì chỉ search trong document đó, không thì search toàn bộ Qdrant
-            EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
-                    .queryEmbedding(queryEmbedding.content())
-                    .maxResults(topK)
-                    .minScore(vectorStoreHelper.minScore())
-                    .filter(request.getDocumentId() != null
-                            ? metadataKey(VectorStoreMapper.DOCUMENT_ID).isEqualTo(request.getDocumentId())
-                            : null)
-                    .build();
-
-            List<EmbeddingMatch<TextSegment>> hits = vectorStoreHelper.call(
-                    ErrorCode.VECTOR_SEARCH_FAILED,
-                    () -> embeddingStore.search(searchRequest).matches()
-            );
-
-            List<SemanticSearchResult> results;
-            if (hits.isEmpty()) {
-                results = List.of();
-            } else {
-                Map<Long, Document> activeDocumentsById = fetchActiveDocuments(hits);
-
-                List<EmbeddingMatch<TextSegment>> validHits = hits.stream()
-                        .filter(hit -> isCurrentVersionHit(hit, activeDocumentsById))
-                        .toList();
-
-                results = searchMapper.toSemanticSearchResults(validHits);
-            }
-
-            searchHelper.logUsage(model, inputTokens, AIUsageStatus.SUCCESS, null);
-            return results;
-
-        } catch (RuntimeException ex) {
-            searchHelper.logUsage(model, inputTokens, AIUsageStatus.FAILED, ex.getMessage());
-            throw ex;
+        // Usage log của lượt embedding câu tìm kiếm do AIUsageListener ghi.
+        Embedding queryEmbedding;
+        try (AIUsageContext ignored = AIUsageContext.open(ConversationType.SEMANTIC_SEARCH, null, null)) {
+            queryEmbedding = embeddingHelper.call(() -> embeddingModel.embed(request.getKeyword())).content();
         }
+
+        // Nếu có documentId thì chỉ search trong document đó, không thì search toàn bộ Qdrant
+        EmbeddingSearchRequest searchRequest = EmbeddingSearchRequest.builder()
+                .queryEmbedding(queryEmbedding)
+                .maxResults(topK)
+                .minScore(vectorStoreHelper.minScore())
+                .filter(request.getDocumentId() != null
+                        ? metadataKey(VectorStoreMapper.DOCUMENT_ID).isEqualTo(request.getDocumentId())
+                        : null)
+                .build();
+
+        List<EmbeddingMatch<TextSegment>> hits = vectorStoreHelper.call(
+                ErrorCode.VECTOR_SEARCH_FAILED,
+                () -> embeddingStore.search(searchRequest).matches()
+        );
+
+        if (hits.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Document> activeDocumentsById = fetchActiveDocuments(hits);
+
+        List<EmbeddingMatch<TextSegment>> validHits = hits.stream()
+                .filter(hit -> isCurrentVersionHit(hit, activeDocumentsById))
+                .toList();
+
+        return searchMapper.toSemanticSearchResults(validHits);
     }
 
 

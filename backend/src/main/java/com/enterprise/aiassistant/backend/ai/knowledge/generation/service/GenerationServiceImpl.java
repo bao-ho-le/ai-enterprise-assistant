@@ -23,10 +23,8 @@ import com.enterprise.aiassistant.backend.ai.knowledge.generation.mapper.Generat
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.repository.GeneratedContentRepository;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.repository.GenerationRepository;
 import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.service.AIUsageLogService;
+import com.enterprise.aiassistant.backend.ai.analytics.usage.listener.AIUsageContext;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
 import com.enterprise.aiassistant.backend.document.enums.DocumentStatus;
@@ -57,7 +55,6 @@ public class GenerationServiceImpl implements GenerationService {
     private final GenerationHelper generationHelper;
     private final GeneratedMapper generatedMapper;
     private final GenerationMapper generationMapper;
-    private final AIUsageLogService aiUsageLogService;
     private final ChatModel chatModel;
     private final LLMHelper llmHelper;
 
@@ -99,19 +96,15 @@ public class GenerationServiceImpl implements GenerationService {
         generation.setStatus(GenerationStatus.RUNNING);
         generationRepository.save(generation);
 
-        String model = llmHelper.getModelName();
-        Integer inputTokens = null;
-        Integer outputTokens = null;
-
         try {
 
             // 4. Gọi LLM để sinh nội dung. Prompt đã được handler điền sẵn (PromptTemplate) nên gửi
-            // thẳng qua ChatModel, không qua AI Service (xem PromptBuilderService)
+            // thẳng qua ChatModel, không qua AI Service (xem PromptBuilderService).
+            // Usage log do AIUsageListener ghi, kèm generation này.
 
-            ChatResponse response = llmHelper.call(() -> chatModel.chat(UserMessage.from(context.getPrompt())));
-            if (response.tokenUsage() != null) {
-                inputTokens = response.tokenUsage().inputTokenCount();
-                outputTokens = response.tokenUsage().outputTokenCount();
+            ChatResponse response;
+            try (AIUsageContext ignored = AIUsageContext.open(conversation.getConversationType(), conversation.getId(), generation.getId())) {
+                response = llmHelper.call(() -> chatModel.chat(UserMessage.from(context.getPrompt())));
             }
 
             // 5. Lưu GeneratedContent và cập nhật Generation thành công
@@ -128,21 +121,17 @@ public class GenerationServiceImpl implements GenerationService {
             generation.setStatus(GenerationStatus.COMPLETED);
             generationRepository.save(generation);
 
-            // 6. Ghi nhận usage thành công và trả kết quả
-
-            logUsage(conversation, model, inputTokens, outputTokens, AIUsageStatus.SUCCESS, null);
+            // 6. Trả kết quả
 
             return generationMapper.toTriggerGenerationResponse(generation, generatedContent);
 
         } catch (RuntimeException ex) {
 
-            // Đánh dấu thất bại, ghi log usage và ném exception
+            // Đánh dấu thất bại và ném exception
 
             generation.setStatus(GenerationStatus.FAILED);
             generation.setErrorMessage(ex.getMessage());
             generationRepository.save(generation);
-
-            logUsage(conversation, model, inputTokens, outputTokens, AIUsageStatus.FAILED, ex.getMessage());
 
             throw new AIConversationException(ErrorCode.GENERATION_RUN_FAILED, ex);
         }
@@ -193,24 +182,5 @@ public class GenerationServiceImpl implements GenerationService {
                 .filter(handler -> handler.supports(conversationType))
                 .findFirst()
                 .orElseThrow(() -> new AIConversationException(ErrorCode.GENERATION_HANDLER_NOT_FOUND));
-    }
-
-    private void logUsage(
-            AIConversation conversation,
-            String model,
-            Integer inputTokens,
-            Integer outputTokens,
-            AIUsageStatus status,
-            String errorMessage
-    ) {
-        aiUsageLogService.logAiUsage(AIUsageLogRequest.builder()
-                .conversationId(conversation.getId())
-                .conversationType(conversation.getConversationType())
-                .model(model)
-                .inputTokens(inputTokens)
-                .outputTokens(outputTokens)
-                .status(status)
-                .errorMessage(errorMessage)
-                .build());
     }
 }

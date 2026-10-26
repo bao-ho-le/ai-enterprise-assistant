@@ -12,9 +12,6 @@ import com.enterprise.aiassistant.backend.ai.chat.message.enums.AIMessageRole;
 import com.enterprise.aiassistant.backend.ai.chat.message.mapper.AIMessageMapper;
 import com.enterprise.aiassistant.backend.ai.chat.message.repository.AIMessageRepository;
 import com.enterprise.aiassistant.backend.ai.chat.message.repository.AIMessageSourceRepository;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.dto.request.AIUsageLogRequest;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.AIUsageStatus;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.service.AIUsageLogService;
 import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper.VectorStoreMapper;
 import com.enterprise.aiassistant.backend.ai.knowledge.qa.config.DocumentQAConfig;
 import com.enterprise.aiassistant.backend.document.entity.Document;
@@ -45,7 +42,6 @@ public class DocumentQAServiceImpl implements DocumentQAService {
     private final ConversationMemoryService conversationMemoryService;
     private final DocumentQAAssistant documentQAAssistant;
     private final LLMHelper llmHelper;
-    private final AIUsageLogService aiUsageLogService;
 
     private final AIMessageMapper messageMapper;
     private final AIConversationHelper aiConversationHelper;
@@ -73,11 +69,7 @@ public class DocumentQAServiceImpl implements DocumentQAService {
                 .map(link -> link.getDocumentVersion().getId())
                 .toList();
 
-        String model = llmHelper.getModelName();
-        Integer inputTokens = null;
-        Integer outputTokens = null;
-        Long messageId = null;
-
+        // Usage log của các lượt gọi AI (embedding câu hỏi, Gemini trả lời) do AIUsageListener ghi.
         try {
             // Context các lượt trước (chưa gồm câu hỏi hiện tại): giúp LLM hiểu tham chiếu
             String conversationMemory = conversationMemoryService.buildMemoryContext(conversation.getId());
@@ -93,11 +85,6 @@ public class DocumentQAServiceImpl implements DocumentQAService {
                     documentQAAssistant.answer(question, conversationMemory, retrievalParameters)
             );
 
-            if (answer.tokenUsage() != null) {
-                inputTokens = answer.tokenUsage().inputTokenCount();
-                outputTokens = answer.tokenUsage().outputTokenCount();
-            }
-
             AIMessage assistantMessage = messageRepository.save(
                     messageMapper.toMessage(conversation, AIMessageRole.ASSISTANT, answer.content())
             );
@@ -110,36 +97,12 @@ public class DocumentQAServiceImpl implements DocumentQAService {
                 );
             }
 
-            messageId = assistantMessage.getId();
-            aiUsageLogService.logAiUsage(
-                    AIUsageLogRequest.builder()
-                            .conversationId(conversation.getId())
-                            .messageId(messageId)
-                            .conversationType(conversation.getConversationType())
-                            .model(model)
-                            .inputTokens(inputTokens)
-                            .outputTokens(outputTokens)
-                            .status(AIUsageStatus.SUCCESS)
-                            .build()
-            );
-
             return assistantMessage;
 
         } catch (RuntimeException ex) {
             // Embedding/tìm kiếm giờ chạy bên trong AI Service, không còn qua EmbeddingHelper (nơi ghi log
             // lỗi), nên ghi log ở đây để lỗi không bị nuốt mất.
             log.error("Document QA failed for conversation {}", conversation.getId(), ex);
-            aiUsageLogService.logAiUsage(
-                    AIUsageLogRequest.builder()
-                            .conversationId(conversation.getId())
-                            .messageId(messageId)
-                            .conversationType(conversation.getConversationType())
-                            .model(model)
-                            .inputTokens(inputTokens)
-                            .outputTokens(outputTokens)
-                            .status(AIUsageStatus.FAILED)
-                            .build()
-            );
             return null;
         }
     }

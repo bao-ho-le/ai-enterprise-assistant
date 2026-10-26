@@ -1,5 +1,6 @@
 package com.enterprise.aiassistant.backend.ai.chat.message.service;
 
+import com.enterprise.aiassistant.backend.ai.analytics.usage.listener.AIUsageContext;
 import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversationHelper;
 import com.enterprise.aiassistant.backend.auth.service.CurrentUserService;
 import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversation;
@@ -81,18 +82,24 @@ public class AIMessageServiceImpl implements AIMessageService {
         AIMessage userMessage = messageMapper.toMessage(conversation, AIMessageRole.USER, request.getContent());
         AIMessage savedUserMessage = messageRepository.save(userMessage);
 
-        AIMessage assistantMessage = answerByIntent(conversation, request.getContent());
+        // Mọi lượt gọi AI của tin nhắn này (intent, viết lại câu hỏi, embedding, trả lời, nén memory)
+        // được AIUsageListener ghi usage log theo conversation hiện tại.
+        AIMessage assistantMessage;
+        try (AIUsageContext ignored = AIUsageContext.open(conversation.getConversationType(), conversation.getId(), null)) {
 
-        // Chỉ cập nhật conversation memory sau khi assistant trả lời thành công.
-        // Tránh lưu user turn với một assistant response giả/null khi LLM hoặc các bước xử lý trước đó thất bại.
-        // Memory chỉ phản ánh những lượt hội thoại thực sự đã hoàn tất.
-        // Nếu appendTurn() thất bại, transaction sẽ xử lý lỗi theo cơ chế hiện tại.
-        if (assistantMessage != null) {
-            conversationMemoryService.appendTurn(
-                    conversation,
-                    request.getContent(),
-                    assistantMessage.getContent()
-            );
+            assistantMessage = answerByIntent(conversation, request.getContent());
+
+            // Chỉ cập nhật conversation memory sau khi assistant trả lời thành công.
+            // Tránh lưu user turn với một assistant response giả/null khi LLM hoặc các bước xử lý trước đó thất bại.
+            // Memory chỉ phản ánh những lượt hội thoại thực sự đã hoàn tất.
+            // Nếu appendTurn() thất bại, transaction sẽ xử lý lỗi theo cơ chế hiện tại.
+            if (assistantMessage != null) {
+                conversationMemoryService.appendTurn(
+                        conversation,
+                        request.getContent(),
+                        assistantMessage.getContent()
+                );
+            }
         }
 
         return messageMapper.toMessageResponse(savedUserMessage, assistantMessage);
