@@ -9,7 +9,7 @@ Do not answer the question. Do not add facts that are not supported by the conve
 Output only the rewritten question and nothing else — no explanation, no Markdown, no surrounding quotation marks.
 
 Conversation context:
-{{conversationMemory}}
+{{chatMemory}}
 
 Current user message:
-{{userMessage}}
+{{query}}

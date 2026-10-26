@@ -108,7 +108,7 @@ public class PromptBuilderService {
     }
 
     // Đọc UTF-8 tường minh: prompt có tiếng Việt và các ký tự "—", "•".
-    private static PromptTemplate load(String path) {
+    public static PromptTemplate load(String path) {
         try {
             return PromptTemplate.from(new ClassPathResource(path).getContentAsString(StandardCharsets.UTF_8));
         } catch (IOException e) {

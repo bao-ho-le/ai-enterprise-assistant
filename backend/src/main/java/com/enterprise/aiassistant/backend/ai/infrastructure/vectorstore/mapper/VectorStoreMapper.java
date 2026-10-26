@@ -2,6 +2,8 @@ package com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.mapper;
 
 import com.enterprise.aiassistant.backend.document.entity.DocumentChunk;
 import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.ContentMetadata;
 import dev.langchain4j.store.embedding.CosineSimilarity;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import org.springframework.stereotype.Component;
@@ -66,5 +68,19 @@ public class VectorStoreMapper {
     // "% match" trên giao diện giữ như cũ.
     public double cosineScore(EmbeddingMatch<TextSegment> match) {
         return CosineSimilarity.fromRelevanceScore(match.score());
+    }
+
+    // Kết quả tìm của luồng RAG (Document QA): metadata nằm trong textSegment, relevance score
+    // nằm ở ContentMetadata.SCORE.
+    public Long chunkId(Content content) {
+        return content.textSegment().metadata().getLong(CHUNK_ID);
+    }
+
+    public Long documentVersionId(Content content) {
+        return content.textSegment().metadata().getLong(DOCUMENT_VERSION_ID);
+    }
+
+    public double cosineScore(Content content) {
+        return CosineSimilarity.fromRelevanceScore((Double) content.metadata().get(ContentMetadata.SCORE));
     }
 }

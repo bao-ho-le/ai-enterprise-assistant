@@ -1,19 +1,27 @@
 package com.enterprise.aiassistant.backend.ai.infrastructure.prompt;
 
+import com.enterprise.aiassistant.backend.ai.chat.conversation.entity.AIConversation;
+import com.enterprise.aiassistant.backend.ai.chat.conversation.helper.AIConversationHelper;
+import com.enterprise.aiassistant.backend.ai.chat.intent.enums.Intent;
+import com.enterprise.aiassistant.backend.ai.chat.memory.service.ConversationMemoryService;
+import com.enterprise.aiassistant.backend.ai.chat.message.helper.AIMessageHelper;
+import com.enterprise.aiassistant.backend.ai.infrastructure.llm.helper.LLMHelper;
 import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
 import com.enterprise.aiassistant.backend.ai.infrastructure.prompt.service.PromptBuilderService;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.dto.EmailGenerationInput;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.dto.FormGenerationInput;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.dto.ReportGenerationInput;
 import com.enterprise.aiassistant.backend.ai.knowledge.generation.dto.SummaryGenerationInput;
+import com.enterprise.aiassistant.backend.ai.knowledge.qa.service.QuestionRewriter;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static dev.langchain4j.service.AiServices.create;
@@ -22,15 +30,24 @@ import static org.junit.jupiter.api.Assertions.*;
 // Mỗi file trong resources/prompts phải điền được đủ biến. Sai tên biến thì LangChain4j ném lỗi,
 // LLMHelper đổi thành LLMException và intent/rewrite/nén memory lặng lẽ rơi vào nhánh fallback,
 // nên phải bắt ở đây. Không gọi Gemini: ChatModel giả chỉ giữ lại prompt nhận được.
+// Prompt Document QA được kiểm ở DocumentQAPipelineTest.
 class PromptTemplatesTest {
 
     private String sentPrompt;
 
+    // Khai báo JSON schema như Gemini ở GeminiConfig: classifyIntent nhận responseFormat và
+    // phải trả JSON, các method trả String thì không.
     private final ChatModel capturingModel = new ChatModel() {
         @Override
         public ChatResponse doChat(ChatRequest request) {
             sentPrompt = ((UserMessage) request.messages().get(0)).singleText();
-            return ChatResponse.builder().aiMessage(AiMessage.from("ok")).build();
+            String reply = request.responseFormat() == null ? "ok" : "{\"value\":\"SUMMARY\"}";
+            return ChatResponse.builder().aiMessage(AiMessage.from(reply)).build();
+        }
+
+        @Override
+        public Set<Capability> supportedCapabilities() {
+            return Set.of(Capability.RESPONSE_FORMAT_JSON_SCHEMA);
         }
     };
 
@@ -41,13 +58,33 @@ class PromptTemplatesTest {
     void chatAssistantPromptsFillEveryVariable() {
 
         assertSent(() -> chatAssistant.generalChat("Xin chào"), "Xin chào");
-        assertSent(() -> chatAssistant.classifyIntent("Tóm tắt tài liệu"), "Tóm tắt tài liệu");
         assertSent(() -> chatAssistant.summarizeConversation("Nãy giờ nói gì?", "MEMORY-1"), "Nãy giờ nói gì?", "MEMORY-1");
-        assertSent(() -> chatAssistant.rewriteQuestion("Cái đó là gì?", "MEMORY-2"), "Cái đó là gì?", "MEMORY-2");
         assertSent(() -> chatAssistant.compressMemory("OLD-SUMMARY", "NEW-TURNS"), "OLD-SUMMARY", "NEW-TURNS");
-        assertSent(() -> chatAssistant.answerFromDocuments("Doanh thu Q3?", "MEMORY-3",
-                promptBuilderService.buildDocumentExcerpts(List.of("CHUNK-A", "CHUNK-B"))),
-                "Doanh thu Q3?", "MEMORY-3", "CHUNK-A\n---\nCHUNK-B");
+
+        // JSON schema đi riêng trong request, chữ prompt giữ nguyên (không bị nối thêm danh sách enum).
+        assertEquals(Intent.SUMMARY, chatAssistant.classifyIntent("Tóm tắt tài liệu"));
+        assertFilled(sentPrompt, "Tóm tắt tài liệu");
+        assertTrue(sentPrompt.endsWith("User message:\nTóm tắt tài liệu\n"), () -> "Intent prompt was changed:\n" + sentPrompt);
+    }
+
+    @Test
+    void questionRewriterFillsMemoryAndQuestion() {
+
+        ConversationMemoryService memoryService = new ConversationMemoryService() {
+            @Override
+            public String buildMemoryContext(Long conversationId) {
+                return "MEMORY-2";
+            }
+
+            @Override
+            public void appendTurn(AIConversation conversation, String userMessage, String assistantResponse) {
+            }
+        };
+        QuestionRewriter questionRewriter = new QuestionRewriter(
+                capturingModel, memoryService, new LLMHelper(), new AIConversationHelper(), new AIMessageHelper());
+
+        assertEquals("ok", questionRewriter.rewrite(AIConversation.builder().id(1L).build(), "Cái đó là gì?"));
+        assertFilled(sentPrompt, "Conversation context:\nMEMORY-2\n", "Current user message:\nCái đó là gì?");
     }
 
     @Test

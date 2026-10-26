@@ -1,6 +1,7 @@
 package com.enterprise.aiassistant.backend.ai.infrastructure.llm.config;
 
 import com.enterprise.aiassistant.backend.ai.infrastructure.llm.service.ChatAssistant;
+import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.service.AiServices;
@@ -33,6 +34,9 @@ public class GeminiConfig {
                 .apiKey(apiKey)
                 .modelName(modelName)
                 .logRequestsAndResponses(logRequests)
+                // AI Service trả enum (classifyIntent) thì gửi kèm JSON schema để Gemini chỉ trả giá trị
+                // hợp lệ; method trả String và các lời gọi ChatModel trực tiếp không bị ảnh hưởng.
+                .supportedCapabilities(Capability.RESPONSE_FORMAT_JSON_SCHEMA)
                 .build();
     }
 
