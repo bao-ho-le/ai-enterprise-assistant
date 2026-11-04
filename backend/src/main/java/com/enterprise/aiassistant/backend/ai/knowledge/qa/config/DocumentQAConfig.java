@@ -54,7 +54,7 @@ public class DocumentQAConfig {
 
         DefaultRetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                 // LangChain4j mặc định lấy cả user message (toàn bộ prompt document-qa.txt) đi tìm;
-                // đổi về đúng câu hỏi.
+                // đổi về đúng câu hỏi thực sự của user được lưu trong InvocationParameters
                 .queryTransformer(query -> List.of(Query.from(query.metadata().invocationParameters().get(QUESTION), query.metadata())))
                 // Không có tài liệu đọc được thì không embed/tìm (bộ lọc isIn không nhận danh sách rỗng),
                 // prompt vẫn ghi "No relevant passages were found.".

@@ -56,7 +56,7 @@ public class AIUsageListener implements ChatModelListener, EmbeddingModelListene
         logUsage(
                 context.embeddingModel().modelName(),
                 embeddingInputTokens(context.response().tokenUsage(), context.textSegments()),
-                0,
+                0, // Nhà cung cấp Google Gemini không tính phí token đầu ra cho model embedding này
                 AIUsageStatus.SUCCESS,
                 null
         );

@@ -22,11 +22,8 @@ public final class AIUsageContext implements AutoCloseable {
     private final Long conversationId;
     private final Long generationId;
 
-    @Getter(AccessLevel.NONE)
-    private final AIUsageContext previous;
-
     public static AIUsageContext open(ConversationType conversationType, Long conversationId, Long generationId) {
-        AIUsageContext context = new AIUsageContext(conversationType, conversationId, generationId, CURRENT.get());
+        AIUsageContext context = new AIUsageContext(conversationType, conversationId, generationId);
         CURRENT.set(context);
         return context;
     }
@@ -37,10 +34,6 @@ public final class AIUsageContext implements AutoCloseable {
 
     @Override
     public void close() {
-        if (previous == null) {
-            CURRENT.remove();
-        } else {
-            CURRENT.set(previous);
-        }
+        CURRENT.remove();
     }
 }

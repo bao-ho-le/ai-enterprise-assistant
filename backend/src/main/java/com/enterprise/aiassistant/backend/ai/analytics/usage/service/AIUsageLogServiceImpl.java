@@ -74,8 +74,8 @@ public class AIUsageLogServiceImpl implements AIUsageLogService {
 
         aiUsageScopeHelper.applyScope(filter, currentUserService.getCurrentPrincipal());
 
+        // map bên dưới chuyển Page<AIUsageLog> -> Page<AIUsageLogResponse>
         return aiUsageLogRepository.filterUsageLogs(filter, pageable)
-
                 .map(aiUsageLogMapper::toResponse);
     }
 
