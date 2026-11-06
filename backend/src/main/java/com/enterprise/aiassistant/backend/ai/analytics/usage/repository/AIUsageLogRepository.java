@@ -56,8 +56,6 @@ public interface AIUsageLogRepository
     @Query("SELECT COALESCE(SUM(u.estimatedCost), 0) FROM AIUsageLog u WHERE u.aiConversationId = :conversationId")
     BigDecimal sumEstimatedCostByConversationId(@Param("conversationId") Long conversationId);
 
-    void deleteByAiConversationId(Long aiConversationId);
-
     // ===================== Admin aggregates =====================
 
     // nativeQuery + CAST: JPQL "(:param IS NULL OR ...)" để param trần không có ngữ cảnh

@@ -32,7 +32,6 @@ import com.enterprise.aiassistant.backend.ai.chat.message.repository.AIMessageRe
 import com.enterprise.aiassistant.backend.ai.chat.message.repository.AIMessageSourceRepository;
 import com.enterprise.aiassistant.backend.ai.chat.message.service.AIMessageService;
 import com.enterprise.aiassistant.backend.ai.analytics.usage.enums.ConversationType;
-import com.enterprise.aiassistant.backend.ai.analytics.usage.repository.AIUsageLogRepository;
 import com.enterprise.aiassistant.backend.common.exception.ErrorCode;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.AIConversationException;
 import com.enterprise.aiassistant.backend.common.exception.business_exception.ConversationException;
@@ -85,8 +84,6 @@ public class AIConversationServiceImpl implements AIConversationService {
     private final GeneratedContentRepository generatedContentRepository;
 
     private final GenerationRepository generationRepository;
-
-    private final AIUsageLogRepository usageLogRepository;
 
     private final AIConversationMapper aiConversationMapper;
 
@@ -263,7 +260,6 @@ public class AIConversationServiceImpl implements AIConversationService {
         if (!generatedContentIds.isEmpty()) {
             generatedContentRepository.deleteAllById(generatedContentIds);
         }
-        usageLogRepository.deleteByAiConversationId(conversationId);
         conversationRepository.delete(conversation);
     }
 
