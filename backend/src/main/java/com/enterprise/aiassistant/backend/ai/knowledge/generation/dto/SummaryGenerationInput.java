@@ -2,6 +2,7 @@ package com.enterprise.aiassistant.backend.ai.knowledge.generation.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
