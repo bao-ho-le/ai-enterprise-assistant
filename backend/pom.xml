@@ -123,6 +123,17 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Integration test: bật Postgres thật trong Docker (version do Spring Boot quản lý) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-testcontainers</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-postgresql</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 		<dependency>
 			<groupId>io.minio</groupId>
@@ -213,6 +224,12 @@
 
 	<build>
 		<plugins>
+			<!-- Chạy integration test (*IT.java) ở bước "mvn verify"; "mvn test" chỉ chạy unit test (*Test.java).
+			     Cấu hình goal integration-test/verify có sẵn trong spring-boot-starter-parent. -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>

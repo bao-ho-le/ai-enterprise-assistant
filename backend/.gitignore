@@ -35,6 +35,8 @@ build/
 ### Properties ###
 **/*.properties
 /backend/src/main/resources/application.properties
+# Config cho integration test chỉ chứa giá trị giả, được phép đưa lên Git
+!src/test/resources/application-test.properties
 ### Postman ###
 .postman/
 postman/
