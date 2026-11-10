@@ -59,9 +59,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (JwtException | AuthenticationException ex) {
-            // Không throw ở đây — để request đi tiếp, Spring Security tự trả 401
-            // vì endpoint yêu cầu authenticated() sẽ tự chặn khi context rỗng
+        } catch (JwtException | AuthenticationException
+                 | com.enterprise.aiassistant.backend.common.exception.business_exception.AuthenticationException
+                 | IllegalArgumentException ex) {
+            // Token không dùng được thì coi như chưa đăng nhập:
+            // - AuthenticationException của app: JwtService ném khi token sai hoặc hết hạn
+            // - IllegalArgumentException: JJWT ném khi token rỗng (header "Bearer ")
+            // - AuthenticationException của Spring: loadUserByUsername không tìm thấy user
+            // Không throw ở đây (lỗi thoát khỏi filter sẽ thành 500). Xóa context rồi cho request
+            // đi tiếp, endpoint yêu cầu authenticated() sẽ bị Spring Security chặn và trả 401.
             SecurityContextHolder.clearContext();
         }
 
