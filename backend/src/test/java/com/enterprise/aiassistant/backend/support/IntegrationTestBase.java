@@ -1,13 +1,17 @@
 package com.enterprise.aiassistant.backend.support;
 
+import com.enterprise.aiassistant.backend.ai.analytics.usage.listener.AIUsageListener;
 import com.enterprise.aiassistant.backend.ai.infrastructure.vectorstore.manager.QdrantCollectionManager;
 import com.enterprise.aiassistant.backend.auth.security.UserPrincipal;
 import com.enterprise.aiassistant.backend.user.entity.User;
 import com.enterprise.aiassistant.backend.user.enums.Permission;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.output.TokenUsage;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.util.List;
 import java.util.Set;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -51,6 +56,10 @@ public abstract class IntegrationTestBase {
     @Autowired
     protected TestDataFactory data;
 
+    // Mặc định trả FAKE_ANSWER; test cần giả lập LLM lỗi thì gọi fakeChatModel.failWith(...)
+    @Autowired
+    protected FakeChatModel fakeChatModel;
+
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
@@ -63,6 +72,7 @@ public abstract class IntegrationTestBase {
     // kể cả khi test trước bị fail giữa chừng. Giữ lại dữ liệu seed của Flyway (admin, user, role).
     @BeforeEach
     void cleanDatabase() {
+        fakeChatModel.reset();
         jdbcTemplate.execute("""
                 TRUNCATE ai_usage_logs, ai_message_sources, ai_messages, conversation_memories,
                          ai_conversation_documents, generations, generated_content, ai_conversations,
@@ -78,6 +88,11 @@ public abstract class IntegrationTestBase {
     // Không dùng @WithMockUser vì CurrentUserService cần principal là UserPrincipal.
     protected static RequestPostProcessor loginAs(User user, Permission... permissions) {
         return user(UserPrincipal.from(user, Set.of(permissions)));
+    }
+
+    // Đếm số dòng thật trong DB, dùng để kiểm tra dữ liệu đã được lưu, xóa hoặc rollback
+    protected long countRows(String table) {
+        return jdbcTemplate.queryForObject("SELECT COUNT(*) FROM " + table, Long.class);
     }
 
     @TestConfiguration(proxyBeanMethods = false)
@@ -99,13 +114,58 @@ public abstract class IntegrationTestBase {
         // Chỉ cần override doChat: mọi cách gọi ChatModel (chat(String), AI Service...) đều đi qua đây.
         @Bean
         @Primary
-        ChatModel fakeChatModel() {
-            return new ChatModel() {
-                @Override
-                public ChatResponse doChat(ChatRequest request) {
-                    return ChatResponse.builder().aiMessage(AiMessage.from(FAKE_ANSWER)).build();
-                }
-            };
+        FakeChatModel fakeChatModel(AIUsageListener aiUsageListener) {
+            return new FakeChatModel(aiUsageListener);
+        }
+    }
+
+    // Gắn AIUsageListener giống Gemini thật (GeminiConfig) nên luồng ghi usage log vẫn chạy thật
+    public static class FakeChatModel implements ChatModel {
+
+        private final List<ChatModelListener> listeners;
+        private volatile RuntimeException failure;
+        private volatile String lastPrompt;
+
+        FakeChatModel(ChatModelListener listener) {
+            this.listeners = List.of(listener);
+        }
+
+        public void failWith(RuntimeException failure) {
+            this.failure = failure;
+        }
+
+        public void reset() {
+            this.failure = null;
+            this.lastPrompt = null;
+        }
+
+        // Nội dung của lần gọi AI gần nhất, để kiểm tra prompt có chứa đúng dữ liệu không
+        public String lastPrompt() {
+            return lastPrompt;
+        }
+
+        @Override
+        public List<ChatModelListener> listeners() {
+            return listeners;
+        }
+
+        // Giống Gemini thật: request luôn có tên model, nếu không AIUsageListener không ghi được log lỗi
+        @Override
+        public ChatRequestParameters defaultRequestParameters() {
+            return ChatRequestParameters.builder().modelName("fake-model").build();
+        }
+
+        @Override
+        public ChatResponse doChat(ChatRequest request) {
+            lastPrompt = request.messages().toString();
+            if (failure != null) {
+                throw failure;
+            }
+            return ChatResponse.builder()
+                    .aiMessage(AiMessage.from(FAKE_ANSWER))
+                    .modelName("fake-model")
+                    .tokenUsage(new TokenUsage(10, 5))
+                    .build();
         }
     }
 }

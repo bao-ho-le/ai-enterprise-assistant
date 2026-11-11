@@ -71,6 +71,27 @@ class AIUsageLogControllerIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.error").value("VALIDATION_FAILED"));
     }
 
+    // Kiểm tra câu query lọc thật trên Postgres, gồm đủ các điều kiện cùng lúc
+    @Test
+    void getUsageLogs_filterByDateModelStatusAndType_returnsOnlyMatchingLog() throws Exception {
+        User alice = data.createUser("alice");
+        data.createUsageLog(alice, "gemini-a", AIUsageStatus.SUCCESS, 10, 5);
+        data.createUsageLog(alice, "gemini-a", AIUsageStatus.FAILED, 0, 0);
+        data.createUsageLog(alice, "gemini-b", AIUsageStatus.SUCCESS, 10, 5);
+
+        mockMvc.perform(get(URL)
+                        .param("fromDate", LocalDate.now().atStartOfDay().toString())
+                        .param("toDate", LocalDate.now().plusDays(1).atStartOfDay().toString())
+                        .param("conversationType", "DOCUMENT_QA")
+                        .param("model", "gemini-a")
+                        .param("status", "SUCCESS")
+                        .with(loginAs(alice, Permission.AI_USAGE_READ_SELF)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].model").value("gemini-a"))
+                .andExpect(jsonPath("$.content[0].status").value("SUCCESS"));
+    }
+
     // Đã đăng nhập nhưng không có permission AI_USAGE_* nào → 403 PERMISSION_DENIED
     @Test
     void getUsageLogs_noUsagePermission_returns403() throws Exception {

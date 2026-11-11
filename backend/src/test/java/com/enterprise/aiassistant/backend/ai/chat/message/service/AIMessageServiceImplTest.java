@@ -190,7 +190,7 @@ class AIMessageServiceImplTest {
             "GENERAL_CHAT,         AI_CHAT",
             "CONVERSATION_SUMMARY, AI_CHAT"
     })
-    void sendMessage_missingIntentPermission_keepsUserMessageButSkipsAi(Intent intent, Permission permission) {
+    void sendMessage_missingIntentPermission_throwsAndSkipsAi(Intent intent, Permission permission) {
         stubUntilIntent(intent);
         // Stub chỉ ném lỗi với đúng permission của dòng này: service kiểm tra sai permission thì không có lỗi và test fail
         doThrow(new AuthorizationException(ErrorCode.PERMISSION_DENIED))
@@ -200,7 +200,8 @@ class AIMessageServiceImplTest {
                 .isInstanceOf(AuthorizationException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PERMISSION_DENIED);
 
-        // Tin nhắn user đã lưu trước khi phân loại intent; không nhánh AI nào được chạy
+        // save() được gọi trước bước kiểm tra quyền, nhưng ở DB thật sẽ bị rollback (xem AIMessageControllerIT).
+        // Không nhánh AI nào được chạy.
         verify(messageRepository).save(userMessage);
         verifyNoInteractions(documentQAService, questionRewriter, summaryChatService,
                 generalChatService, conversationSummaryChatService, conversationMemoryService);
