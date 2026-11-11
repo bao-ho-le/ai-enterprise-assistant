@@ -61,7 +61,7 @@ public class GenerationServiceImpl implements GenerationService {
     private final List<GenerationHandler> handlers;
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = AIConversationException.class)
     public TriggerGenerationResponse generate(Long conversationId, TriggerGenerationRequest request) {
 
         // 1. Validate request và conversation
