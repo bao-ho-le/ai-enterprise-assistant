@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Slf4j
@@ -60,7 +61,7 @@ public class DocumentQAServiceImpl implements DocumentQAService {
         Set<Long> readableDocumentIds = documentAuthorizationService.filterReadableDocumentIds(
                 attachedDocuments.stream()
                         .map(link -> link.getDocumentVersion().getDocument())
-                        .filter(java.util.Objects::nonNull)
+                        .filter(Objects::nonNull)
                         .toList()
         );
 
