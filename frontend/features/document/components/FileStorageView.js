@@ -837,9 +837,9 @@ export default function FileStorageView({ folderPath = [], folderId = null }) {
         onViewEvidence={(doc) => setEvidenceTarget(doc)}
         scrollResetKey={scrollResetKey}
         disabled={navigating}
-        onNavigateToWriteReport={() => navigateToFeature("/write-report")}
-        onNavigateToSummary={() => navigateToFeature("/summary")}
-        onNavigateToDocumentQA={() => navigateToFeature("/document-qa")}
+        onNavigateToWriteReport={() => navigateToFeature("/chat?mode=report")}
+        onNavigateToSummary={() => navigateToFeature("/chat?mode=summary")}
+        onNavigateToDocumentQA={() => navigateToFeature("/chat?mode=qa")}
       />
 
       <FolderNameModal

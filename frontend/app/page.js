@@ -20,10 +20,10 @@ export const metadata = {
 
 const FEATURES = [
   { Icon: FolderSearch, title: "Semantic File Storage", href: "/file-storage", desc: "Search documents by meaning, not just keywords. Find relevant files across your entire organization instantly." },
-  { Icon: Mail, title: "AI Email Composer", href: "/write-email", desc: "Draft professional emails with the right tone, length, and language for any audience — customer, employee, or executive." },
-  { Icon: FileBarChart, title: "Report Generation", href: "/write-report", desc: "Generate progress and financial reports from your documents with consistent formatting and enterprise writing standards." },
-  { Icon: ListTree, title: "Smart Summaries", href: "/summary", desc: "Executive summaries, bullet points, timelines, and action items — tailored to how your stakeholders consume information." },
-  { Icon: MessagesSquare, title: "Document Q&A", href: "/document-qa", desc: "Ask questions across multiple documents with source citations. NotebookLM-style grounded answers for your knowledge base." },
+  { Icon: Mail, title: "AI Email Composer", href: "/chat?mode=email", desc: "Draft professional emails with the right tone, length, and language for any audience — customer, employee, or executive." },
+  { Icon: FileBarChart, title: "Report Generation", href: "/chat?mode=report", desc: "Generate progress and financial reports from your documents with consistent formatting and enterprise writing standards." },
+  { Icon: ListTree, title: "Smart Summaries", href: "/chat?mode=summary", desc: "Executive summaries, bullet points, timelines, and action items — tailored to how your stakeholders consume information." },
+  { Icon: MessagesSquare, title: "Document Q&A", href: "/chat?mode=qa", desc: "Ask questions across multiple documents with source citations. NotebookLM-style grounded answers for your knowledge base." },
   { Icon: Activity, title: "Usage Analytics", href: "/ai-usage", desc: "Monitor token consumption, costs, and model performance across teams. Full visibility into your AI investment." },
 ];
 
@@ -61,7 +61,7 @@ export default function LandingPage() {
                   <ArrowRight className="h-4 w-4" />
                   Get Started
                 </Link>
-                <Link href="/document-qa" className="btn-secondary px-6 py-3 text-base w-full sm:w-auto">
+                <Link href="/chat?mode=qa" className="btn-secondary px-6 py-3 text-base w-full sm:w-auto">
                   <PlayCircle className="h-4 w-4" />
                   Try Document QA
                 </Link>

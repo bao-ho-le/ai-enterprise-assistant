@@ -7,7 +7,9 @@ import { formatDateTime } from "@/utils/format";
 
 // Report/Summary counterpart of EmailPreview — same card/footer layout, without the
 // email-only header (From/To/Subject).
-export default function GeneratedContentPreview({ item, onBack }) {
+// `embedded` renders just the content card (no page heading/back button/padding) — used
+// inside the Assistant workspace's generation result card.
+export default function GeneratedContentPreview({ item, onBack, embedded = false }) {
   const [copyLabel, setCopyLabel] = useState("Copy to Clipboard");
   const [saveLabel, setSaveLabel] = useState("Save");
   const [bodyCopyLabel, setBodyCopyLabel] = useState("");
@@ -38,16 +40,7 @@ export default function GeneratedContentPreview({ item, onBack }) {
     setTimeout(() => setSaveLabel("Save"), 1500);
   };
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-text-primary">Generated Content</h1>
-        <button type="button" className="btn-secondary text-sm" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to Form
-        </button>
-      </div>
-
+  const card = (
       <div className="card overflow-hidden">
         <div className="space-y-2 p-4 border-b border-border-subtle">
           <div className="flex items-center gap-3">
@@ -93,6 +86,20 @@ export default function GeneratedContentPreview({ item, onBack }) {
           </button>
         </div>
       </div>
+  );
+
+  if (embedded) return card;
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-text-primary">Generated Content</h1>
+        <button type="button" className="btn-secondary text-sm" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to Form
+        </button>
+      </div>
+      {card}
     </div>
   );
 }

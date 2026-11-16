@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { ArrowLeft, Copy, Save } from "lucide-react";
 
-export default function EmailPreview({ from, to, subject, onSubjectChange, body, onBack }) {
+// `embedded` renders just the content card, without the page heading/"Back to Form"
+// header or the page-level padding — used inside the Assistant workspace's result card.
+export default function EmailPreview({ from, to, subject, onSubjectChange, body, onBack, embedded = false }) {
   const [copyLabel, setCopyLabel] = useState("Copy to Clipboard");
   const [saveLabel, setSaveLabel] = useState("Save");
   const [bodyCopyLabel, setBodyCopyLabel] = useState("");
@@ -35,16 +37,7 @@ export default function EmailPreview({ from, to, subject, onSubjectChange, body,
     setTimeout(() => setSaveLabel("Save"), 1500);
   };
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-text-primary">Email Preview</h1>
-        <button type="button" className="btn-secondary text-sm" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4" />
-          Back to Form
-        </button>
-      </div>
-
+  const card = (
       <div className="card overflow-hidden">
         <div className="space-y-3 p-4 border-b border-border-subtle">
           <div className="flex items-center gap-3 text-sm">
@@ -93,6 +86,20 @@ export default function EmailPreview({ from, to, subject, onSubjectChange, body,
           </button>
         </div>
       </div>
+  );
+
+  if (embedded) return card;
+
+  return (
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-text-primary">Email Preview</h1>
+        <button type="button" className="btn-secondary text-sm" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to Form
+        </button>
+      </div>
+      {card}
     </div>
   );
 }

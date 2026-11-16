@@ -40,13 +40,13 @@ export function requiresSourceDocuments(value) {
 }
 
 // conversationType values that actually have a screen in this app, and where that
-// screen lives — backs the sidebar's type filter dropdown (LeftSidebar) and the
-// cross-type routing for its conversation list items.
+// screen lives — backs the type filters and the cross-type routing for conversation
+// list items. All four now open in the unified /chat workspace.
 export const ROUTED_CONVERSATION_TYPES = [
-  { value: "EMAIL_GENERATION", label: "Email Generation", basePath: "/write-email" },
-  { value: "REPORT_GENERATION", label: "Report Generation", basePath: "/write-report" },
-  { value: "SUMMARY_GENERATION", label: "Summary Generation", basePath: "/summary" },
-  { value: "DOCUMENT_QA", label: "Document QA", basePath: "/document-qa" },
+  { value: "EMAIL_GENERATION", label: "Email Generation", basePath: "/chat" },
+  { value: "REPORT_GENERATION", label: "Report Generation", basePath: "/chat" },
+  { value: "SUMMARY_GENERATION", label: "Summary Generation", basePath: "/chat" },
+  { value: "DOCUMENT_QA", label: "Document QA", basePath: "/chat" },
 ];
 
 // AIConversation.status

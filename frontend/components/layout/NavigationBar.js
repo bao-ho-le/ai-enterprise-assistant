@@ -8,13 +8,11 @@ import { useAuth } from "@/lib/AuthContext";
 import { isAdmin } from "@/lib/permissions";
 import { getInitials, formatDateTime } from "@/utils/format";
 
+// Email / Report / Summary / Document QA all live in the unified /chat workspace now.
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/file-storage", label: "File Storage" },
-  { href: "/write-email", label: "Write Email" },
-  { href: "/write-report", label: "Write Report" },
-  { href: "/summary", label: "Summary" },
-  { href: "/document-qa", label: "Document QA" },
+  { href: "/chat", label: "AI assistant" },
 ];
 
 function matchesPath(pathname, href) {
