@@ -39,3 +39,14 @@ build/
 .postman/
 postman/
 **/.freebuff/
+
+### Build & test run artifacts (local only) ###
+# Maven output (target/) is ignored at the top of this file; it already covers
+# Surefire/Failsafe reports, JaCoCo exec/report files and test run logs.
+*.log
+hs_err_pid*
+replay_pid*
+.attach_pid*
+*.hprof
+.testcontainers.properties
+

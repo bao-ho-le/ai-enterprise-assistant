@@ -274,7 +274,6 @@ public class JwtService {
     }
 
 
-
     private Claims extractAllClaims(
             String token,
             SecretKey key
