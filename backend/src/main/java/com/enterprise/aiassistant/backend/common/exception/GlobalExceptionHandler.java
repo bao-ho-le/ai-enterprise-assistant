@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
@@ -24,7 +25,25 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+// Body thiếu hoặc JSON sai cú pháp / sai kiểu (vd: "parentId":"abc")
+        @ExceptionHandler(HttpMessageNotReadableException.class)
+        public ResponseEntity<ErrorResponseDto> handleNotReadable(
+                HttpMessageNotReadableException exception,
+                HttpServletRequest request
+        ) {
 
+        log.warn("Malformed request body: {}", exception.getMessage());
+
+        ErrorResponseDto response = ErrorResponseDto.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("MALFORMED_REQUEST_BODY")
+                .message("Request body is missing or malformed")
+                .path(request.getRequestURI())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDto> handleBusinessException(
             BusinessException exception,
