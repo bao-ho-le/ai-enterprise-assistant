@@ -19,7 +19,6 @@ export default function AssistantCreationPanel({ composer }) {
 
   const isChat = mode.supportsMessages;
   const documentsError = composer.validation.errors.documents || "";
-  const missingOptions = composer.validation.errors.options || [];
   const canSubmit = canSubmitRequest({ validation: composer.validation, submitting: composer.submitting });
 
   const addDocuments = (selected) => {
@@ -41,19 +40,16 @@ export default function AssistantCreationPanel({ composer }) {
         <h2 className="text-base font-semibold text-text-primary">{mode.filterLabel}</h2>
         <p className="mt-1 text-sm leading-relaxed text-text-secondary">{mode.description}</p>
       </div>
-      <div className="flex flex-wrap items-center gap-1.5">
-        <span className={`badge ${mode.requiresDocuments ? "badge-warning" : "badge-neutral"}`}>
-          {mode.requiresDocuments ? "Documents required" : "No documents required"}
-        </span>
-        <span className="badge badge-neutral">{isChat ? "Multi-turn" : "One-shot"}</span>
-      </div>
+      <span className={`badge ${mode.requiresDocuments ? "badge-warning" : "badge-neutral"}`}>
+        {mode.requiresDocuments ? "Documents required" : "No documents required"}
+      </span>
     </div>
   );
 
   return (
-    <section className="card overflow-hidden">
+    <section className="card">
       {/* Mode selection */}
-      <div className="border-b border-border-subtle bg-bg-secondary/40 p-4 sm:p-6">
+      <div className="rounded-t-xl border-b border-border-subtle bg-bg-secondary/40 p-4 sm:p-6">
         <AssistantModeSelector
           variant="cards"
           modes={modes}
@@ -76,7 +72,6 @@ export default function AssistantCreationPanel({ composer }) {
                 <span className={`badge ${mode.requiresDocuments ? "badge-warning" : "badge-neutral"}`}>
                   {mode.requiresDocuments ? "Documents required" : "No documents required"}
                 </span>
-                <span className="badge badge-neutral">Multi-turn</span>
               </div>
             </div>
             <AssistantChatComposer
@@ -116,27 +111,21 @@ export default function AssistantCreationPanel({ composer }) {
                 onPick={addDocuments}
                 onRemove={removeDocument}
                 required={mode.requiresDocuments}
-                error={documentsError}
+                onClear={() => composer.setDocuments([])}
                 description="The generated content uses these documents as its only source material."
               />
             </div>
           )}
 
           {/* Submit bar */}
-          <div className="flex flex-col gap-3 bg-bg-secondary/40 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-            <div className="min-w-0 space-y-1 text-xs">
-              {composer.error ? (
-                <p className="text-error">{composer.error}</p>
-              ) : documentsError ? (
-                <p className="text-warning">{documentsError}</p>
-              ) : missingOptions.length > 0 ? (
-                <p className="text-warning">Required: {missingOptions.join(", ")}</p>
-              ) : (
-                <p className="text-text-muted">
-                  This creates a conversation whose result you can preview and regenerate later.
+          <div className="sticky bottom-0 z-10 flex flex-col gap-3 rounded-b-xl border-t border-border-subtle bg-bg-card/95 p-4 backdrop-blur sm:flex-row sm:items-center sm:justify-end sm:p-6">
+            {composer.error || documentsError ? (
+              <div className="min-w-0 text-xs">
+                <p className={composer.error ? "text-error" : "text-warning"}>
+                  {composer.error || documentsError}
                 </p>
-              )}
-            </div>
+              </div>
+            ) : null}
 
             <button
               type="button"

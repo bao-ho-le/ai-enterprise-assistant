@@ -21,9 +21,6 @@ export default function GenerationFormSections({ conversationType, values, onCha
             >
               {section.title}
             </h3>
-            {section.description && (
-              <p className="mt-1 text-xs leading-relaxed text-text-muted">{section.description}</p>
-            )}
           </div>
 
           <div className="space-y-4">

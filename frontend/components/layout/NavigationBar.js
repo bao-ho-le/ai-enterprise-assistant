@@ -12,7 +12,7 @@ import { getInitials, formatDateTime } from "@/utils/format";
 const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/file-storage", label: "File Storage" },
-  { href: "/chat", label: "AI assistant" },
+  { href: "/chat", label: "AI Assistant" },
 ];
 
 function matchesPath(pathname, href) {

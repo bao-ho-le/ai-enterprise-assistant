@@ -82,19 +82,16 @@ export const GENERATION_FORM_SECTIONS = {
     {
       id: "details",
       title: "Email details",
-      description: "What the email should accomplish and who it is between.",
       fields: ["purpose", "sender", "recipient"],
     },
     {
       id: "preferences",
       title: "Writing preferences",
-      description: "How the email should read.",
       fields: ["language", "length", "audience", "tone"],
     },
     {
       id: "context",
       title: "Additional context",
-      description: "Prior thread history, requests already made, anything to include.",
       fields: ["optionalContext"],
     },
   ],
@@ -102,19 +99,16 @@ export const GENERATION_FORM_SECTIONS = {
     {
       id: "details",
       title: "Report details",
-      description: "Title and the period the report covers.",
       fields: ["title", "fromDate", "toDate"],
     },
     {
       id: "preferences",
       title: "Writing preferences",
-      description: "Length, audience and language.",
       fields: ["language", "length", "audience"],
     },
     {
       id: "instructions",
       title: "Additional instructions",
-      description: "Focus areas or extra guidance for the report.",
       fields: ["instructions"],
     },
   ],
@@ -122,19 +116,16 @@ export const GENERATION_FORM_SECTIONS = {
     {
       id: "style",
       title: "Summary format",
-      description: "Choose how the summary is structured.",
       fields: ["style"],
     },
     {
       id: "preferences",
       title: "Writing preferences",
-      description: "Length and language.",
       fields: ["language", "length"],
     },
     {
       id: "instructions",
       title: "Additional instructions",
-      description: "Anything specific the summary should focus on.",
       fields: ["instructions"],
     },
   ],

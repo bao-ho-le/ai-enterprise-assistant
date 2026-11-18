@@ -74,16 +74,43 @@ function PickerBreadcrumb({ breadcrumb, onNavigate }) {
 // visible in place (same spot it'd normally show up) instead of vanishing from the
 // listing, just faded and inert, like the ghosted source item Windows/Mac show
 // during a drag-move.
-function PickerRow({ icon: Icon, iconBg, iconColor, title, extLabel, interactive, doubleClick, onActivate, checkbox, dimmed }) {
+function PickerRow({
+  icon: Icon,
+  iconBg,
+  iconColor,
+  title,
+  extLabel,
+  interactive,
+  doubleClick,
+  onActivate,
+  checkbox,
+  dimmed,
+  checkable,
+  checked,
+  ariaLabel,
+}) {
   const active = interactive && !dimmed;
   return (
     <div
-      role="row"
+      role={checkable ? "checkbox" : "row"}
+      aria-checked={checkable ? Boolean(checked) : undefined}
+      aria-label={checkable ? ariaLabel : undefined}
+      tabIndex={checkable ? 0 : undefined}
       className={`flex items-center gap-3 border-b border-border-default px-4 py-1 transition-colors ${
         active ? "cursor-pointer select-none hover:bg-bg-elevated/50" : ""
       } ${dimmed ? "cursor-not-allowed" : ""}`}
       onClick={active && !doubleClick ? onActivate : undefined}
       onDoubleClick={active && doubleClick ? onActivate : undefined}
+      onKeyDown={
+        checkable && active
+          ? (event) => {
+              if (event.key === " " || event.key === "Enter") {
+                event.preventDefault();
+                onActivate?.();
+              }
+            }
+          : undefined
+      }
       title={dimmed ? "Currently being moved" : active && doubleClick ? "Double-click to open" : undefined}
     >
       {/* opacity only on the icon/text — not the row div itself — so the row's
@@ -124,6 +151,9 @@ export default function FolderBrowserPicker({
   documentFilter,
   movingItems,
   initialFolderId = null,
+  listHeightClass = "h-[50vh]",
+  hideRootBreadcrumb = false,
+  selectionResetKey = 0,
   onSelectionChange,
   onLocationChange,
 }) {
@@ -195,6 +225,12 @@ export default function FolderBrowserPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIds]);
 
+  // Lets an embedded caller clear the ticked rows after it has consumed the selection
+  // (see SelectedDocumentsSection's "Add files"), without remounting the browser.
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [selectionResetKey]);
+
   // Items being moved (MoveItemModal) stay in the listing wherever they'd normally
   // show up, dimmed instead of removed — see PickerRow's `dimmed`.
   const movingFolderIds = (movingItems || []).filter((it) => it.type === "folder").map((it) => it.id);
@@ -237,13 +273,17 @@ export default function FolderBrowserPicker({
 
   return (
     <div>
-      <div className="mb-2 flex h-8 min-w-0 items-center">
-        {isSearching ? (
-          <span className="px-1.5 py-1 text-sm text-text-secondary">Search Results</span>
-        ) : (
-          <PickerBreadcrumb breadcrumb={folderView?.breadcrumb} onNavigate={setBrowseFolderId} />
-        )}
-      </div>
+      {/* Embedded (compact) usage hides the breadcrumb at the root — there's nothing to
+          navigate back to yet — so the picker only costs one extra row once inside a folder. */}
+      {(isSearching || !hideRootBreadcrumb || (folderView?.breadcrumb?.length || 0) > 1) && (
+        <div className="mb-2 flex h-8 min-w-0 items-center">
+          {isSearching ? (
+            <span className="px-1.5 py-1 text-sm text-text-secondary">Search Results</span>
+          ) : (
+            <PickerBreadcrumb breadcrumb={folderView?.breadcrumb} onNavigate={setBrowseFolderId} />
+          )}
+        </div>
+      )}
 
       {mode === "attach" && (
         <div className="mb-2 flex items-center gap-2">
@@ -273,7 +313,7 @@ export default function FolderBrowserPicker({
 
       {/* h-[50vh] not max-h: a fixed height regardless of item count (browsing or
           searching) so the popup doesn't resize as you navigate or type a search. */}
-      <div className="h-[50vh] overflow-y-auto rounded-lg border border-border-subtle">
+      <div className={`${listHeightClass} overflow-y-auto rounded-lg border border-border-subtle`}>
         {loading ? (
           <div className="flex items-center justify-center gap-2 py-10 text-text-muted">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -332,15 +372,18 @@ export default function FolderBrowserPicker({
                   interactive={selectable}
                   onActivate={selectable ? () => toggleDoc(doc.id) : undefined}
                   dimmed={dimmed}
+                  checkable={selectable}
+                  checked={selectedIds.has(doc.id)}
+                  ariaLabel={`Select ${doc.title}`}
                   checkbox={
                     selectable ? (
                       <input
                         type="checkbox"
-                        className="h-4 w-4 rounded border-border-default bg-bg-primary accent-accent"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                        className="pointer-events-none h-4 w-4 rounded border-border-default bg-bg-primary accent-accent"
                         checked={selectedIds.has(doc.id)}
-                        onChange={() => toggleDoc(doc.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        aria-label={`Select ${doc.title}`}
+                        readOnly
                       />
                     ) : null
                   }

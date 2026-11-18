@@ -9,7 +9,7 @@ import Toast from "@/components/ui/Toast";
 import RenameConversationModal from "@/features/conversation/components/RenameConversationModal";
 import ConversationRowMenu from "@/features/conversation/components/ConversationRowMenu";
 import { getConversations, softDeleteConversation } from "@/services/conversationService";
-import { ASSISTANT_MODES, modeByConversationType } from "@/features/assistant/models/assistantRules";
+import { ASSISTANT_MODES } from "@/features/assistant/models/assistantRules";
 import { formatConversationTitle } from "@/utils/format";
 
 const PAGE_SIZE = 20;
@@ -43,10 +43,6 @@ function formatSidebarTitle(title) {
 const FILTERS = [{ value: "", label: "All" }].concat(
   ASSISTANT_MODES.map((mode) => ({ value: mode.conversationType, label: mode.filterLabel }))
 );
-
-function typeBadge(conversationType) {
-  return modeByConversationType(conversationType)?.badge || "AI";
-}
 
 // One list for all four conversation types. Filtering stays server-side
 // (GET /ai-conversations?conversationType=…, default ACTIVE + pageable), so switching
@@ -216,13 +212,6 @@ export default function AssistantSidebar() {
                         : "flex items-center gap-2 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-bg-elevated"
                     }
                   >
-                    <span
-                      className={`badge shrink-0 ${
-                        active ? "badge-accent" : "badge-neutral"
-                      } px-1.5 py-0 text-[10px]`}
-                    >
-                      {typeBadge(conversation.conversationType)}
-                    </span>
                     <p
                       className={
                         active
